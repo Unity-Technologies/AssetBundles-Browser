@@ -49,10 +49,8 @@ namespace UnityEditor.AssetBundles
 			if (m_TreeView == null)
 			{
 				if (assetBundleData == null)
-				{
 					assetBundleData = new AssetBundleData();
-					new AssetBundleStructData().Create();
-				}
+
 				richTextStyle.richText = true;
 
 				if (m_TreeViewState == null)
