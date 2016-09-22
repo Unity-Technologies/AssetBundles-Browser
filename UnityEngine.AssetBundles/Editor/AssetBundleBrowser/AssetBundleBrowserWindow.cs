@@ -69,6 +69,17 @@ namespace UnityEditor.AssetBundles
 			if (selectedItems.Count > 0)
 			{
 				string[] bundles = AssetDatabase.GetAllAssetBundleNames();
+				List<string> variants = new List<string>();
+				foreach (var b in bundles)
+				{
+					int index = b.IndexOf('.');
+					if (index > 0)
+					{
+						string v = b.Substring(index + 1);
+						if (!variants.Contains(v))
+							variants.Add(v);
+					}
+				}
 				scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 				foreach (var i in selectedItems)
 				{
@@ -103,23 +114,33 @@ namespace UnityEditor.AssetBundles
 					GUILayout.BeginHorizontal();
 					GUILayout.Label("<b><color=white>AssetBundle</color></b>", richTextStyle);
 					string bid = importers[0].assetBundleName;
+					string variant = importers[0].assetBundleVariant;
 					foreach (var i in importers)
 					{
 						if (i.assetBundleName != bid)
-						{
 							bid = "-";
-							break;
-						}
+						if (i.assetBundleVariant != variant)
+							variant = "-";
 					}
-
+					int currentVariantId = variants.IndexOf(variant);
 					int currentBundleId = Array.IndexOf(bundles, bid);
 					int bundleId = EditorGUILayout.Popup(currentBundleId, bundles);
+					int variantId = EditorGUILayout.Popup(currentVariantId, variants.ToArray());
 					if (bundleId != currentBundleId)
 					{
-						if (EditorUtility.DisplayDialog("AssetBundle Change", "Move selected assets to " + bundles[bundleId] + "?", "Ok", "Cancel"))
+						if (EditorUtility.DisplayDialog("AssetBundle Change", "Move selected assets to bundle " + bundles[bundleId] + "?", "Ok", "Cancel"))
 						{
-							foreach(var i in importers)
+							foreach (var i in importers)
 								i.assetBundleName = bundles[bundleId];
+							ResetData(false);
+						}
+					}
+					if (variantId != currentVariantId)
+					{
+						if (EditorUtility.DisplayDialog("AssetBundle Change", "Move selected assets to variant " + variants[variantId] + "?", "Ok", "Cancel"))
+						{
+							foreach (var i in importers)
+								i.assetBundleVariant = variants[variantId];
 							ResetData(false);
 						}
 					}

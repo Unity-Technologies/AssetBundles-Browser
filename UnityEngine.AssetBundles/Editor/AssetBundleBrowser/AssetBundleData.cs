@@ -250,6 +250,8 @@ namespace UnityEditor.AssetBundles
 			{
 				get
 				{
+					if (type == Type.Bundle)
+						return ColorName(assetName);
 					return ColorName(System.IO.Path.GetFileNameWithoutExtension(assetName));
 				}
 			}
