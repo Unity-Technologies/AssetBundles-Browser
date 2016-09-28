@@ -115,6 +115,10 @@ namespace UnityEngine.AssetBundles
 							GUILayout.Label("<color=white>" + r + "</color>", richTextStyle);
 						GUILayout.EndVertical();
 					}
+					GUILayout.BeginVertical();
+					foreach (var r in i.data.issues)
+						GUILayout.Label("<color=red>" + r + "</color>", richTextStyle);
+					GUILayout.EndVertical();
 				}
 				EditorGUILayout.EndScrollView();
 

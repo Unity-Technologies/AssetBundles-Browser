@@ -83,7 +83,9 @@ namespace UnityEngine.AssetBundles
 					if (!assetInfoMap.TryGetValue(n, out parent))
 					{
 						if (n == bundleName)
+						{
 							assetInfoMap.Add(n, new AssetInfo(this, n, AssetInfo.Type.Bundle, AssetDatabase.GetAssetPathsFromAssetBundle(n), isVariant));
+						}
 						else
 						{
 							if (!assetInfoMap.ContainsKey(n))
@@ -115,7 +117,7 @@ namespace UnityEngine.AssetBundles
 		public class AssetTreeItemData
 		{
 			public int id;
-			public int issueCount = 0;
+			public List<string> issues = new List<string>();
 			public int childIssueCount = 0;
 			public AssetInfo assetInfo;
 			public AssetTreeItemData parent;
@@ -147,30 +149,63 @@ namespace UnityEngine.AssetBundles
 
 			public int CountIssues()
 			{
-				issueCount = IsDuplicated ? 1 : 0;
+				if (IsDuplicated)
+					issues.Add("Asset duplicated in multiple bundles.");
 				childIssueCount = 0;
 				if (children != null)
 				{
 					foreach (var c in children)
 						childIssueCount += c.CountIssues();
 				}
-				return childIssueCount + issueCount;
+				return childIssueCount + issues.Count;
 			}
 
 			internal void PostProcess(AssetBundleData abd)
 			{
+				foreach (var c in children)
+					c.FindRootDependencies();
 				CountIssues();
-				foreach(var c in children)
-					c.assetInfo.FindRootDependencies();
+			}
+
+			private void FindRootDependencies()
+			{
+				if (assetInfo.type == AssetInfo.Type.Bundle)
+				{
+					assetInfo.FindRootDependencies();
+					if (assetInfo.isVariant)
+					{
+						foreach (var c in parent.children)
+						{
+							if (c != this && !CompareLists(c.assetInfo.dependencies, assetInfo.dependencies))
+								issues.Add("Variant bundle contents do not match variant " + c.assetInfo.assetName);
+						}
+					}
+				}
+				if (assetInfo.type == AssetInfo.Type.BundlePath)
+				{
+					foreach (var c in children)
+						c.FindRootDependencies();
+				}
+			}
+
+			private bool CompareLists(List<string> a, List<string> b)
+			{
+				if (a.Count != b.Count)
+					return false;
+				for (int i = 0; i < a.Count; i++)
+					if (a[i] != b[i])
+						return false;
+				return true;
 			}
 
 			public string displayName
 			{
 				get
 				{
-					if (childIssueCount == 0)
+					int issueCount = childIssueCount + issues.Count;
+					if (issueCount == 0)
 						return assetInfo.displayName;
-					return assetInfo.displayName + "<color=red> [" + childIssueCount + " issue" + (childIssueCount > 1 ? "s" : "") + "]" + "</color>"; ;
+					return assetInfo.displayName + "<color=red> [" + issueCount + " issue" + (issueCount > 1 ? "s" : "") + "]" + "</color>"; ;
 				}
 			}
 
