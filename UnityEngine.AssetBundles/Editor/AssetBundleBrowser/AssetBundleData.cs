@@ -150,7 +150,13 @@ namespace UnityEngine.AssetBundles
 			public int CountIssues()
 			{
 				if (IsDuplicated)
-					issues.Add("Asset duplicated in multiple bundles.");
+				{
+					string errMsg = "Asset duplicated in multiple bundles:\n\t";
+					foreach (var r in assetInfo.uniqueRoots)
+						errMsg += r + "\n\t";
+				
+					issues.Add(errMsg);
+				}
 				childIssueCount = 0;
 				if (children != null)
 				{
