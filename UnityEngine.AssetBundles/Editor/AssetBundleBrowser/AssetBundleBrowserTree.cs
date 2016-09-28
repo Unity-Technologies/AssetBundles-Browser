@@ -8,11 +8,11 @@ using UnityEditor.UI;
 using UnityEditor.IMGUI.Controls;
 using System;
 
-namespace UnityEditor.AssetBundles
+namespace UnityEngine.AssetBundles
 {
-
 	internal class AssetBundleBrowserTree : TreeView
 	{
+		Texture2D variantIconTexture;
 		internal class TreeItem : TreeViewItem
 		{
 			public AssetBundleData.AssetTreeItemData data;
@@ -27,15 +27,16 @@ namespace UnityEditor.AssetBundles
 		public AssetBundleBrowserTree(TreeViewState treeViewState, AssetBundleData data) : base(treeViewState)
 		{
 			s_Styles = new Styles();
+			variantIconTexture = Resources.Load<Texture2D>("variant.png");
 			assetBundleData = data;
 		}
 
 		protected override void BuildRootAndRows(out TreeViewItem root, out IList<TreeViewItem> rows)
 		{
-			root = new TreeItem(null, -1);
+			root = new TreeItem(assetBundleData.rootTreeItem, -1);
 			rows = new List<TreeViewItem>();
 
-			foreach (var i in assetBundleData.treeItemData)
+			foreach (var i in assetBundleData.rootTreeItem.children)
 				CreateAssetItem(i, 0, rows);
 
 			TreeViewUtility.SetParentAndChildrenForItems(rows, root);
@@ -82,8 +83,17 @@ namespace UnityEditor.AssetBundles
 				iconRect.width = k_IconWidth;
 				iconRect.x += iconLeftPadding;
 				rect.xMin += k_IconWidth + iconRightPadding;
-				if(asset.type == AssetBundleData.AssetInfo.Type.Bundle)
-					GUI.DrawTexture(iconRect, EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName), ScaleMode.ScaleToFit);
+				if (asset.type == AssetBundleData.AssetInfo.Type.Bundle || asset.type == AssetBundleData.AssetInfo.Type.BundlePath)
+				{
+					if (asset.isVariant)
+					{
+						GUI.DrawTexture(iconRect, AssetDatabase.GetCachedIcon("Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/variant.png"), ScaleMode.ScaleToFit);
+					}
+					else
+					{
+						GUI.DrawTexture(iconRect, EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName), ScaleMode.ScaleToFit);
+					}
+				}
 				else
 					GUI.DrawTexture(iconRect, AssetDatabase.GetCachedIcon(asset.assetName), ScaleMode.ScaleToFit);
 			}

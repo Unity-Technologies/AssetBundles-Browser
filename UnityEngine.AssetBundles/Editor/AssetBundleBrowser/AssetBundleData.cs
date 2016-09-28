@@ -19,71 +19,99 @@ using System;
  * handle bundle changes without rebuilding everything
  * 
 */
-namespace UnityEditor.AssetBundles
+namespace UnityEngine.AssetBundles
 {
 	public class AssetBundleData
 	{
 		public Dictionary<string, AssetInfo> assetInfoMap = new Dictionary<string, AssetInfo>();
-		public List<AssetTreeItemData> treeItemData = new List<AssetTreeItemData>();
+		public AssetTreeItemData rootTreeItem;
 		static int idCount = 1;
 		public int issueCount = 0;
 		public AssetBundleData()
 		{
+			AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 			DateTime start = DateTime.Now;
 			idCount = 1;
-			treeItemData = new List<AssetTreeItemData>();
-			foreach (var bundleName in AssetDatabase.GetAllAssetBundleNames())
-				assetInfoMap.Add(bundleName, new AssetInfo(this, bundleName, AssetInfo.Type.Bundle));
+			CreateBundleInfos();
+			CreateAssetInfos();
 
-			foreach (var bundleName in AssetDatabase.GetAllAssetBundleNames())
-				treeItemData.Add(new AssetTreeItemData(this, null, assetInfoMap[bundleName]));
+			rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
+			foreach (var a in assetInfoMap.Values)
+				a.PostProcess(this);
+			rootTreeItem.PostProcess(this);
 
-			foreach (var k in assetInfoMap)
-				k.Value.PostProcess();
-
-			foreach (var t in treeItemData)
-				issueCount += t.CountIssues();
-
-			foreach (var t in treeItemData)
-				t.assetInfo.FindRootDependencies();
-
-			AssetInfo unreferenced = new AssetInfo(this, "Unreferenced", AssetInfo.Type.None);
-			assetInfoMap.Add(unreferenced.assetName, unreferenced);
-			treeItemData.Add(new AssetTreeItemData(this, null, unreferenced));
 			TimeSpan elapsed = DateTime.Now - start;
 			Debug.Log("Rebuilt data for " + assetInfoMap.Count + " entries in " + elapsed.TotalSeconds + " seconds.");
 		}
+
+		private void CreateAssetInfos()
+		{
+			foreach (var asset in AssetDatabase.GetAllAssetPaths())
+			{
+				string ext = System.IO.Path.GetExtension(asset);
+				if (ext.Length > 0 && ext != ".dll" && ext != ".cs" && !asset.StartsWith("ProjectSettings") && !asset.StartsWith("Library"))
+					assetInfoMap.Add(asset, new AssetInfo(this, asset, AssetInfo.Type.Asset, AssetDatabase.GetDependencies(asset), false));
+			}
+		}
+
+		private void CreateBundleInfos()
+		{
+			string[] bundleNames = AssetDatabase.GetAllAssetBundleNames();
+			assetInfoMap.Add(string.Empty, new AssetInfo(this, string.Empty, AssetInfo.Type.BundlePath, new string[] { }, false));
+
+			foreach (var bundleName in bundleNames)
+			{
+				List<string> parts = new List<string>(bundleName.Split('/'));
+				bool isVariant = false;
+				int vi = parts.Last().IndexOf('.');
+				if (vi > 0)
+				{
+					isVariant = true;
+					string last = parts.Last();
+					parts.RemoveAt(parts.Count - 1);
+					parts.Add(last.Substring(0, vi));
+					parts.Add(last.Substring(vi + 1));
+				}
+				AssetInfo parent = assetInfoMap[string.Empty];
+				for (int p = 0; p < parts.Count; p++)
+				{
+					string n = parts[p];
+					for (int j = p-1; j >= 0; j--)
+						n = parts[j] + ((isVariant && p == parts.Count - 1 && j == p - 1) ? "." : "/") + n;
+					if (!parent.dependencies.Contains(n))
+						parent.dependencies.Add(n);
+					if (!assetInfoMap.TryGetValue(n, out parent))
+					{
+						if (n == bundleName)
+							assetInfoMap.Add(n, new AssetInfo(this, n, AssetInfo.Type.Bundle, AssetDatabase.GetAssetPathsFromAssetBundle(n), isVariant));
+						else
+						{
+							if (!assetInfoMap.ContainsKey(n))
+							{
+								assetInfoMap.Add(n, parent = new AssetInfo(this, n, AssetInfo.Type.BundlePath, new string[] { }, false));
+							}
+						}
+					}
+				}
+			}
+		}
+
 		public void Refresh()
 		{
 			DateTime start = DateTime.Now;
 			idCount = 1;
-			treeItemData = new List<AssetTreeItemData>();
-			foreach (var bundleName in AssetDatabase.GetAllAssetBundleNames())
-				assetInfoMap[bundleName] = new AssetInfo(this, bundleName, AssetInfo.Type.Bundle);
+			foreach (var a in assetInfoMap.Values)
+				a.Reset();
+			foreach (var a in assetInfoMap.Values)
+				a.PostProcess(this);
+			rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
 
-			foreach (var bundleName in AssetDatabase.GetAllAssetBundleNames())
-				treeItemData.Add(new AssetTreeItemData(this, null, assetInfoMap[bundleName]));
+			rootTreeItem.PostProcess(this);
 
-			foreach (var k in assetInfoMap)
-				k.Value.PostProcess();
-
-			foreach (var t in treeItemData)
-				issueCount += t.CountIssues();
-
-			foreach (var t in treeItemData)
-				t.assetInfo.rootDependencies.Clear();
-
-			foreach (var t in treeItemData)
-				t.assetInfo.FindRootDependencies();
-
-			AssetInfo unreferenced = new AssetInfo(this, "Unreferenced", AssetInfo.Type.None);
-			assetInfoMap[unreferenced.assetName] = unreferenced;
-			treeItemData.Add(new AssetTreeItemData(this, null, unreferenced));
 			TimeSpan elapsed = DateTime.Now - start;
 			Debug.Log("Refreshed data for " + assetInfoMap.Count + " entries in " + elapsed.TotalSeconds + " seconds.");
 		}
 
-		//there are one of these per TreeViewItem
 		public class AssetTreeItemData
 		{
 			public int id;
@@ -109,7 +137,7 @@ namespace UnityEditor.AssetBundles
 				List<string> refs = new List<string>();
 				refs.Add(assetInfo.assetName);
 				AssetTreeItemData p = parent;
-				while (p != null)
+				while (p != null && p.assetInfo.assetName.Length > 0 && (p.assetInfo.type == AssetInfo.Type.Bundle || p.assetInfo.type == AssetInfo.Type.Asset))
 				{
 					refs.Insert(0, p.assetInfo.assetName);
 					p = p.parent;
@@ -121,9 +149,19 @@ namespace UnityEditor.AssetBundles
 			{
 				issueCount = IsDuplicated ? 1 : 0;
 				childIssueCount = 0;
-				foreach (var c in children)
-					childIssueCount += c.CountIssues();
+				if (children != null)
+				{
+					foreach (var c in children)
+						childIssueCount += c.CountIssues();
+				}
 				return childIssueCount + issueCount;
+			}
+
+			internal void PostProcess(AssetBundleData abd)
+			{
+				CountIssues();
+				foreach(var c in children)
+					c.assetInfo.FindRootDependencies();
 			}
 
 			public string displayName
@@ -148,10 +186,12 @@ namespace UnityEditor.AssetBundles
 		public class AssetInfo
 		{
 			AssetBundleData abData;
+			public bool isVariant;
 			public string assetName;
 			public enum Type
 			{
 				None,
+				BundlePath,
 				Bundle,
 				Asset
 			}
@@ -162,60 +202,36 @@ namespace UnityEditor.AssetBundles
 			public List<List<string>> references = new List<List<string>>(); //first item is parent, last is root
 			public List<string> dependencies = new List<string>();
 			public List<string> rootDependencies = new List<string>();
-			public AssetInfo(AssetBundleData abd, string name, Type t)
+			public AssetInfo(AssetBundleData abd, string name, Type t, IEnumerable<string> deps, bool isVar)
 			{
+				isVariant = isVar;
 				abData = abd;
 				type = t;
 				assetName = name;
-				if (type == Type.Asset)
-				{
-					foreach (var d in AssetDatabase.GetDependencies(assetName, false))
-					{
+				foreach (var d in deps)
+					if (d != assetName)
 						dependencies.Add(d);
-						if (!abData.assetInfoMap.ContainsKey(d))
-							abData.assetInfoMap.Add(d, new AssetInfo(abData, d, Type.Asset));
-					}
-				}
-				else if (type == Type.None)
-				{
-					List<string> unref = new List<string>();
-					foreach (var d in AssetDatabase.GetAllAssetPaths())
-					{
-						if (!d.StartsWith("Assets/"))
-							continue;
-						string ext = System.IO.Path.GetExtension(d);
-						if (ext.Length == 0 || ext == ".dll" || ext == ".cs")
-							continue;
-
-						if (!abData.assetInfoMap.ContainsKey(d))
-						{
-							abData.assetInfoMap.Add(d, new AssetInfo(abData, d, Type.Asset));
-							dependencies.Add(d);
-						}
-					}
-				}
-				else if (type == Type.Bundle)
-				{
-					foreach (var d in AssetDatabase.GetAssetPathsFromAssetBundle(assetName))
-					{
-						dependencies.Add(d);
-						if (!abData.assetInfoMap.ContainsKey(d))
-							abData.assetInfoMap.Add(d, new AssetInfo(abData, d, Type.Asset));
-					}
-				}
 			}
 
-			public void PostProcess()
+			internal void Reset()
 			{
-				if (type == Type.Bundle)
-				{
-					rootReference = "";
-					return;
-				}
-
+				references.Clear();
 				uniqueRoots.Clear();
+				rootDependencies.Clear();
+				rootReference = "";
+			}
+			public void PostProcess(AssetBundleData abd)
+			{
+				uniqueRoots.Clear();
+				rootDependencies.Clear();
+				rootReference = "";
+				if (type == Type.Bundle)
+					return;
+
 				foreach (var r in references)
 				{
+					if (!abData.assetInfoMap.ContainsKey(r.Last()))
+						Debug.Log("Cannot find asset " + r.Last());
 					AssetInfo p = abData.assetInfoMap[r.Last()];
 					if (p.type == Type.Bundle && r.Count == 1)
 						rootReference = r.Last();
@@ -230,7 +246,8 @@ namespace UnityEditor.AssetBundles
 				string sep = "";
 				foreach (var s in refs)
 				{
-					p += sep + abData.assetInfoMap[s].displayName;
+					AssetInfo ai = abData.assetInfoMap[s];
+					p += sep + (ai.type == AssetInfo.Type.Asset ? ai.displayName : ai.displayPath);
 					sep = "/";
 				}
 				return p + "</color>";
@@ -250,20 +267,26 @@ namespace UnityEditor.AssetBundles
 			{
 				get
 				{
-					if (type == Type.Bundle)
-						return ColorName(assetName);
+					if (type == Type.Bundle || type == Type.BundlePath)
+					{
+						int i = assetName.LastIndexOf('.');
+						if(i > 0)
+							return ColorName(assetName.Substring(i+1));
+						return ColorName(System.IO.Path.GetFileName(assetName));
+					}
 					return ColorName(System.IO.Path.GetFileNameWithoutExtension(assetName));
 				}
 			}
 
 			private string ColorName(string n)
 			{
-				string color = (!string.IsNullOrEmpty(rootReference) || type == Type.Bundle) ? "white" : (uniqueRoots.Count > 1 ? "red" : "grey");
-				if (type == Type.Bundle)
-					return "<b><color=" + color + ">" + n + "</color></b>";
+				if (type == Type.Bundle || type == Type.BundlePath)
+				{
+					return "<b><color=white>" + n + "</color></b>";
+				}
+				string color = (!string.IsNullOrEmpty(rootReference)) ? "white" : (uniqueRoots.Count > 1 ? "red" : "grey");
 				return "<color=" + color + ">" + n + "</color>";
 			}
-
 
 			internal void FindRootDependencies()
 			{
@@ -282,6 +305,7 @@ namespace UnityEditor.AssetBundles
 				foreach (var r in dependencies)
 					abData.assetInfoMap[r].AddRoots(rd, exclude);
 			}
+
 		}
 	}
 }

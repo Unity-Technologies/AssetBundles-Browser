@@ -4,8 +4,9 @@ using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using System.IO;
 
-namespace UnityEditor.AssetBundles
+namespace UnityEngine.AssetBundles
 {
 	public class AssetBundleBrowserWindow : EditorWindow
 	{
@@ -43,8 +44,10 @@ namespace UnityEditor.AssetBundles
 		void OnGUI()
 		{
 			GUILayout.BeginHorizontal();
-			if (GUILayout.Button("Rebuild AssetBundle Data"))
+			if (GUILayout.Button("Refresh Dependencies"))
 				ResetData(true);
+
+			GUILayout.EndHorizontal();
 
 			if (m_TreeView == null)
 			{
@@ -62,22 +65,29 @@ namespace UnityEditor.AssetBundles
 				m_TreeView.OnSelectionChanged += SelectionChanged;
 			}
 
-			GUILayout.EndHorizontal();
 			m_TreeView.OnGUI(new Rect(0, 20, position.width / 2, position.height - 20));
 			GUILayout.BeginArea(new Rect(position.width / 2, 20, position.width / 2, position.height - 20));
 			List<AssetImporter> importers = null;
 			if (selectedItems.Count > 0)
 			{
-				string[] bundles = AssetDatabase.GetAllAssetBundleNames();
+				string[] raw_bundles = AssetDatabase.GetAllAssetBundleNames();
+				List<string> bundles = new List<string>();
 				List<string> variants = new List<string>();
-				foreach (var b in bundles)
+				foreach (var b in raw_bundles)
 				{
 					int index = b.IndexOf('.');
 					if (index > 0)
 					{
+						string bn = b.Substring(0, index);
+						if (!bundles.Contains(bn))
+							bundles.Add(bn);
 						string v = b.Substring(index + 1);
 						if (!variants.Contains(v))
 							variants.Add(v);
+					}
+					else
+					{
+						bundles.Add(b);
 					}
 				}
 				scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
@@ -93,14 +103,13 @@ namespace UnityEditor.AssetBundles
 							importers = new List<AssetImporter>();
 						importers.Add(importer);
 						GUILayout.BeginVertical();
-						//GUILayout.Label("<b><color=white>References</color></b>", richTextStyle);
 						foreach (var r in asset.references)
 							GUILayout.Label("\t" + asset.GetFullReferencePath(r), richTextStyle);
 						GUILayout.EndVertical();
 					}
 					if (asset.type == AssetBundleData.AssetInfo.Type.Bundle)
 					{
-						GUILayout.Label(asset.displayName, richTextStyle);
+						GUILayout.Label(asset.displayPath, richTextStyle);
 						GUILayout.BeginVertical();
 						foreach (var r in asset.rootDependencies)
 							GUILayout.Label("<color=white>" + r + "</color>", richTextStyle);
@@ -114,17 +123,17 @@ namespace UnityEditor.AssetBundles
 					GUILayout.BeginHorizontal();
 					GUILayout.Label("<b><color=white>AssetBundle</color></b>", richTextStyle);
 					string bid = importers[0].assetBundleName;
-					string variant = importers[0].assetBundleVariant;
+					string vid = importers[0].assetBundleVariant;
 					foreach (var i in importers)
 					{
 						if (i.assetBundleName != bid)
 							bid = "-";
-						if (i.assetBundleVariant != variant)
-							variant = "-";
+						if (i.assetBundleVariant != vid)
+							vid = "-";
 					}
-					int currentVariantId = variants.IndexOf(variant);
-					int currentBundleId = Array.IndexOf(bundles, bid);
-					int bundleId = EditorGUILayout.Popup(currentBundleId, bundles);
+					int currentVariantId = variants.IndexOf(vid);
+					int currentBundleId = bundles.IndexOf(bid);
+					int bundleId = EditorGUILayout.Popup(currentBundleId, bundles.ToArray());
 					int variantId = EditorGUILayout.Popup(currentVariantId, variants.ToArray());
 					if (bundleId != currentBundleId)
 					{
@@ -146,12 +155,6 @@ namespace UnityEditor.AssetBundles
 					}
 					GUILayout.EndHorizontal();
 				}
-
-				if (GUILayout.Button("Select"))
-				{
-					//Selection.activeObjects = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(asset.assetName);
-				}
-
 			}
 			GUILayout.EndArea();
 		}
@@ -175,12 +178,7 @@ namespace UnityEditor.AssetBundles
 			selectedItems.Clear();
 			IList<TreeViewItem> items = m_TreeView.GetRowsFromIDs(selectedIds);
 			foreach (var i in items)
-			{
-			//	UnityEngine.GameObject o = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>((i as AssetBundleBrowserTree.AssetBundleBrowserTreeItem).data.assetInfo.assetName);
-			//	if(o != null)
-			//		EditorGUIUtility.PingObject(o);
 				selectedItems.Add(i as AssetBundleBrowserTree.TreeItem);
-			}
 		}
 	}
 }
