@@ -29,12 +29,15 @@ namespace UnityEngine.AssetBundles
 		public int issueCount = 0;
 		public AssetBundleData()
 		{
+			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Refreshing asset database.", 0);
 			AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 			DateTime start = DateTime.Now;
 			idCount = 1;
+			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", .25f);
 			CreateBundleInfos();
 			CreateAssetInfos();
 
+			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Creating asset tree data", .75f);
 			rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
 			foreach (var a in assetInfoMap.Values)
 				a.PostProcess(this);
@@ -42,12 +45,18 @@ namespace UnityEngine.AssetBundles
 
 			TimeSpan elapsed = DateTime.Now - start;
 			Debug.Log("Rebuilt data for " + assetInfoMap.Count + " entries in " + elapsed.TotalSeconds + " seconds.");
+			EditorUtility.ClearProgressBar();
 		}
 
 		private void CreateAssetInfos()
 		{
-			foreach (var asset in AssetDatabase.GetAllAssetPaths())
+			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", .25f);
+			string[] paths = AssetDatabase.GetAllAssetPaths();
+			for(int i = 0; i < paths.Length; i++)
 			{
+				if(i % 100 == 0)
+					EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", .25f + ((float)i / (float)paths.Length) * .5f);
+				string asset = paths[i];
 				string ext = System.IO.Path.GetExtension(asset);
 				if (ext.Length > 0 && ext != ".dll" && ext != ".cs" && !asset.StartsWith("ProjectSettings") && !asset.StartsWith("Library"))
 					assetInfoMap.Add(asset, new AssetInfo(this, asset, AssetInfo.Type.Asset, AssetDatabase.GetDependencies(asset), false));
