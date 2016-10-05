@@ -208,8 +208,21 @@ namespace UnityEngine.AssetBundles
 				if (a.Count != b.Count)
 					return false;
 				for (int i = 0; i < a.Count; i++)
-					if (a[i] != b[i])
+				{
+					string ap = System.IO.Path.GetFileNameWithoutExtension(a[i]);
+					bool found = false;
+					for (int j = 0; j < b.Count; j++)
+					{
+						string bp = System.IO.Path.GetFileNameWithoutExtension(b[i]);
+						if (ap == bp)
+						{
+							found = true;
+							break;
+						}
+					}
+					if (!found)
 						return false;
+				}
 				return true;
 			}
 
