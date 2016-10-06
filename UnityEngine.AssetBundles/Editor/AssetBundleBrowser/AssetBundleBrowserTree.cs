@@ -33,6 +33,13 @@ namespace UnityEngine.AssetBundles
 
 		protected override void BuildRootAndRows(out TreeViewItem root, out IList<TreeViewItem> rows)
 		{
+			if (!assetBundleData.isValid)
+			{
+				root = new TreeViewItem(0);
+				rows = new List<TreeViewItem>();
+				return;
+			}
+
 			root = new TreeItem(assetBundleData.rootTreeItem, -1);
 			rows = new List<TreeViewItem>();
 

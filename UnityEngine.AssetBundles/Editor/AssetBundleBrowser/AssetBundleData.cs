@@ -27,6 +27,7 @@ namespace UnityEngine.AssetBundles
 		public AssetTreeItemData rootTreeItem;
 		static int idCount = 1;
 		public int issueCount = 0;
+		public bool isValid = false;
 		public AssetBundleData()
 		{
 			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Refreshing asset database.", 0);
@@ -34,18 +35,30 @@ namespace UnityEngine.AssetBundles
 			DateTime start = DateTime.Now;
 			idCount = 1;
 			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", .25f);
-			CreateBundleInfos();
-			CreateAssetInfos();
+			assetInfoMap.Add(string.Empty, new AssetInfo(this, string.Empty, AssetInfo.Type.BundlePath, new string[] { }, false));
+			try
+			{
+				CreateBundleInfos();
+				CreateAssetInfos();
 
-			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Creating asset tree data", .75f);
-			rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
-			foreach (var a in assetInfoMap.Values)
-				a.PostProcess(this);
-			rootTreeItem.PostProcess(this);
-
+				EditorUtility.DisplayProgressBar("Asset Bundle Window", "Creating asset tree data", .75f);
+				rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
+				foreach (var a in assetInfoMap.Values)
+					a.PostProcess(this);
+				rootTreeItem.PostProcess(this);
+				isValid = true;
+			}
+			catch (Exception e)
+			{
+			//	assetInfoMap = new Dictionary<string, AssetInfo>();
+			//	rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
+			//	rootTreeItem.PostProcess(this);
+				Debug.LogException(e);
+			}
 			TimeSpan elapsed = DateTime.Now - start;
 			Debug.Log("Rebuilt data for " + assetInfoMap.Count + " entries in " + elapsed.TotalSeconds + " seconds.");
 			EditorUtility.ClearProgressBar();
+
 		}
 
 		private void CreateAssetInfos()
@@ -66,7 +79,6 @@ namespace UnityEngine.AssetBundles
 		private void CreateBundleInfos()
 		{
 			string[] bundleNames = AssetDatabase.GetAllAssetBundleNames();
-			assetInfoMap.Add(string.Empty, new AssetInfo(this, string.Empty, AssetInfo.Type.BundlePath, new string[] { }, false));
 
 			foreach (var bundleName in bundleNames)
 			{
@@ -138,8 +150,11 @@ namespace UnityEngine.AssetBundles
 				assetInfo = i;
 				foreach (var d in assetInfo.dependencies)
 				{
-					children.Add(new AssetTreeItemData(abd, this, abd.assetInfoMap[d]));
-					abd.assetInfoMap[d].references.Add(CreateReferenceList());
+					if (abd.assetInfoMap.ContainsKey(d))
+					{
+						children.Add(new AssetTreeItemData(abd, this, abd.assetInfoMap[d]));
+						abd.assetInfoMap[d].references.Add(CreateReferenceList());
+					}
 				}
 			}
 
@@ -366,7 +381,10 @@ namespace UnityEngine.AssetBundles
 					rd.Add(rootReference);
 
 				foreach (var r in dependencies)
-					abData.assetInfoMap[r].AddRoots(rd, exclude);
+				{
+					if(abData.assetInfoMap.ContainsKey(r))
+						abData.assetInfoMap[r].AddRoots(rd, exclude);
+				}
 			}
 
 		}
