@@ -15,14 +15,15 @@ using System;
  * add warning icon for issues
  * somehow show things pulled in from Resources folders?
  * add refs to unused assets
- * show progress bar when rebuilding
+ * DONE show progress bar when rebuilding
  * handle bundle changes without rebuilding everything
- * 
+ * remove asset from bundle
 */
 namespace UnityEngine.AssetBundles
 {
 	public class AssetBundleData
 	{
+		AssetDependencyData dependencyData;
 		public Dictionary<string, AssetInfo> assetInfoMap = new Dictionary<string, AssetInfo>();
 		public AssetTreeItemData rootTreeItem;
 		static int idCount = 1;
@@ -30,49 +31,69 @@ namespace UnityEngine.AssetBundles
 		public bool isValid = false;
 		public AssetBundleData()
 		{
-			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Refreshing asset database.", 0);
+		}
+
+		public void Refresh(bool rebuildDependencies)
+		{
+			if (rebuildDependencies)
+				dependencyData = null;
+			if (dependencyData == null)
+				dependencyData = new AssetDependencyData();
+			assetInfoMap = new Dictionary<string, AssetInfo>();
 			AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-			DateTime start = DateTime.Now;
 			idCount = 1;
-			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", .25f);
-			assetInfoMap.Add(string.Empty, new AssetInfo(this, string.Empty, AssetInfo.Type.BundlePath, new string[] { }, false));
 			try
 			{
+				assetInfoMap.Add(string.Empty, new AssetInfo(this, string.Empty, AssetInfo.Type.BundlePath, new string[] { }, false));
+
 				CreateBundleInfos();
 				CreateAssetInfos();
 
-				EditorUtility.DisplayProgressBar("Asset Bundle Window", "Creating asset tree data", .75f);
-				rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
+				rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty], 0);
 				foreach (var a in assetInfoMap.Values)
 					a.PostProcess(this);
 				rootTreeItem.PostProcess(this);
+				/*
+				AssetTreeItemData unrefs = new AssetTreeItemData(this, rootTreeItem, new AssetInfo(this, "Unreferenced", AssetInfo.Type.None, new string[] { }, false));
+				rootTreeItem.children.Add(unrefs);
+
+				Dictionary<string, AssetTreeItemData> assetTypes = new Dictionary<string, AssetTreeItemData>();
+
+				foreach (var a in assetInfoMap.Values)
+				{
+					if (a.references.Count == 0 && a.type == AssetInfo.Type.Asset)
+					{
+						string typeName = AssetDatabase.GetMainAssetTypeAtPath(a.assetName).Name;
+						//var importer = AssetImporter.GetAtPath(a.assetName);
+						AssetTreeItemData p;
+						if (!assetTypes.TryGetValue(typeName, out p))
+						{
+							p = new AssetTreeItemData(this, unrefs, new AssetInfo(this, typeName, AssetInfo.Type.None, new string[] { }, false));
+							unrefs.children.Add(p);
+							assetTypes.Add(typeName, p);
+						}
+
+						p.children.Add(new AssetTreeItemData(this, p, a));
+					}
+				}
+				*/
 				isValid = true;
 			}
 			catch (Exception e)
 			{
-			//	assetInfoMap = new Dictionary<string, AssetInfo>();
-			//	rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
-			//	rootTreeItem.PostProcess(this);
 				Debug.LogException(e);
 			}
-			TimeSpan elapsed = DateTime.Now - start;
-			Debug.Log("Rebuilt data for " + assetInfoMap.Count + " entries in " + elapsed.TotalSeconds + " seconds.");
-			EditorUtility.ClearProgressBar();
-
 		}
 
 		private void CreateAssetInfos()
 		{
-			EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", .25f);
 			string[] paths = AssetDatabase.GetAllAssetPaths();
 			for(int i = 0; i < paths.Length; i++)
 			{
-				if(i % 100 == 0)
-					EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", .25f + ((float)i / (float)paths.Length) * .5f);
 				string asset = paths[i];
 				string ext = System.IO.Path.GetExtension(asset);
 				if (ext.Length > 0 && ext != ".dll" && ext != ".cs" && !asset.StartsWith("ProjectSettings") && !asset.StartsWith("Library"))
-					assetInfoMap.Add(asset, new AssetInfo(this, asset, AssetInfo.Type.Asset, AssetDatabase.GetDependencies(asset), false));
+					assetInfoMap.Add(asset, new AssetInfo(this, asset, AssetInfo.Type.Asset, dependencyData.GetDependencies(asset), false));
 			}
 		}
 
@@ -119,22 +140,6 @@ namespace UnityEngine.AssetBundles
 			}
 		}
 
-		public void Refresh()
-		{
-			DateTime start = DateTime.Now;
-			idCount = 1;
-			foreach (var a in assetInfoMap.Values)
-				a.Reset();
-			foreach (var a in assetInfoMap.Values)
-				a.PostProcess(this);
-			rootTreeItem = new AssetTreeItemData(this, null, assetInfoMap[string.Empty]);
-
-			rootTreeItem.PostProcess(this);
-
-			TimeSpan elapsed = DateTime.Now - start;
-			Debug.Log("Refreshed data for " + assetInfoMap.Count + " entries in " + elapsed.TotalSeconds + " seconds.");
-		}
-
 		public class AssetTreeItemData
 		{
 			public int id;
@@ -143,16 +148,19 @@ namespace UnityEngine.AssetBundles
 			public AssetInfo assetInfo;
 			public AssetTreeItemData parent;
 			public List<AssetTreeItemData> children = new List<AssetTreeItemData>();
-			public AssetTreeItemData(AssetBundleData abd, AssetTreeItemData p, AssetInfo i)
+			public AssetTreeItemData(AssetBundleData abd, AssetTreeItemData p, AssetInfo i, int depth)
 			{
 				parent = p;
 				id = idCount++;
 				assetInfo = i;
+				if (depth > 7)
+					return;
 				foreach (var d in assetInfo.dependencies)
 				{
 					if (abd.assetInfoMap.ContainsKey(d))
 					{
-						children.Add(new AssetTreeItemData(abd, this, abd.assetInfoMap[d]));
+						//Debug.Log("Unable to find asset " + d);
+						children.Add(new AssetTreeItemData(abd, this, abd.assetInfoMap[d], depth + 1));
 						abd.assetInfoMap[d].references.Add(CreateReferenceList());
 					}
 				}
@@ -287,8 +295,7 @@ namespace UnityEngine.AssetBundles
 				type = t;
 				assetName = name;
 				foreach (var d in deps)
-					if (d != assetName)
-						dependencies.Add(d);
+					dependencies.Add(d);
 			}
 
 			internal void Reset()

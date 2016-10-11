@@ -16,7 +16,7 @@ namespace UnityEngine.AssetBundles
 			public void OnPostprocessAssetbundleNameChanged(string assetPath, string previousAssetBundleName, string newAssetBundleName)
 			{
 				foreach(var w in AssetBundleBrowserWindow.openWindows)
-					w.ResetData(false);
+					w.ResetData();
 			}
 		}
 
@@ -32,7 +32,7 @@ namespace UnityEngine.AssetBundles
 		[SerializeField]
 		TreeViewState m_TreeViewState;
 		AssetBundleBrowserTree m_TreeView;
-		AssetBundleData assetBundleData;
+		AssetBundleData assetBundleData = new AssetBundleData();
 		List<AssetBundleBrowserTree.TreeItem> selectedItems = new List<AssetBundleBrowserTree.TreeItem>();
 		GUIStyle richTextStyle = new GUIStyle();
 
@@ -45,14 +45,31 @@ namespace UnityEngine.AssetBundles
 		{
 			GUILayout.BeginHorizontal();
 			if (GUILayout.Button("Refresh Dependencies"))
-				ResetData(true);
-
+				ResetData();
+		/*	if (GUILayout.Button("Build Bundles"))
+				BuildPipeline.BuildAssetBundles("AssetBundles", BuildAssetBundleOptions.ChunkBasedCompression, BuildTarget.StandaloneWindows64);
+			if (GUILayout.Button("Reset All Bundles"))
+			{
+				foreach (var a in assetBundleData.assetInfoMap.Values)
+				{
+					AssetImporter i = AssetImporter.GetAtPath(a.assetName);
+					if (i != null)
+					{
+						if (i.assetBundleName != string.Empty)
+						{
+							i.assetBundleVariant = string.Empty;
+							i.assetBundleName = string.Empty;
+						}
+					}
+				}
+				ResetData();
+			}
+			*/
 			GUILayout.EndHorizontal();
 
 			if (m_TreeView == null)
 			{
-				if (assetBundleData == null)
-					assetBundleData = new AssetBundleData();
+				assetBundleData.Refresh(false);
 
 				richTextStyle.richText = true;
 
@@ -135,6 +152,8 @@ namespace UnityEngine.AssetBundles
 						if (i.assetBundleVariant != vid)
 							vid = "-";
 					}
+					bundles.Insert(0, "none");
+					variants.Insert(0, "none");
 					int currentVariantId = variants.IndexOf(vid);
 					int currentBundleId = bundles.IndexOf(bid);
 					int bundleId = EditorGUILayout.Popup(currentBundleId, bundles.ToArray());
@@ -144,8 +163,12 @@ namespace UnityEngine.AssetBundles
 						if (EditorUtility.DisplayDialog("AssetBundle Change", "Move selected assets to bundle " + bundles[bundleId] + "?", "Ok", "Cancel"))
 						{
 							foreach (var i in importers)
-								i.assetBundleName = bundles[bundleId];
-							ResetData(false);
+							{
+
+								i.assetBundleName = bundleId == 0 ? string.Empty : bundles[bundleId];
+								
+							}
+							ResetData();
 						}
 					}
 					if (variantId != currentVariantId)
@@ -153,8 +176,10 @@ namespace UnityEngine.AssetBundles
 						if (EditorUtility.DisplayDialog("AssetBundle Change", "Move selected assets to variant " + variants[variantId] + "?", "Ok", "Cancel"))
 						{
 							foreach (var i in importers)
-								i.assetBundleVariant = variants[variantId];
-							ResetData(false);
+							{
+								i.assetBundleVariant = variantId == 0 ? string.Empty : variants[variantId];
+							}
+							ResetData();
 						}
 					}
 					GUILayout.EndHorizontal();
@@ -164,12 +189,8 @@ namespace UnityEngine.AssetBundles
 		}
 
 
-		public void ResetData(bool rebuildData)
+		public void ResetData()
 		{
-			if (rebuildData)
-				assetBundleData = null;
-			if (assetBundleData != null)
-				assetBundleData.Refresh();
 			selectedItems.Clear();
 			m_TreeViewState = null;
 			m_TreeView = null;
