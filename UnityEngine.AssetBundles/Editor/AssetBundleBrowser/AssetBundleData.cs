@@ -378,19 +378,20 @@ namespace UnityEngine.AssetBundles
 				foreach (var d in dependencies)
 				{
 					AssetInfo i = abData.assetInfoMap[d];
-					i.AddRoots(rootDependencies, assetName);
+					i.AddRoots(rootDependencies, assetName, 0);
 				}
 			}
 
-			private void AddRoots(List<string> rd, string exclude)
+			private void AddRoots(List<string> rd, string exclude, int depth)
 			{
 				if (!string.IsNullOrEmpty(rootReference) && rootReference != exclude && !rd.Contains(rootReference))
 					rd.Add(rootReference);
-
+				if (depth > 7)
+					return;
 				foreach (var r in dependencies)
 				{
-					if(abData.assetInfoMap.ContainsKey(r))
-						abData.assetInfoMap[r].AddRoots(rd, exclude);
+					if (abData.assetInfoMap.ContainsKey(r))
+						abData.assetInfoMap[r].AddRoots(rd, exclude, depth + 1);
 				}
 			}
 
