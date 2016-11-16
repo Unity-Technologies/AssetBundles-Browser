@@ -3,7 +3,8 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
-namespace UnityEngine.AssetBundles
+
+namespace UnityEngine.AssetBundles.Old
 {
 
 	public class AssetDependencyData
@@ -20,7 +21,8 @@ namespace UnityEngine.AssetBundles
 		public struct AssetInfo
 		{
 			public string name;			//full path name of asset: Assets/foo/bar.png
-			public int bundle;			//index of bundle, -1 for none
+			public int bundle;          //index of bundle, -1 for none
+			//public long size;			//process asset size for current platform
 			public int[] dependencies;  //indices of dependencies
 		}
 
@@ -41,7 +43,7 @@ namespace UnityEngine.AssetBundles
 			//find all assets
 			string[] assetPaths = AssetDatabase.GetAllAssetPaths();
 			assets = new AssetInfo[assetPaths.Length];
-			for(int i = 0; i < assetPaths.Length; i++)
+			for (int i = 0; i < assetPaths.Length; i++)
 				assets[i].name = assetPaths[i];
 
 			//link assets to bundles

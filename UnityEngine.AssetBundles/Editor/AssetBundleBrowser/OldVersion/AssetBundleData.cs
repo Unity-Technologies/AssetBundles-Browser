@@ -19,7 +19,7 @@ using System;
  * handle bundle changes without rebuilding everything
  * remove asset from bundle
 */
-namespace UnityEngine.AssetBundles
+namespace UnityEngine.AssetBundles.Old
 {
 	public class AssetBundleData
 	{
@@ -53,8 +53,8 @@ namespace UnityEngine.AssetBundles
 				foreach (var a in assetInfoMap.Values)
 					a.PostProcess(this);
 				rootTreeItem.PostProcess(this);
-				/*
-				AssetTreeItemData unrefs = new AssetTreeItemData(this, rootTreeItem, new AssetInfo(this, "Unreferenced", AssetInfo.Type.None, new string[] { }, false));
+				
+				AssetTreeItemData unrefs = new AssetTreeItemData(this, rootTreeItem, new AssetInfo(this, "Unreferenced", AssetInfo.Type.None, new string[] { }, false), 0);
 				rootTreeItem.children.Add(unrefs);
 
 				Dictionary<string, AssetTreeItemData> assetTypes = new Dictionary<string, AssetTreeItemData>();
@@ -68,15 +68,15 @@ namespace UnityEngine.AssetBundles
 						AssetTreeItemData p;
 						if (!assetTypes.TryGetValue(typeName, out p))
 						{
-							p = new AssetTreeItemData(this, unrefs, new AssetInfo(this, typeName, AssetInfo.Type.None, new string[] { }, false));
+							p = new AssetTreeItemData(this, unrefs, new AssetInfo(this, typeName, AssetInfo.Type.None, new string[] { }, false), 0);
 							unrefs.children.Add(p);
 							assetTypes.Add(typeName, p);
 						}
 
-						p.children.Add(new AssetTreeItemData(this, p, a));
+						p.children.Add(new AssetTreeItemData(this, p, a, 0));
 					}
 				}
-				*/
+				
 				isValid = true;
 			}
 			catch (Exception e)
@@ -148,9 +148,11 @@ namespace UnityEngine.AssetBundles
 			public AssetInfo assetInfo;
 			public AssetTreeItemData parent;
 			public List<AssetTreeItemData> children = new List<AssetTreeItemData>();
+			AssetBundleData assetBundleData;
 			public AssetTreeItemData(AssetBundleData abd, AssetTreeItemData p, AssetInfo i, int depth)
 			{
 				parent = p;
+				assetBundleData = abd;
 				id = idCount++;
 				assetInfo = i;
 				if (depth > 7)
@@ -264,7 +266,14 @@ namespace UnityEngine.AssetBundles
 			{
 				get
 				{
-					return string.IsNullOrEmpty(assetInfo.rootReference) && assetInfo.uniqueRoots.Count > 1;
+					if (!string.IsNullOrEmpty(assetInfo.rootReference))
+						return false;
+					foreach (var u in assetInfo.uniqueRoots)
+					{
+						if (!string.IsNullOrEmpty(assetBundleData.assetInfoMap[u].rootReference))
+							return false;
+					}
+					return true;
 				}
 			}
 		}
@@ -283,6 +292,7 @@ namespace UnityEngine.AssetBundles
 			}
 
 			public Type type;
+			public long size = 0;
 			public string rootReference = string.Empty;
 			public List<string> uniqueRoots = new List<string>();
 			public List<List<string>> references = new List<List<string>>(); //first item is parent, last is root
@@ -294,7 +304,18 @@ namespace UnityEngine.AssetBundles
 				abData = abd;
 				type = t;
 				assetName = name;
-				foreach (var d in deps)
+			/*	if (System.IO.Path.GetExtension(assetName).Length > 0)
+				{
+					string path = AssetDatabase.AssetPathToGUID(assetName);
+					string libPath = "Library/metadata/" + path.Substring(0, 2) + "/" + path;
+					if (System.IO.File.Exists(libPath))
+					{
+						var s = System.IO.File.OpenRead(libPath);
+						size = s.Length;
+						s.Close();
+					}
+				}
+				*/foreach (var d in deps)
 					dependencies.Add(d);
 			}
 
@@ -305,6 +326,18 @@ namespace UnityEngine.AssetBundles
 				rootDependencies.Clear();
 				rootReference = "";
 			}
+
+			public long totalSize
+			{
+				get
+				{
+					long total = size;
+					foreach (var d in dependencies)
+						total += abData.assetInfoMap[d].totalSize;
+					return total;
+				}
+			}
+
 			public void PostProcess(AssetBundleData abd)
 			{
 				uniqueRoots.Clear();
