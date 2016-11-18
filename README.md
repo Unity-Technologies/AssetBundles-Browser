@@ -1,4 +1,2 @@
-AssetBundle Browser
-
-
-//TODO: complete this document...
+# Asset Bundle Browser tool
+Coming soon.
