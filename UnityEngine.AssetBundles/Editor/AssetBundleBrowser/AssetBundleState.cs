@@ -48,17 +48,63 @@ namespace UnityEngine.AssetBundles
             {
                 if (!ignoreExternalAssetBundleChanges)
                 {
-                    if (!bundles.ContainsKey(newAssetBundleName))
-                        CreateEmptyBundle(newAssetBundleName);
-                    BundleInfo curr = bundles[newAssetBundleName];
+                    var bundleName = GetBundleName(assetPath);
+                    if (!bundles.ContainsKey(bundleName))
+                        CreateEmptyBundle(bundleName);
+                    BundleInfo curr = bundles[bundleName];
                     MoveAssetsToBundle(curr, new AssetInfo[] { assets[assetPath] });
                     EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
-                    dirty = true;
                 }
+            }
+
+            static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+            {
+                foreach (string str in importedAssets)
+                {
+                    Debug.Log("Reimported Asset: " + str);
+                    if (!assets.ContainsKey(str))
+                    {
+                        var bundleName = GetBundleName(str);
+                        if (!bundles.ContainsKey(bundleName))
+                            bundles.Add(bundleName, new BundleInfo(bundleName));
+
+                        var ai = new AssetInfo(bundles[bundleName], str);
+                        ai.bundle.assets.Add(ai);
+                        assets.Add(str, ai);
+                    }
+                }
+                foreach (string str in deletedAssets)
+                {
+                    Debug.Log("Deleted Asset: " + str);
+                    AssetInfo ai = assets[str];
+                    ai.bundle.assets.Remove(ai);
+                    assets.Remove(str);
+                }
+
+                for (int i = 0; i < movedAssets.Length; i++)
+                {
+                    Debug.Log("Moved Asset: " + movedAssets[i] + " from: " + movedFromAssetPaths[i]);
+                    AssetInfo ai = assets[movedFromAssetPaths[i]];
+                    ai.name = movedAssets[i];
+                    assets.Remove(movedFromAssetPaths[i]);
+                    assets.Add(ai.name, ai);
+
+                    var bundleName = GetBundleName(ai.name);
+                    BundleInfo bi = bundles[bundleName];
+                    if (bi != ai.bundle)
+                    {
+                        ai.bundle.assets.Remove(ai);
+                        ai.bundle = bi;
+                        ai.bundle.assets.Add(ai);
+                    }
+
+                }
+                EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
             }
         }
 
         static bool ignoreExternalAssetBundleChanges = false;
+        public const string NoBundleName = "<none>";
         public static Dictionary<string, BundleInfo> bundles = new Dictionary<string, BundleInfo>();
         public static Dictionary<string, AssetInfo> assets = new Dictionary<string, AssetInfo>();
         static List<IModification> modifications = new List<IModification>();
@@ -81,7 +127,7 @@ namespace UnityEngine.AssetBundles
             modifications.Clear();
 
             //find all bundles
-            BundleInfo noneBundle = new BundleInfo("<none>");
+            BundleInfo noneBundle = new BundleInfo(AssetBundleState.NoBundleName);
 
             //find all assets
             foreach(var asset in AssetDatabase.GetAllAssetPaths())
@@ -118,10 +164,21 @@ namespace UnityEngine.AssetBundles
 
         }
 
+        internal static string GetBundleName(string asset)
+        {
+            var bundleName = AssetDatabase.GetImplicitAssetBundleName(asset);
+            var vn = AssetDatabase.GetImplicitAssetBundleVariantName(asset);
+            if (vn.Length > 0)
+                bundleName = bundleName + "." + vn;
+            if (bundleName.Length == 0)
+                bundleName = AssetBundleState.NoBundleName;
+            return bundleName;
+        }
+
         internal static void DeleteBundle(BundleInfo bundleToRemove)
         {
             if(bundleToRemove.assets.Count > 0)
-                MoveAssetsToBundle(bundles["<none>"], new List<AssetInfo>(bundleToRemove.assets));
+                MoveAssetsToBundle(bundles[AssetBundleState.NoBundleName], new List<AssetInfo>(bundleToRemove.assets));
             bundles.Remove(bundleToRemove.name);
             dirty = true;
         }
@@ -143,7 +200,7 @@ namespace UnityEngine.AssetBundles
 
         static void SetAssetBundle(string bundleName, IEnumerable<AssetInfo> assetsToMove)
         {
-            if (bundleName == "<none>")
+            if (bundleName == AssetBundleState.NoBundleName)
                 bundleName = string.Empty;
             var variantName = string.Empty;
             int dot = bundleName.LastIndexOf('.');

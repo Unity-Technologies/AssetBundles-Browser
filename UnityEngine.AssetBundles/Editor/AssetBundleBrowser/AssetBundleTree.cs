@@ -25,7 +25,7 @@ namespace UnityEngine.AssetBundles
 
         protected override bool CanRename(TreeViewItem item)
         {
-            return item.displayName != "<none>";
+            return item.displayName != AssetBundleState.NoBundleName;
         }
 
         protected override void RenameEnded(RenameEndedArgs args)
