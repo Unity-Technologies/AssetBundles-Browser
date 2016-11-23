@@ -10,17 +10,8 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetListTree : TreeView
 	{
-        public class Item : TreeViewItem
-        {
-            public AssetBundleDataCache.AssetData m_data;
-            public Item(AssetBundleDataCache.AssetData bd, int depth) : base(bd.m_id, depth, bd.m_displayName)
-            {
-                m_data = bd;
-                icon = AssetDatabase.GetCachedIcon(m_data.m_assetPath) as Texture2D;
-            }
-        }
-
-        List<AssetBundleDataCache.AssetData> m_assetsInSelectedBundles = new List<AssetBundleDataCache.AssetData>();
+        IEnumerable<AssetBundleState.BundleInfo> m_selectedBundles;
+        HashSet<AssetBundleState.AssetInfo> m_assetsInSelectedBundles = new HashSet<AssetBundleState.AssetInfo>();
         SelectionListTree m_selectionList;
 
 		public AssetListTree(TreeViewState state, SelectionListTree selList) : base(state)
@@ -29,22 +20,30 @@ namespace UnityEngine.AssetBundles
             Reload();
 		}
 
-        protected override bool CanMultiSelect(TreeViewItem item)
-        {
-            return false;
-        }
-
         protected override void BuildRootAndRows(out TreeViewItem root, out IList<TreeViewItem> rows)
 		{
 			root = new TreeViewItem(-1, -1);
 			rows = new List<TreeViewItem>();
+            rows.Add(root);
+           // for (int i = 0; i < m_assetsInSelectedBundles.Count; i++)
+           foreach(var a in m_assetsInSelectedBundles)
+            {
+                //var assetIndex = m_assetsInSelectedBundles[i];
+                //var assetName = AssetBundleState.assets[assetIndex].name;
+                var item = new TreeViewItem(a.name.GetHashCode(), 0, root, System.IO.Path.GetFileNameWithoutExtension(a.name));
+                item.userData = a;
+                item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
+                rows.Add(item);
+                root.AddChild(item);
+            }
 
-            foreach (var b in m_assetsInSelectedBundles)
-                CreateItems(rows, b, 0);
+            //  foreach (var b in m_assetsInSelectedBundles)
+            //     CreateItems(rows, b, 0);
 
-            SetupParentsAndChildrenFromDepths(root, rows);
-		}
-        void CreateItems(IList<TreeViewItem> rows, AssetBundleDataCache.AssetData a, int depth)
+            //SetupParentsAndChildrenFromDepths(root, rows);
+        }
+        /*
+        void CreateItems(IList<TreeViewItem> rows, AssetBundleState.AssetData a, int depth)
         {
             Item item = new Item(a, depth);
             rows.Add(item);
@@ -55,7 +54,7 @@ namespace UnityEngine.AssetBundles
                 {
                     if (d != a.m_assetPath)
                     {
-                        AssetBundleDataCache.AssetData ad = AssetBundleDataCache.GetAssetData(string.Empty, d);
+                        AssetBundleState.AssetData ad = AssetBundleState.GetAssetData(string.Empty, d);
                         if (string.IsNullOrEmpty(ad.m_bundle))
                             CreateItems(rows, ad, depth + 1);
                     }
@@ -67,25 +66,21 @@ namespace UnityEngine.AssetBundles
                     item.children = CreateChildListForCollapsedParent();
             }
         }
+        */
 
-        IList<TreeViewItem> m_selectedBundleslist = null;
-        internal void SetItems(IList<TreeViewItem> list)
-		{
-            m_selectedBundleslist = list;
+
+        internal void SetSelectedBundles(IEnumerable<AssetBundleState.BundleInfo> b)
+        {
+            m_selectedBundles = b;
+            m_assetsInSelectedBundles.Clear();
             if (HasSelection())
-                SetSelection(AssetBundleDataCache.s_emptyIntList);
-            m_selectionList.Clear();
-			m_assetsInSelectedBundles.Clear();
+                SetSelection(new List<int>());
 
-            foreach (var i in list)
-			{
-				foreach (var a in (i as AssetBundleTree.Item).data.assets)
-				{
-					if (m_assetsInSelectedBundles.Find(s => s.m_assetPath == a.m_assetPath) == null)
-						m_assetsInSelectedBundles.Add(a);
-				}
-			}
-			Reload();
+            foreach (var bundleInfo in m_selectedBundles)
+                foreach (var a in bundleInfo.assets)
+                    m_assetsInSelectedBundles.Add(a);
+            SelectionChanged(GetSelection());
+            Reload();
         }
 
         protected override void ContextClickedItem(int id)
@@ -94,37 +89,51 @@ namespace UnityEngine.AssetBundles
             if (i != null)
             {
                 GenericMenu menu = new GenericMenu();
-                foreach(var b in AssetBundleDataCache.s_bundleDataMap.Keys)
-                    menu.AddItem(new GUIContent("Move to bundle/" +  b), false, OnContextMenuFindIssues, b);
+                foreach(var b in AssetBundleState.bundles)
+                    if(!m_selectedBundles.Contains(b.Value))
+                        menu.AddItem(new GUIContent("Move to bundle/" + b.Key), false, MoveToBundle, b.Value);
+                menu.AddItem(new GUIContent("Move to bundle/<Create New Bundle...>"), false, MoveToBundle, null);
                 menu.ShowAsContext();
             }
         }
 
-        void OnContextMenuFindIssues(object target)
+        void MoveToBundle(object target)
         {
-            foreach (var t in GetRowsFromIDs(GetSelection()))
+            AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
+            if (bi == null)
             {
-                Item i = t as Item;
-                AssetImporter importer = AssetImporter.GetAtPath(i.m_data.m_assetPath);
-                string bundleName = target as string;
-                int dot = bundleName.IndexOf('.');
-                if (dot < 0)
-                {
-                    importer.assetBundleName = bundleName;
-                    importer.assetBundleVariant = string.Empty;
-                }
-                else
-                {
-                    importer.assetBundleName = bundleName.Substring(0, dot);
-                    importer.assetBundleVariant = bundleName.Substring(dot + 1);
-                }
+                if (EditorUtility.DisplayDialogComplex("Create Bundle Name", "Hit ok to create new bundle", "Create", "Cancel", "idk?") > 0)
+                    return;
+                bi = AssetBundleState.CreateEmptyBundle("New Bundle" + Random.Range(0, 10000));
             }
-            SetItems(m_selectedBundleslist);
+
+            AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
+            SetSelectedBundles(m_selectedBundles);
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
-            m_selectionList.SetItems(GetRowsFromIDs(selectedIds));
+            m_selectionList.SetItems(GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
 		}
-	}
+
+        protected override bool CanStartDrag(CanStartDragArgs args)
+        {
+            args.draggedItemIDs = GetSelection();
+            return true;
+        }
+
+        protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
+        {
+            DragAndDrop.PrepareStartDrag();
+            DragAndDrop.paths = GetRowsFromIDs(args.draggedItemIDs).Select(a => (a.userData as AssetBundleState.AssetInfo).name).ToArray();
+            DragAndDrop.StartDrag("blah");
+        }
+
+        protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
+        {
+            return DragAndDropVisualMode.None;
+        }
+    }
+
+
 }

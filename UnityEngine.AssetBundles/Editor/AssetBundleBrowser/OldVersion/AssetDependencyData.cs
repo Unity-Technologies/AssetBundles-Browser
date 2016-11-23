@@ -4,9 +4,8 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace UnityEngine.AssetBundles.Old
+namespace UnityEngine.AssetBundles
 {
-
 	public class AssetDependencyData
 	{
 		public BundleInfo[] bundles;
@@ -22,7 +21,6 @@ namespace UnityEngine.AssetBundles.Old
 		{
 			public string name;			//full path name of asset: Assets/foo/bar.png
 			public int bundle;          //index of bundle, -1 for none
-			//public long size;			//process asset size for current platform
 			public int[] dependencies;  //indices of dependencies
 		}
 
@@ -33,7 +31,6 @@ namespace UnityEngine.AssetBundles.Old
 
 		public void Create()
 		{
-			DateTime start = DateTime.Now;
 			//find all bundles
 			string[] bundleNames = AssetDatabase.GetAllAssetBundleNames();
 			bundles = new BundleInfo[bundleNames.Length];
@@ -54,21 +51,6 @@ namespace UnityEngine.AssetBundles.Old
 				for (int a = 0; a < assetPathsInBundle.Length; a++)
 					assets[bundles[i].assets[a] = FindAssetIndex(assetPathsInBundle[a])].bundle = i;
 			}
-
-			//link asset dependencies
-			for (int i = 0; i < assets.Length; i++)
-			{
-				if (i % 100 == 0)
-					EditorUtility.DisplayProgressBar("Asset Bundle Window", "Gathering asset dependencies", ((float)i / (float)assets.Length));
-				
-				var filtered = AssetDatabase.GetDependencies(assets[i].name, false).Where(a => a != assets[i].name);
-				assets[i].dependencies = new int[filtered.Count()];
-				int di = 0;
-				foreach(var d in filtered)
-					assets[i].dependencies[di++] = FindAssetIndex(d);
-			}
-			TimeSpan elapsed = DateTime.Now - start;
-			EditorUtility.ClearProgressBar();
 		}
 
 		int FindAssetIndex(string a)
@@ -78,13 +60,21 @@ namespace UnityEngine.AssetBundles.Old
 					return i;
 			return -1;
 		}
-
+        
 		internal IEnumerable<string> GetDependencies(string asset)
 		{
-			int a = FindAssetIndex(asset);
+			int assetIndex = FindAssetIndex(asset);
 			List<string> results = new List<string>();
-			for (int i = 0; i < assets[a].dependencies.Length; i++)
-				results.Add(assets[assets[a].dependencies[i]].name);
+            if (assets[assetIndex].dependencies == null)
+            {
+                    var filtered = AssetDatabase.GetDependencies(assets[assetIndex].name, false).Where(a => a != assets[assetIndex].name);
+                    assets[assetIndex].dependencies = new int[filtered.Count()];
+                    int di = 0;
+                    foreach (var d in filtered)
+                        assets[assetIndex].dependencies[di++] = FindAssetIndex(d);
+            }
+            for (int i = 0; i < assets[assetIndex].dependencies.Length; i++)
+				results.Add(assets[assets[assetIndex].dependencies[i]].name);
 			return results;
 		}
 	}

@@ -20,7 +20,7 @@ namespace UnityEngine.AssetBundles.Old
 			}
 		}
 
-		[MenuItem("Window/Asset Bundle Browser")]
+		[MenuItem("Window/Asset Bundle Browser OLD")]
 		static void ShowWindow()
 		{
 			var window = GetWindow<AssetBundleBrowserWindow>();

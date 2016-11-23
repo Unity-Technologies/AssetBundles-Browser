@@ -23,9 +23,10 @@ namespace UnityEngine.AssetBundles
         bool m_resizingHorizontalSplitter = false;
         bool m_resizingVerticalSplitter = false;
         Rect m_horizontalSplitterRect, m_verticalSplitterRect;
-
+        const float toolbarHeight = 20;
+        const float splitterWidth = 3;
         public static List<AssetBundleBrowserWindow> s_openWindows = new List<AssetBundleBrowserWindow>();
-		[MenuItem("Window/Asset Bundle Browser V2")]
+		[MenuItem("Window/Asset Bundle Browser")]
 		static void ShowWindow()
 		{
 			var window = GetWindow<AssetBundleBrowserWindow>();
@@ -41,13 +42,24 @@ namespace UnityEngine.AssetBundles
 
         void OnEnable()
         {
-            m_horizontalSplitterRect = new Rect(position.width / 2, 0, 5f, this.position.height);
-            m_verticalSplitterRect = new Rect(0, position.width / 2, (this.position.width - m_horizontalSplitterRect.width) - 5, 5f);
+            m_horizontalSplitterRect = new Rect(position.width / 2, toolbarHeight, splitterWidth, this.position.height - toolbarHeight);
+            m_verticalSplitterRect = new Rect(0, position.width / 2, (this.position.width - m_horizontalSplitterRect.width) - splitterWidth, splitterWidth);
         }
 
 		void OnGUI()
-		{
-			if (m_bundleTree == null)
+        {
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Refresh State", GUILayout.Height(toolbarHeight)))
+                AssetBundleState.Rebuild();
+
+            if (GUILayout.Button("Revert Changes", GUILayout.Height(toolbarHeight)))
+                AssetBundleState.ClearChanges();
+
+            if (GUILayout.Button("Apply Changes", GUILayout.Height(toolbarHeight)))
+                AssetBundleState.ApplyChanges();
+            GUILayout.EndHorizontal();
+
+            if (m_bundleTree == null)
 			{
                 if (m_selectionTreeState == null)
                     m_selectionTreeState = new TreeViewState();
@@ -61,16 +73,17 @@ namespace UnityEngine.AssetBundles
 					m_bundleTreeState = new TreeViewState();
 				m_bundleTree = new AssetBundleTree(m_bundleTreeState, m_assetList);
 			}
-
+            if (AssetBundleState.CheckAndClearDirtyFlag())
+                m_bundleTree.Reload();
             HandleHorizontalResize();
             HandleVerticalResize();
 
-			m_bundleTree.OnGUI(new Rect(0, 0, m_horizontalSplitterRect.x, position.height));
-            float panelLeft = m_horizontalSplitterRect.x + 5;
-            float panelWidth = (position.width - m_horizontalSplitterRect.x) - 5;
-
-            m_assetList.OnGUI(new Rect(panelLeft, 0, panelWidth, m_verticalSplitterRect.y));
-            m_selectionList.OnGUI(new Rect(panelLeft, m_verticalSplitterRect.y + 5, panelWidth, (position.height - m_verticalSplitterRect.y) - 5));
+			m_bundleTree.OnGUI(new Rect(0, toolbarHeight, m_horizontalSplitterRect.x, position.height - toolbarHeight));
+            float panelLeft = m_horizontalSplitterRect.x + splitterWidth;
+            float panelWidth = (position.width - m_horizontalSplitterRect.x) - splitterWidth;
+            float panelHeight = m_verticalSplitterRect.y - toolbarHeight;
+            m_assetList.OnGUI(new Rect(panelLeft, toolbarHeight, panelWidth, panelHeight));
+            m_selectionList.OnGUI(new Rect(panelLeft, m_verticalSplitterRect.y + splitterWidth, panelWidth, (position.height - m_verticalSplitterRect.y) - splitterWidth));
 
             if (m_resizingHorizontalSplitter || m_resizingVerticalSplitter)
                 Repaint();
@@ -78,8 +91,8 @@ namespace UnityEngine.AssetBundles
 
         private void HandleHorizontalResize()
         {
-            m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, position.width * .9f);
-            m_horizontalSplitterRect.height = position.height;
+            m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - splitterWidth) * .9f);
+            m_horizontalSplitterRect.height = position.height - toolbarHeight;
 
             GUI.DrawTexture(m_horizontalSplitterRect, EditorGUIUtility.whiteTexture);
             EditorGUIUtility.AddCursorRect(m_horizontalSplitterRect, MouseCursor.ResizeHorizontal);
@@ -87,7 +100,7 @@ namespace UnityEngine.AssetBundles
                 m_resizingHorizontalSplitter = true;
 
             if (m_resizingHorizontalSplitter)
-                m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, position.width * .9f);
+                m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - splitterWidth) * .9f);
 
             if (Event.current.type == EventType.MouseUp)
                 m_resizingHorizontalSplitter = false;
@@ -96,7 +109,7 @@ namespace UnityEngine.AssetBundles
         private void HandleVerticalResize()
         {
             m_verticalSplitterRect.x = m_horizontalSplitterRect.x;
-            m_verticalSplitterRect.y = Mathf.Clamp(m_verticalSplitterRect.y, position.height * .1f, position.height * .9f);
+            m_verticalSplitterRect.y = Mathf.Clamp(m_verticalSplitterRect.y, (position.height - toolbarHeight) * .1f + toolbarHeight, (position.height - splitterWidth) * .9f);
             m_verticalSplitterRect.width = position.width - m_horizontalSplitterRect.x;
 
             GUI.DrawTexture(m_verticalSplitterRect, EditorGUIUtility.whiteTexture);
@@ -105,7 +118,7 @@ namespace UnityEngine.AssetBundles
                 m_resizingVerticalSplitter = true;
 
             if (m_resizingVerticalSplitter)
-                m_verticalSplitterRect.y = Mathf.Clamp(Event.current.mousePosition.y, position.height * .1f, position.height* .9f);
+                m_verticalSplitterRect.y = Mathf.Clamp(Event.current.mousePosition.y, (position.height - toolbarHeight) * .1f + toolbarHeight, (position.height - splitterWidth) * .9f);
 
             if (Event.current.type == EventType.MouseUp)
                 m_resizingVerticalSplitter = false;

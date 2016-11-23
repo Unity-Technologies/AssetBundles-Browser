@@ -9,78 +9,103 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetBundleTree : TreeView
 	{
-        
 		AssetListTree m_assetList;
 
 		public AssetBundleTree(TreeViewState state, AssetListTree alt) : base(state)
 		{
-			m_assetList = alt;
-            AssetBundleDataCache.InitializeBundleData(AssetDatabase.GetAllAssetBundleNames());
+            AssetBundleState.Rebuild();
+            m_assetList = alt;
 			Reload();
+		}
+
+        protected override bool CanMultiSelect(TreeViewItem item)
+        {
+            return false;
+        }
+
+        protected override bool CanRename(TreeViewItem item)
+        {
+            return item.displayName != "<none>";
+        }
+
+        protected override void RenameEnded(RenameEndedArgs args)
+        {
+            if (args.newName.Length > 0 && args.newName != args.originalName && !AssetBundleState.bundles.ContainsKey(args.newName))
+            {
+                var bi = TreeViewUtility.FindItem(args.itemID, rootItem).userData as AssetBundleState.BundleInfo;
+                args.acceptedRename = true;
+                AssetBundleState.RenameBundle(bi, args.newName);
+            }
+            else
+            {
+                args.acceptedRename = false;
+            }
+            Reload();
+        }
+
+        protected override void BuildRootAndRows(out TreeViewItem root, out IList<TreeViewItem> rows)
+		{
+			root = new TreeViewItem(-1, -1);
+			rows = new List<TreeViewItem>();
+            rows.Add(root);
+
+            foreach(var b in AssetBundleState.bundles)
+            {
+                TreeViewItem item = new TreeViewItem(b.Value.name.GetHashCode(), 0, root, b.Key);
+                item.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
+                item.userData = b.Value;
+                rows.Add(item);
+                root.AddChild(item);
+            }
+		}
+
+        protected override void SelectionChanged(IList<int> selectedIds)
+		{
+            m_assetList.SetSelectedBundles(GetRowsFromIDs(selectedIds).Select(a => (a.userData as AssetBundleState.BundleInfo)));
 		}
 
         protected override void ContextClickedItem(int id)
         {
+            GenericMenu menu = new GenericMenu();
             var i = TreeViewUtility.FindItem(id, rootItem);
             if (i != null)
             {
-                GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("Find issues"), false, OnContextMenuFindIssues, i);
-                menu.ShowAsContext();
+                menu.AddItem(new GUIContent("Delete " + i.displayName), false, DeleteBundle, i.userData);
             }
-        }
-
-        void OnContextMenuFindIssues(object target)
-        {
-            foreach (var t in GetRowsFromIDs(GetSelection()))
+            else
             {
-                Item i = t as Item;
-
+                menu.AddItem(new GUIContent("New Bundle"), false, DeleteBundle, null);
             }
+            menu.ShowAsContext();
         }
 
-        public class Item : TreeViewItem
-		{
-			public AssetBundleDataCache.BundleData data;
-			public Item(AssetBundleDataCache.BundleData bd) : base(bd.m_id, bd.depth, bd.fullName)
-			{
-				data = bd;
-				icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
-			}
-		}
+        void NewBundle(object o)
+        {
+            var bi = AssetBundleState.CreateEmptyBundle("New Bundle");
+            Reload();
+            foreach (var r in GetRows())
+                if (r.displayName == "New Bundle")
+                    BeginRename(r);
+        }
 
-		protected override void BuildRootAndRows(out TreeViewItem root, out IList<TreeViewItem> rows)
-		{
-			root = new Item(AssetBundleDataCache.s_bundleData);
-			rows = new List<TreeViewItem>();
+        void DeleteBundle(object b)
+        {
+            AssetBundleState.DeleteBundle(b as AssetBundleState.BundleInfo);
+        }
 
-			foreach (var c in AssetBundleDataCache.s_bundleData.m_children)
-				CreateBundleTreeItems(rows, c);
-
-			SetupParentsAndChildrenFromDepths(root, rows);
-		}
-
-		private void CreateBundleTreeItems(IList<TreeViewItem> rows, AssetBundleDataCache.BundleData bundleData)
-		{
-			TreeViewItem item = new Item(bundleData);
-			rows.Add(item);
-			if (bundleData.m_children.Count > 0)
-			{
-				if (IsExpanded(bundleData.m_id))
-				{
-					foreach (var c in bundleData.m_children)
-						CreateBundleTreeItems(rows, c);
-				}
-				else
-				{
-					item.children = CreateChildListForCollapsedParent();
-				}
-			}
-		}
-
-		protected override void SelectionChanged(IList<int> selectedIds)
-		{
-			m_assetList.SetItems(GetRowsFromIDs(selectedIds));
-		}
-	}
+        protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
+        {
+            if (args.performDrop)
+            {
+                List<AssetBundleState.AssetInfo> draggedItems = new List<AssetBundleState.AssetInfo>();
+                foreach (var a in DragAndDrop.paths)
+                    draggedItems.Add(AssetBundleState.assets[a]);
+                var targetBundle = args.parentItem.userData as AssetBundleState.BundleInfo;
+                AssetBundleState.MoveAssetsToBundle(targetBundle, draggedItems);
+                SelectionChanged(GetSelection());
+            }
+            return DragAndDropVisualMode.Move;
+        }
+        
+    }
 }

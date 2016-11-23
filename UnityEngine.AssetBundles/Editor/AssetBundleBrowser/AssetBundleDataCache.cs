@@ -6,14 +6,14 @@ using UnityEditor;
 
 namespace UnityEngine.AssetBundles
 {
-    public class AssetBundleDataCache
+    public class AssetBundleStateOld
     {
         public class BundleData
         {
             public string m_name = string.Empty;
             public BundleData m_parent = null;
             public List<BundleData> m_children = new List<BundleData>();
-            //private List<AssetData> m_assets = null;
+            public List<AssetData> m_assets = new List<AssetData>();
             public string fullName { get { return m_parent == null ? m_name : m_parent.fullName + (string.IsNullOrEmpty(m_parent.fullName) ? "" : "/") + m_name; } }
             public int depth { get { return m_parent == null ? -1 : m_parent.depth + 1; } }
             public int m_id;
@@ -23,6 +23,8 @@ namespace UnityEngine.AssetBundles
                 m_parent = p;
                 m_name = n;
                 m_id = m_name.GetHashCode();
+                foreach (var a in AssetDatabase.GetAssetPathsFromAssetBundle(fullName))
+                    m_assets.Add(GetAssetData(m_name, a));
             }
 
             public void MergeChildren(IEnumerable<string> mc)
@@ -32,20 +34,6 @@ namespace UnityEngine.AssetBundles
                     m_children.Add(fd = GetAssetBundle(this, mc.First()));
                 if (mc.Count() > 1)
                     fd.MergeChildren(mc.Skip(1));
-            }
-
-            public List<AssetData> assets
-            {
-                get
-                {
-                  //  if (m_assets == null)
-                  //  {
-                        var m_assets = new List<AssetData>();
-                        foreach (var a in AssetDatabase.GetAssetPathsFromAssetBundle(fullName))
-                            m_assets.Add(GetAssetData(m_name, a));
-                    //}
-                    return m_assets;
-                }
             }
         }
 
@@ -95,6 +83,9 @@ namespace UnityEngine.AssetBundles
 
         public static void InitializeBundleData(string[] bundleNames)
         {
+            s_assetDataMap.Clear();
+            s_bundleDataMap.Clear();
+            AssetDependencyData dd = new AssetDependencyData();
             s_bundleData = new BundleData(null, "");
             foreach (var b in bundleNames)
                 s_bundleData.MergeChildren(b.Split('/'));
