@@ -34,34 +34,60 @@ namespace UnityEngine.AssetBundles
         {
             root = new TreeViewItem(-1, -1);
             rows = new List<TreeViewItem>();
-            rows.Add(root);
-            //       if (m_selection >= 0)
+
             if (m_selecteditems != null)
             {
+                int index = 0;
                 foreach (var a in m_selecteditems)
                 {
-
                     var item = new TreeViewItem(a.name.GetHashCode(), 0, root, a.name);
                     item.userData = a;
                     item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
                     rows.Add(item);
-                    root.AddChild(item);
-                    //show all references...
+                    var deps = AssetDatabase.GetDependencies(a.name);
+                    if (deps.Length > 1)
+                    {
+                        if (IsExpanded(item.id))
+                        {
+                            var refItem = new TreeViewItem(index, 1, (deps.Length - 1) + " dependenc" + (deps.Length == 2 ? "y" : "ies"));
+                            refItem.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
+                            rows.Add(refItem);
+                            if (IsExpanded(index))
+                            {
+                                foreach (var d in deps)
+                                {
+                                    if (d != a.name)
+                                    {
+                                        var di = new TreeViewItem(d.GetHashCode(), 2, d);
+                                        di.icon = AssetDatabase.GetCachedIcon(d) as Texture2D;
+                                        di.userData = AssetBundleState.assets[d];
+                                        rows.Add(di);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                refItem.children = CreateChildListForCollapsedParent();
+                            }
+                            index++;
+                        }
+                        else
+                        {
+                            item.children = CreateChildListForCollapsedParent();
+                        }
+                    }
                 }
             }
-            // SetupParentsAndChildrenFromDepths(root, rows);
+            SetupParentsAndChildrenFromDepths(root, rows);
         }
-        /*
-        internal void SetItems(IList<int> list)
-		{
-            if(HasSelection())
-                SetSelection(new List<int>());
-            m_selection = -1;
-            if (list.Count > 0)
-                m_selection = list[0];
-			Reload();
-		}
-        */
+
+        protected override void DoubleClickedItem(int id)
+        {
+            var assetInfo = TreeViewUtility.FindItem(id, rootItem).userData as AssetBundleState.AssetInfo;
+            if (assetInfo != null)
+                Selection.activeObject = AssetDatabase.LoadAssetAtPath<Object>(assetInfo.name);
+        }
+
         internal void Clear()
         {
             m_selecteditems = null;

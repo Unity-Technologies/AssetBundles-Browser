@@ -47,17 +47,15 @@ namespace UnityEngine.AssetBundles
 		{
 			root = new TreeViewItem(-1, -1);
 			rows = new List<TreeViewItem>();
-            rows.Add(root);
-
             foreach(var b in AssetBundleState.bundles)
             {
                 TreeViewItem item = new TreeViewItem(b.Value.name.GetHashCode(), 0, root, b.Key);
                 item.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
                 item.userData = b.Value;
                 rows.Add(item);
-                root.AddChild(item);
             }
-		}
+            SetupParentsAndChildrenFromDepths(root, rows);
+        }
 
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
@@ -106,6 +104,11 @@ namespace UnityEngine.AssetBundles
             }
             return DragAndDropVisualMode.Move;
         }
-        
+
+        internal void Refresh()
+        {
+            Reload();
+            SelectionChanged(GetSelection());
+        }
     }
 }

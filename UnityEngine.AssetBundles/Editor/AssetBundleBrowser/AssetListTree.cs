@@ -24,49 +24,22 @@ namespace UnityEngine.AssetBundles
 		{
 			root = new TreeViewItem(-1, -1);
 			rows = new List<TreeViewItem>();
-            rows.Add(root);
-           // for (int i = 0; i < m_assetsInSelectedBundles.Count; i++)
            foreach(var a in m_assetsInSelectedBundles)
             {
-                //var assetIndex = m_assetsInSelectedBundles[i];
-                //var assetName = AssetBundleState.assets[assetIndex].name;
                 var item = new TreeViewItem(a.name.GetHashCode(), 0, root, System.IO.Path.GetFileNameWithoutExtension(a.name));
                 item.userData = a;
                 item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
                 rows.Add(item);
-                root.AddChild(item);
             }
-
-            //  foreach (var b in m_assetsInSelectedBundles)
-            //     CreateItems(rows, b, 0);
-
-            //SetupParentsAndChildrenFromDepths(root, rows);
+            SetupParentsAndChildrenFromDepths(root, rows);
         }
-        /*
-        void CreateItems(IList<TreeViewItem> rows, AssetBundleState.AssetData a, int depth)
+
+        protected override void DoubleClickedItem(int id)
         {
-            Item item = new Item(a, depth);
-            rows.Add(item);
-            var dependencies = AssetDatabase.GetDependencies(a.m_assetPath, false);
-            if (IsExpanded(a.m_id))
-            {
-                foreach (var d in dependencies)
-                {
-                    if (d != a.m_assetPath)
-                    {
-                        AssetBundleState.AssetData ad = AssetBundleState.GetAssetData(string.Empty, d);
-                        if (string.IsNullOrEmpty(ad.m_bundle))
-                            CreateItems(rows, ad, depth + 1);
-                    }
-                }
-            }
-            else
-            {
-                if(dependencies.Length > 0 && dependencies[0] != a.m_assetPath)
-                    item.children = CreateChildListForCollapsedParent();
-            }
+            var assetInfo = TreeViewUtility.FindItem(id, rootItem).userData as AssetBundleState.AssetInfo;
+            if (assetInfo != null)
+                Selection.activeObject = AssetDatabase.LoadAssetAtPath<Object>(assetInfo.name);
         }
-        */
 
 
         internal void SetSelectedBundles(IEnumerable<AssetBundleState.BundleInfo> b)
@@ -79,8 +52,8 @@ namespace UnityEngine.AssetBundles
             foreach (var bundleInfo in m_selectedBundles)
                 foreach (var a in bundleInfo.assets)
                     m_assetsInSelectedBundles.Add(a);
-            SelectionChanged(GetSelection());
             Reload();
+            SelectionChanged(GetSelection());
         }
 
         protected override void ContextClickedItem(int id)
@@ -101,11 +74,7 @@ namespace UnityEngine.AssetBundles
         {
             AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
             if (bi == null)
-            {
-                if (EditorUtility.DisplayDialogComplex("Create Bundle Name", "Hit ok to create new bundle", "Create", "Cancel", "idk?") > 0)
-                    return;
-                bi = AssetBundleState.CreateEmptyBundle("New Bundle" + Random.Range(0, 10000));
-            }
+                bi = AssetBundleState.CreateEmptyBundle("Bundle" + Random.Range(0, 10000));
 
             AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
             SetSelectedBundles(m_selectedBundles);

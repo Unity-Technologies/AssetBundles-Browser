@@ -42,6 +42,18 @@ namespace UnityEngine.AssetBundles
                 name = n;
             }
         }
+        class AssetBundleChangeListener : AssetPostprocessor
+        {
+            public void OnPostprocessAssetbundleNameChanged(string assetPath, string previousAssetBundleName, string newAssetBundleName)
+            {
+                if (!bundles.ContainsKey(newAssetBundleName))
+                    CreateEmptyBundle(newAssetBundleName);
+                BundleInfo curr = bundles[newAssetBundleName];
+                MoveAssetsToBundle(curr, new AssetInfo[] { assets[assetPath] });
+                EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+                dirty = true;
+            }
+        }
 
         public static Dictionary<string, BundleInfo> bundles = new Dictionary<string, BundleInfo>();
         public static Dictionary<string, AssetInfo> assets = new Dictionary<string, AssetInfo>();

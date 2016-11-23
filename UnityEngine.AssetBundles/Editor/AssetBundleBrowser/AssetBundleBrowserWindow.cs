@@ -89,6 +89,11 @@ namespace UnityEngine.AssetBundles
                 Repaint();
         }
 
+        internal void Refresh()
+        {
+            m_bundleTree.Refresh();
+        }
+
         private void HandleHorizontalResize()
         {
             m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - splitterWidth) * .9f);
