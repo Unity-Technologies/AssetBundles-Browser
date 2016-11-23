@@ -46,15 +46,19 @@ namespace UnityEngine.AssetBundles
         {
             public void OnPostprocessAssetbundleNameChanged(string assetPath, string previousAssetBundleName, string newAssetBundleName)
             {
-                if (!bundles.ContainsKey(newAssetBundleName))
-                    CreateEmptyBundle(newAssetBundleName);
-                BundleInfo curr = bundles[newAssetBundleName];
-                MoveAssetsToBundle(curr, new AssetInfo[] { assets[assetPath] });
-                EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
-                dirty = true;
+                if (!ignoreExternalAssetBundleChanges)
+                {
+                    if (!bundles.ContainsKey(newAssetBundleName))
+                        CreateEmptyBundle(newAssetBundleName);
+                    BundleInfo curr = bundles[newAssetBundleName];
+                    MoveAssetsToBundle(curr, new AssetInfo[] { assets[assetPath] });
+                    EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+                    dirty = true;
+                }
             }
         }
 
+        static bool ignoreExternalAssetBundleChanges = false;
         public static Dictionary<string, BundleInfo> bundles = new Dictionary<string, BundleInfo>();
         public static Dictionary<string, AssetInfo> assets = new Dictionary<string, AssetInfo>();
         static List<IModification> modifications = new List<IModification>();
@@ -139,6 +143,8 @@ namespace UnityEngine.AssetBundles
 
         static void SetAssetBundle(string bundleName, IEnumerable<AssetInfo> assetsToMove)
         {
+            if (bundleName == "<none>")
+                bundleName = string.Empty;
             var variantName = string.Empty;
             int dot = bundleName.LastIndexOf('.');
             if (dot > 0)
@@ -146,11 +152,13 @@ namespace UnityEngine.AssetBundles
                 variantName = bundleName.Substring(dot + 1);
                 bundleName = bundleName.Substring(0, dot);
             }
+            ignoreExternalAssetBundleChanges = true;
             foreach (var a in assetsToMove)
             {
                 AssetImporter importer = AssetImporter.GetAtPath(a.name);
                 importer.SetAssetBundleNameAndVariant(bundleName, variantName);
             }
+            ignoreExternalAssetBundleChanges = false;
         }
 
         public static void MoveAssetsToBundle(BundleInfo bi, IEnumerable<AssetInfo> ais)
