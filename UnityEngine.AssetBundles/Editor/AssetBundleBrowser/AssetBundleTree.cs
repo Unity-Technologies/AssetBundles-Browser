@@ -43,18 +43,17 @@ namespace UnityEngine.AssetBundles
             Reload();
         }
 
-        protected override void BuildRootAndRows(out TreeViewItem root, out IList<TreeViewItem> rows)
-		{
-			root = new TreeViewItem(-1, -1);
-			rows = new List<TreeViewItem>();
-            foreach(var b in AssetBundleState.bundles)
+        protected override TreeViewItem BuildRoot()
+        {
+            var root = new TreeViewItem(-1, -1);
+            foreach (var b in AssetBundleState.bundles)
             {
-                TreeViewItem item = new TreeViewItem(b.Value.name.GetHashCode(), 0, root, b.Key);
+                var item = new TreeViewItem(b.Value.name.GetHashCode(), 0, root, b.Key);
                 item.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
                 item.userData = b.Value;
-                rows.Add(item);
+                root.AddChild(item);
             }
-            SetupParentsAndChildrenFromDepths(root, rows);
+            return root;
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
@@ -95,12 +94,12 @@ namespace UnityEngine.AssetBundles
         {
             if (args.performDrop)
             {
-                List<AssetBundleState.AssetInfo> draggedItems = new List<AssetBundleState.AssetInfo>();
-                foreach (var a in DragAndDrop.paths)
-                    draggedItems.Add(AssetBundleState.assets[a]);
                 var targetBundle = args.parentItem.userData as AssetBundleState.BundleInfo;
-                AssetBundleState.MoveAssetsToBundle(targetBundle, draggedItems);
-                SelectionChanged(GetSelection());
+                if (targetBundle != null)
+                {
+                    AssetBundleState.MoveAssetsToBundle(targetBundle, DragAndDrop.paths.Select(a => AssetBundleState.assets[a]));
+                    SelectionChanged(GetSelection());
+                }
             }
             return DragAndDropVisualMode.Move;
         }

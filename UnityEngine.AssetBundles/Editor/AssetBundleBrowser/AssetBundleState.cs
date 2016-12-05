@@ -15,10 +15,12 @@ namespace UnityEngine.AssetBundles
 {
     public class AssetBundleState
     {
-        interface IModification
+        public interface IModification
         {
             void Apply();
-        }
+			string GetDisplayString();
+			IEnumerable<string> GetDisplaySubStrings();
+		}
 
         public class BundleInfo
         {
@@ -61,7 +63,7 @@ namespace UnityEngine.AssetBundles
             {
                 foreach (string str in importedAssets)
                 {
-                    Debug.Log("Reimported Asset: " + str);
+                //    Debug.Log("Reimported Asset: " + str);
                     if (!assets.ContainsKey(str))
                     {
                         var bundleName = GetBundleName(str);
@@ -75,15 +77,18 @@ namespace UnityEngine.AssetBundles
                 }
                 foreach (string str in deletedAssets)
                 {
-                    Debug.Log("Deleted Asset: " + str);
-                    AssetInfo ai = assets[str];
-                    ai.bundle.assets.Remove(ai);
-                    assets.Remove(str);
+					//       Debug.Log("Deleted Asset: " + str);
+					AssetInfo ai = null;
+					if (assets.TryGetValue(str, out ai))
+					{
+						ai.bundle.assets.Remove(ai);
+						assets.Remove(str);
+					}
                 }
 
                 for (int i = 0; i < movedAssets.Length; i++)
                 {
-                    Debug.Log("Moved Asset: " + movedAssets[i] + " from: " + movedFromAssetPaths[i]);
+            //        Debug.Log("Moved Asset: " + movedAssets[i] + " from: " + movedFromAssetPaths[i]);
                     AssetInfo ai = assets[movedFromAssetPaths[i]];
                     ai.name = movedAssets[i];
                     assets.Remove(movedFromAssetPaths[i]);
@@ -107,7 +112,7 @@ namespace UnityEngine.AssetBundles
         public const string NoBundleName = "<none>";
         public static Dictionary<string, BundleInfo> bundles = new Dictionary<string, BundleInfo>();
         public static Dictionary<string, AssetInfo> assets = new Dictionary<string, AssetInfo>();
-        static List<IModification> modifications = new List<IModification>();
+        public static List<IModification> modifications = new List<IModification>();
         static bool dirty = false;
         public static bool CheckAndClearDirtyFlag()
         {
@@ -196,9 +201,19 @@ namespace UnityEngine.AssetBundles
             {
                 SetAssetBundle(bundle.name, assetsToMove);
             }
-        }
+			public string GetDisplayString()
+			{
+				return "Move Assets to bundle " + bundle.name;
+			}
 
-        static void SetAssetBundle(string bundleName, IEnumerable<AssetInfo> assetsToMove)
+			public IEnumerable<string> GetDisplaySubStrings()
+			{
+				return assetsToMove.Select(a => a.name);
+			}
+
+		}
+
+		static void SetAssetBundle(string bundleName, IEnumerable<AssetInfo> assetsToMove)
         {
             if (bundleName == AssetBundleState.NoBundleName)
                 bundleName = string.Empty;
@@ -241,22 +256,34 @@ namespace UnityEngine.AssetBundles
         class RenameBundleMod : IModification
         {
             BundleInfo bundle;
-            public RenameBundleMod(BundleInfo bi)
+			string previousName;
+            public RenameBundleMod(BundleInfo bi, string prevName)
             {
-                bundle = bi;
+				previousName = prevName;
+				bundle = bi;
             }
 
             public void Apply()
             {
                 SetAssetBundle(bundle.name, bundle.assets);
             }
-        }
+			public string GetDisplayString()
+			{
+				return "Rename bundle '" + previousName + "' to '" + bundle.name + "'";
+			}
+
+			public IEnumerable<string> GetDisplaySubStrings()
+			{
+				return null;
+			}
+		}
 
         internal static void RenameBundle(BundleInfo bi, string newName)
         {
+			string prevName = bi.name;
             bundles.Remove(bi.name);
             bundles.Add(bi.name = newName, bi);
-            modifications.Add(new RenameBundleMod(bi));
+            modifications.Add(new RenameBundleMod(bi, prevName));
         }
 
 

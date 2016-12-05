@@ -20,25 +20,28 @@ namespace UnityEngine.AssetBundles
             Reload();
 		}
 
-        protected override void BuildRootAndRows(out TreeViewItem root, out IList<TreeViewItem> rows)
-		{
-			root = new TreeViewItem(-1, -1);
-			rows = new List<TreeViewItem>();
-           foreach(var a in m_assetsInSelectedBundles)
+        protected override TreeViewItem BuildRoot()
+        {
+            var root = new TreeViewItem(-1, -1);
+            foreach (var a in m_assetsInSelectedBundles)
             {
                 var item = new TreeViewItem(a.name.GetHashCode(), 0, root, System.IO.Path.GetFileNameWithoutExtension(a.name));
                 item.userData = a;
                 item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
-                rows.Add(item);
+                root.AddChild(item);
             }
-            SetupParentsAndChildrenFromDepths(root, rows);
+            return root;
         }
 
         protected override void DoubleClickedItem(int id)
         {
             var assetInfo = TreeViewUtility.FindItem(id, rootItem).userData as AssetBundleState.AssetInfo;
-            if (assetInfo != null)
-                Selection.activeObject = AssetDatabase.LoadAssetAtPath<Object>(assetInfo.name);
+			if (assetInfo != null)
+			{
+				Object o = AssetDatabase.LoadAssetAtPath<Object>(assetInfo.name);
+				EditorGUIUtility.PingObject(o);
+				Selection.activeObject = o;
+			}
         }
 
 
@@ -95,12 +98,20 @@ namespace UnityEngine.AssetBundles
         {
             DragAndDrop.PrepareStartDrag();
             DragAndDrop.paths = GetRowsFromIDs(args.draggedItemIDs).Select(a => (a.userData as AssetBundleState.AssetInfo).name).ToArray();
-            DragAndDrop.StartDrag("blah");
+            DragAndDrop.StartDrag("AssetListTree");
         }
 
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
-            return DragAndDropVisualMode.None;
+            if (args.performDrop)
+            {
+                var targetBundle = (args.parentItem.userData as AssetBundleState.AssetInfo).bundle;
+                if (targetBundle != null)
+                {
+                    AssetBundleState.MoveAssetsToBundle(targetBundle, DragAndDrop.paths.Select(a => AssetBundleState.assets[a]));
+                }
+            }
+            return DragAndDropVisualMode.Move;
         }
     }
 

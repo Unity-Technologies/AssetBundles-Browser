@@ -23,7 +23,7 @@ namespace UnityEngine.AssetBundles
         bool m_resizingHorizontalSplitter = false;
         bool m_resizingVerticalSplitter = false;
         Rect m_horizontalSplitterRect, m_verticalSplitterRect;
-        const float toolbarHeight = 20;
+        const float toolbarHeight = 25;
         const float splitterWidth = 3;
         public static List<AssetBundleBrowserWindow> s_openWindows = new List<AssetBundleBrowserWindow>();
 		[MenuItem("Window/Asset Bundle Browser")]
@@ -49,15 +49,20 @@ namespace UnityEngine.AssetBundles
 		void OnGUI()
         {
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Refresh State", GUILayout.Height(toolbarHeight)))
-                AssetBundleState.Rebuild();
+			if (GUILayout.Button("Detect Issues", GUILayout.Height(toolbarHeight - 5)))
+				AssetBundleIssuesWindow.ShowWindow();
 
-            if (GUILayout.Button("Revert Changes", GUILayout.Height(toolbarHeight)))
-                AssetBundleState.ClearChanges();
+			GUI.enabled = AssetBundleState.modifications.Count > 0;
+			if (GUILayout.Button("Revert Changes", GUILayout.Height(toolbarHeight - 5)))
+			{
+				if(EditorUtility.DisplayDialog("Revert Changes", "Are you sure you want to revert all asset bundle changes?", "Yes", "No"))
+					AssetBundleState.ClearChanges();
+			}
 
-            if (GUILayout.Button("Apply Changes", GUILayout.Height(toolbarHeight)))
-                AssetBundleState.ApplyChanges();
-            GUILayout.EndHorizontal();
+			if (GUILayout.Button("Apply Changes", GUILayout.Height(toolbarHeight - 5)))
+				AssetBundleChangesWindow.ShowWindow();
+			GUI.enabled = true;
+			GUILayout.EndHorizontal();
 
             if (m_bundleTree == null)
 			{
@@ -91,7 +96,8 @@ namespace UnityEngine.AssetBundles
 
         internal void Refresh()
         {
-            m_bundleTree.Refresh();
+			if(m_bundleTree != null)
+				m_bundleTree.Refresh();
         }
 
         private void HandleHorizontalResize()
