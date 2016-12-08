@@ -15,7 +15,7 @@ namespace UnityEngine.AssetBundles
 		{
             AssetBundleState.Rebuild();
             m_assetList = alt;
-			Reload();
+		//	Reload();
 		}
 
         protected override bool CanMultiSelect(TreeViewItem item)
@@ -46,8 +46,12 @@ namespace UnityEngine.AssetBundles
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem(-1, -1);
+            root.children = new List<TreeViewItem>();
+
             foreach (var b in AssetBundleState.bundles)
             {
+                if (b.Key == AssetBundleState.NoBundleName)
+                    continue;
                 var item = new TreeViewItem(b.Value.name.GetHashCode(), 0, root, b.Key);
                 item.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
                 item.userData = b.Value;
@@ -58,8 +62,8 @@ namespace UnityEngine.AssetBundles
 
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
-            m_assetList.SetSelectedBundles(GetRowsFromIDs(selectedIds).Select(a => (a.userData as AssetBundleState.BundleInfo)));
-		}
+            m_assetList.SetSelectedBundle(selectedIds.Count == 0 ? null : TreeViewUtility.FindItem(selectedIds[0], rootItem).userData as AssetBundleState.BundleInfo);
+        }
 
         protected override void ContextClickedItem(int id)
         {

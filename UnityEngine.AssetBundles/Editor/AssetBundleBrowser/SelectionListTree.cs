@@ -13,11 +13,13 @@ namespace UnityEngine.AssetBundles
         public SelectionListTree(TreeViewState state) : base(state)
         {
             showBorder = true;
-            Reload();
+          //  Reload();
         }
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem(-1, -1);
+            root.children = new List<TreeViewItem>();
+
             if (m_selecteditems != null)
             {
 				int index = 0;
@@ -70,5 +72,19 @@ namespace UnityEngine.AssetBundles
             m_selecteditems = items;
             Reload();
         }
+
+        protected override bool CanStartDrag(CanStartDragArgs args)
+        {
+            args.draggedItemIDs = GetSelection();
+            return true;
+        }
+
+        protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
+        {
+            DragAndDrop.PrepareStartDrag();
+            DragAndDrop.paths = GetRowsFromIDs(args.draggedItemIDs).Select(a => a.userData == null ? string.Empty : (a.userData as AssetBundleState.AssetInfo).name).ToArray();
+            DragAndDrop.StartDrag("SelectionListTree");
+        }
+
     }
 }

@@ -111,6 +111,15 @@ namespace UnityEngine.AssetBundles
         static bool ignoreExternalAssetBundleChanges = false;
         public const string NoBundleName = "<none>";
         public static Dictionary<string, BundleInfo> bundles = new Dictionary<string, BundleInfo>();
+
+        internal static AssetInfo GetAsset(string a)
+        {
+            AssetInfo ai = null;
+            if (assets.TryGetValue(a, out ai))
+                return ai;
+            return null;
+        }
+
         public static Dictionary<string, AssetInfo> assets = new Dictionary<string, AssetInfo>();
         public static List<IModification> modifications = new List<IModification>();
         static bool dirty = false;
@@ -140,7 +149,7 @@ namespace UnityEngine.AssetBundles
                 if (!asset.StartsWith("Assets/"))
                     continue;
                 string ext = System.IO.Path.GetExtension(asset);
-                if (ext.Length > 0 && ext != ".dll" && ext != ".cs" && !asset.StartsWith("ProjectSettings") && !asset.StartsWith("Library"))
+                if (ext != ".dll" && ext != ".cs" && !asset.StartsWith("ProjectSettings") && !asset.StartsWith("Library"))
                 {
                     AssetInfo ai = new AssetInfo(noneBundle, asset);
                     assets.Add(asset, ai);
@@ -227,8 +236,11 @@ namespace UnityEngine.AssetBundles
             ignoreExternalAssetBundleChanges = true;
             foreach (var a in assetsToMove)
             {
-                AssetImporter importer = AssetImporter.GetAtPath(a.name);
-                importer.SetAssetBundleNameAndVariant(bundleName, variantName);
+                if (a != null)
+                {
+                    AssetImporter importer = AssetImporter.GetAtPath(a.name);
+                    importer.SetAssetBundleNameAndVariant(bundleName, variantName);
+                }
             }
             ignoreExternalAssetBundleChanges = false;
         }
@@ -238,9 +250,12 @@ namespace UnityEngine.AssetBundles
             modifications.Add(new MoveAssetsToBundleMod(bi, ais));
             foreach (var a in ais)
             {
-                a.bundle.assets.Remove(a);
-                bi.assets.Add(a);
-                a.bundle = bi;
+                if (a != null)
+                {
+                    a.bundle.assets.Remove(a);
+                    bi.assets.Add(a);
+                    a.bundle = bi;
+                }
             }
             dirty = true;
         }

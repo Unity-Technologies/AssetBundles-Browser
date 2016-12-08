@@ -69,14 +69,18 @@ namespace UnityEngine.AssetBundles
                 if (m_selectionTreeState == null)
                     m_selectionTreeState = new TreeViewState();
                 m_selectionList = new SelectionListTree(m_selectionTreeState);
+                m_selectionList.Reload();
 
-				if (m_assetListState == null)
+                if (m_assetListState == null)
 					m_assetListState = new TreeViewState();
 				m_assetList = new AssetListTree(m_assetListState, m_selectionList);
+                m_assetList.Reload();
 
-				if (m_bundleTreeState == null)
+
+                if (m_bundleTreeState == null)
 					m_bundleTreeState = new TreeViewState();
 				m_bundleTree = new AssetBundleTree(m_bundleTreeState, m_assetList);
+                m_bundleTree.Reload();
 			}
             if (AssetBundleState.CheckAndClearDirtyFlag())
                 m_bundleTree.Reload();

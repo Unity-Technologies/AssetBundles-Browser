@@ -10,25 +10,28 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetListTree : TreeView
 	{
-        IEnumerable<AssetBundleState.BundleInfo> m_selectedBundles;
-        HashSet<AssetBundleState.AssetInfo> m_assetsInSelectedBundles = new HashSet<AssetBundleState.AssetInfo>();
+        AssetBundleState.BundleInfo m_selectedBundle = null;
         SelectionListTree m_selectionList;
 
 		public AssetListTree(TreeViewState state, SelectionListTree selList) : base(state)
 		{
             m_selectionList = selList;
-            Reload();
+            //Reload();
 		}
 
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem(-1, -1);
-            foreach (var a in m_assetsInSelectedBundles)
+            root.children = new List<TreeViewItem>();
+            if (m_selectedBundle != null)
             {
-                var item = new TreeViewItem(a.name.GetHashCode(), 0, root, System.IO.Path.GetFileNameWithoutExtension(a.name));
-                item.userData = a;
-                item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
-                root.AddChild(item);
+                foreach (var a in m_selectedBundle.assets)
+                {
+                    var item = new TreeViewItem(a.name.GetHashCode(), 0, root, System.IO.Path.GetFileNameWithoutExtension(a.name));
+                    item.userData = a;
+                    item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
+                    root.AddChild(item);
+                }
             }
             return root;
         }
@@ -45,16 +48,11 @@ namespace UnityEngine.AssetBundles
         }
 
 
-        internal void SetSelectedBundles(IEnumerable<AssetBundleState.BundleInfo> b)
+        internal void SetSelectedBundle(AssetBundleState.BundleInfo b)
         {
-            m_selectedBundles = b;
-            m_assetsInSelectedBundles.Clear();
-            if (HasSelection())
+            if (HasSelection() && m_selectedBundle != b)
                 SetSelection(new List<int>());
-
-            foreach (var bundleInfo in m_selectedBundles)
-                foreach (var a in bundleInfo.assets)
-                    m_assetsInSelectedBundles.Add(a);
+            m_selectedBundle = b;
             Reload();
             SelectionChanged(GetSelection());
         }
@@ -66,7 +64,7 @@ namespace UnityEngine.AssetBundles
             {
                 GenericMenu menu = new GenericMenu();
                 foreach(var b in AssetBundleState.bundles)
-                    if(!m_selectedBundles.Contains(b.Value))
+                    if(b.Value != m_selectedBundle)
                         menu.AddItem(new GUIContent("Move to bundle/" + b.Key), false, MoveToBundle, b.Value);
                 menu.AddItem(new GUIContent("Move to bundle/<Create New Bundle...>"), false, MoveToBundle, null);
                 menu.ShowAsContext();
@@ -80,7 +78,7 @@ namespace UnityEngine.AssetBundles
                 bi = AssetBundleState.CreateEmptyBundle("Bundle" + Random.Range(0, 10000));
 
             AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
-            SetSelectedBundles(m_selectedBundles);
+            SetSelectedBundle(m_selectedBundle);
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
@@ -103,16 +101,28 @@ namespace UnityEngine.AssetBundles
 
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
+            if (m_selectedBundle == null)
+                return DragAndDropVisualMode.None;
+
             if (args.performDrop)
             {
-                var targetBundle = (args.parentItem.userData as AssetBundleState.AssetInfo).bundle;
-                if (targetBundle != null)
-                {
-                    AssetBundleState.MoveAssetsToBundle(targetBundle, DragAndDrop.paths.Select(a => AssetBundleState.assets[a]));
-                }
+                AssetBundleState.MoveAssetsToBundle(m_selectedBundle, DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)));
+                SetSelectedBundle(m_selectedBundle);
             }
+
             return DragAndDropVisualMode.Move;
         }
+
+        protected override void KeyEvent()
+        {
+            if (Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
+            {
+                MoveToBundle(AssetBundleState.bundles[AssetBundleState.NoBundleName]);
+                SetSelection(new List<int>());
+                Event.current.Use();
+            }
+        }
+
     }
 
 
