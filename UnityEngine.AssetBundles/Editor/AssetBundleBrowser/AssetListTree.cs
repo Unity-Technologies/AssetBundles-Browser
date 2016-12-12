@@ -75,7 +75,7 @@ namespace UnityEngine.AssetBundles
         {
             AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
             if (bi == null)
-                bi = AssetBundleState.CreateEmptyBundle("Bundle" + Random.Range(0, 10000));
+                bi = AssetBundleState.CreateEmptyBundle("New Bundle", true);
 
             AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
             SetSelectedBundle(m_selectedBundle);
@@ -117,7 +117,7 @@ namespace UnityEngine.AssetBundles
         {
             if (Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
             {
-                MoveToBundle(AssetBundleState.bundles[AssetBundleState.NoBundleName]);
+                MoveToBundle(AssetBundleState.NoBundleName);
                 SetSelection(new List<int>());
                 Event.current.Use();
             }

@@ -59,9 +59,13 @@ namespace UnityEngine.AssetBundles
 					AssetBundleState.ClearChanges();
 			}
 
-			if (GUILayout.Button("Apply Changes", GUILayout.Height(toolbarHeight - 5)))
-				AssetBundleChangesWindow.ShowWindow();
-			GUI.enabled = true;
+            if (GUILayout.Button("Apply Changes", GUILayout.Height(toolbarHeight - 5)))
+                AssetBundleChangesWindow.ShowWindow();
+            GUI.enabled = true;
+
+            if (GUILayout.Button("Build Bundles", GUILayout.Height(toolbarHeight - 5)))
+                AssetBundleBuildWindow.ShowWindow();
+
 			GUILayout.EndHorizontal();
 
             if (m_bundleTree == null)
@@ -87,7 +91,10 @@ namespace UnityEngine.AssetBundles
             HandleHorizontalResize();
             HandleVerticalResize();
 
-			m_bundleTree.OnGUI(new Rect(0, toolbarHeight, m_horizontalSplitterRect.x, position.height - toolbarHeight));
+            if (EditorGUI.Button(new Rect(0, toolbarHeight, m_horizontalSplitterRect.x, toolbarHeight), new GUIContent("New Bundle")))
+                AssetBundleState.CreateEmptyBundle("New Bundle", true);
+            
+            m_bundleTree.OnGUI(new Rect(0, toolbarHeight * 2, m_horizontalSplitterRect.x, position.height - toolbarHeight * 2));
             float panelLeft = m_horizontalSplitterRect.x + splitterWidth;
             float panelWidth = (position.width - m_horizontalSplitterRect.x) - splitterWidth;
             float panelHeight = m_verticalSplitterRect.y - toolbarHeight;

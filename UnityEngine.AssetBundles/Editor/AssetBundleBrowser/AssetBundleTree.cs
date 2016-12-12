@@ -56,7 +56,11 @@ namespace UnityEngine.AssetBundles
                 item.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
                 item.userData = b.Value;
                 root.AddChild(item);
+                if (b.Key == AssetBundleState.editBundleName)
+                    BeginRename(item, .25f);
             }
+            AssetBundleState.editBundleName = string.Empty;
+
             return root;
         }
 
@@ -82,11 +86,8 @@ namespace UnityEngine.AssetBundles
 
         void NewBundle(object o)
         {
-            var bi = AssetBundleState.CreateEmptyBundle("New Bundle");
+            var bi = AssetBundleState.CreateEmptyBundle("New Bundle", true);
             Reload();
-            foreach (var r in GetRows())
-                if (r.displayName == "New Bundle")
-                    BeginRename(r);
         }
 
         void DeleteBundle(object b)

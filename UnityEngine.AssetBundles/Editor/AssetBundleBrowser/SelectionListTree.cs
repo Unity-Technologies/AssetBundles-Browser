@@ -13,7 +13,6 @@ namespace UnityEngine.AssetBundles
         public SelectionListTree(TreeViewState state) : base(state)
         {
             showBorder = true;
-          //  Reload();
         }
         protected override TreeViewItem BuildRoot()
         {
@@ -29,10 +28,11 @@ namespace UnityEngine.AssetBundles
 					item.userData = a;
 					item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
 					root.AddChild(item);
-					var deps = AssetDatabase.GetDependencies(a.name, true);
-					if (deps.Length > 1)
+                    var deps = new HashSet<string>();
+                    GatherDependencies(a, deps);
+					if (deps.Count > 0)
 					{
-						var refItem = new TreeViewItem(index, 1, (deps.Length - 1) + " dependenc" + (deps.Length == 2 ? "y" : "ies"));
+						var refItem = new TreeViewItem(index, 1, deps.Count + " dependenc" + (deps.Count == 1 ? "y" : "ies"));
 						refItem.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
 						item.AddChild(refItem);
 						foreach (var d in deps)
@@ -50,6 +50,20 @@ namespace UnityEngine.AssetBundles
 				}
 			}
             return root;
+        }
+
+        void GatherDependencies(AssetBundleState.AssetInfo a, HashSet<string> deps)
+        {
+            if (a == null)
+                return;
+            foreach (var d in AssetDatabase.GetDependencies(a.name, true))
+                deps.Add(d);
+            if (AssetDatabase.IsValidFolder(a.name))
+            {
+                foreach (var f in AssetDatabase.GetSubFolders(a.name))
+                    GatherDependencies(AssetBundleState.GetAsset(f), deps);
+                //gather items in folder
+            }
         }
 
         protected override void DoubleClickedItem(int id)
