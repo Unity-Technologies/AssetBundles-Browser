@@ -18,9 +18,8 @@ namespace UnityEngine.AssetBundles
             m_selectionList = selList;
             showBorder = true;
             showAlternatingRowBackgrounds = true;
-            //Reload();
+            DefaultStyles.label.richText = true;
         }
-
         protected override TreeViewItem BuildRoot()
         {
             var root = new TreeViewItem(-1, -1);
@@ -34,8 +33,29 @@ namespace UnityEngine.AssetBundles
                     item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
                     root.AddChild(item);
                 }
+                List<AssetBundleState.AssetInfo> deps = new List<AssetBundleState.AssetInfo>();
+                if (m_selectedBundle.GatherImplicitDependencies(deps) > 0)
+                foreach (var a in deps)
+                {
+                    var item = new TreeViewItem(a.name.GetHashCode(), 0, root, " " + System.IO.Path.GetFileNameWithoutExtension(a.name));
+                    item.userData = a;
+                    item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
+                    root.AddChild(item);
+                }
             }
             return root;
+        }
+
+        protected override void RowGUI(RowGUIArgs args)
+        {
+            //var ai = args.item.userData as AssetBundleState.AssetInfo;
+
+            Color oldColor = GUI.color;
+            if(args.label.StartsWith(" "))
+                GUI.color = GUI.color * new Color(1, 1, 1, 0.35f);
+            base.RowGUI(args);
+            GUI.color = oldColor;
+
         }
 
         protected override void DoubleClickedItem(int id)
@@ -77,16 +97,17 @@ namespace UnityEngine.AssetBundles
         {
             AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
             if (bi == null)
-                bi = AssetBundleState.CreateEmptyBundle("New Bundle", true);
+                bi = AssetBundleState.CreateEmptyBundle(null);
 
-            AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
+            AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => (a.userData as AssetBundleState.AssetInfo)));
             SetSelectedBundle(m_selectedBundle);
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
             m_selectionList.SetItems(GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
-		}
+            //TODO: update to assetrefs: m_selectionList.SetItems(GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
+        }
 
         protected override bool CanStartDrag(CanStartDragArgs args)
         {
@@ -119,8 +140,8 @@ namespace UnityEngine.AssetBundles
         {
             if (Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
             {
-                MoveToBundle(AssetBundleState.NoBundleName);
-                SetSelection(new List<int>());
+                AssetBundleState.MoveAssetsToBundle(AssetBundleState.bundles[string.Empty], GetRowsFromIDs(GetSelection()).Select(a => (a.userData as AssetBundleState.AssetInfo)));
+                SetSelectedBundle(m_selectedBundle);
                 Event.current.Use();
             }
         }

@@ -12,12 +12,12 @@ public class AssetBundleViewer : EditorWindow
     string uiPath = null;
     string progress = null;
     Vector3 scrollPos;
-
-    [MenuItem("AssetBundles/Open Viewer")]
+    /*
+    [MenuItem("AssetBundles/Viewer")]
     public static void OpenViewer()
     {
         GetWindow(typeof(AssetBundleViewer));
-    }
+    }*/
 
     void Update()
     {

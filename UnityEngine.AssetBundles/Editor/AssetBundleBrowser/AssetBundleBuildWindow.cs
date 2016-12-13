@@ -9,10 +9,11 @@ namespace UnityEngine.AssetBundles
 	{
         [SerializeField]
         string m_bundlePath = string.Empty;
-		internal static void ShowWindow()
+        [MenuItem("AssetBundles/Build", priority = 2)]
+        internal static void ShowWindow()
 		{
 			var window = GetWindow<AssetBundleBuildWindow>();
-			window.titleContent = new GUIContent("Asset Bundle Build");
+			window.titleContent = new GUIContent("ABBuild");
 			window.Show();
 		}
 

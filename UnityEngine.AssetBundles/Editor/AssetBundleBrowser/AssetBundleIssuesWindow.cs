@@ -11,12 +11,12 @@ namespace UnityEngine.AssetBundles
 		[SerializeField]
 		TreeViewState m_treeState;
 		IssueTree m_tree;
-		
 
-		internal static void ShowWindow()
+        [MenuItem("AssetBundles/Analyze", priority = 1)]
+        internal static void ShowWindow()
 		{
 			var window = GetWindow<AssetBundleIssuesWindow>();
-			window.titleContent = new GUIContent("Asset Bundle Issues");
+			window.titleContent = new GUIContent("ABAnalyze");
             window.Show();
 		}
 

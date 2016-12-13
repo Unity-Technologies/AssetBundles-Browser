@@ -23,6 +23,60 @@ namespace UnityEngine.AssetBundles
 
             if (m_selecteditems != null)
             {
+                foreach (var a in m_selecteditems)
+                {
+                    int index = 0;
+                    var item = new TreeViewItem(a.name.GetHashCode(), 0, root, a.name);
+                    item.userData = a;
+                    item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
+                    root.AddChild(item);
+                    var refs = new List<AssetBundleState.AssetInfo>();
+                    a.GatherReferences(refs);
+                    if (refs.Count > 0)
+                    {
+                        var refItem = new TreeViewItem(index++, 1, refs.Count + " reference" + (refs.Count == 1 ? "" : "s"));
+                        refItem.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
+                        item.AddChild(refItem);
+
+                        foreach (var d in refs)
+                        {
+                            var di = new TreeViewItem(d.name.GetHashCode(), 2, d.name);
+                            di.icon = AssetDatabase.GetCachedIcon(d.name) as Texture2D;
+                            di.userData = d;
+                            refItem.AddChild(di);
+                        }
+                    }
+
+                    var bundles = new List<AssetBundleState.BundleInfo>();
+                    a.GatherBundles(bundles);
+                    if (bundles.Count > 0)
+                    {
+                        var refItem = new TreeViewItem(index++, 1, bundles.Count + " bundle" + (bundles.Count == 1 ? "" : "s"));
+                        refItem.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
+                        item.AddChild(refItem);
+
+                        foreach (var d in bundles)
+                        {
+                            var di = new TreeViewItem(d.name.GetHashCode(), 2, d.name);
+                            di.icon = AssetDatabase.GetCachedIcon(d.name) as Texture2D;
+                            di.userData = d;
+                            refItem.AddChild(di);
+                        }
+                    }
+
+                }
+            }
+            return root;
+        }
+
+        /*
+        protected override TreeViewItem BuildRoot()
+        {
+            var root = new TreeViewItem(-1, -1);
+            root.children = new List<TreeViewItem>();
+
+            if (m_selecteditems != null)
+            {
 				int index = 0;
 				foreach (var a in m_selecteditems)
 				{
@@ -53,7 +107,7 @@ namespace UnityEngine.AssetBundles
 			}
             return root;
         }
-
+        /*
         void GatherDependencies(AssetBundleState.AssetInfo a, HashSet<string> deps)
         {
             if (a == null)
@@ -95,7 +149,7 @@ namespace UnityEngine.AssetBundles
                 }
             }
         }
-
+        */
         protected override void DoubleClickedItem(int id)
         {
             var assetInfo = TreeViewUtility.FindItem(id, rootItem).userData as AssetBundleState.AssetInfo;
@@ -147,7 +201,7 @@ namespace UnityEngine.AssetBundles
         {
             AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
             if (bi == null)
-                bi = AssetBundleState.CreateEmptyBundle("New Bundle", true);
+                bi = AssetBundleState.CreateEmptyBundle(null);
 
             AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
             m_bundleTree.Refresh();

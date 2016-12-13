@@ -4,116 +4,141 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 
-/*
- * rename bundle
- * delete bundle
- * show bundle hierarchy
- * show asset dependencies
- * show asset references
-*/
 namespace UnityEngine.AssetBundles
 {
     public class AssetBundleState
     {
-        /*
-        public interface IModification
-        {
-            void Apply();
-			string GetDisplayString();
-			IEnumerable<string> GetDisplaySubStrings();
-		}
-*/
         public class BundleInfo
         {
             public string name;
             public List<AssetInfo> assets = new List<AssetInfo>();
+            public int GatherImplicitDependencies(List<AssetInfo> results)
+            {
+                foreach (var a in assets)
+                    GatherDependencies(a, results);
+                return results.Count;
+            }
+
+            private void GatherDependencies(AssetInfo a, List<AssetInfo> results)
+            {
+                List<string> deps = new List<string>(AssetDatabase.GetDependencies(a.name, true));
+                if (AssetDatabase.IsValidFolder(a.name))
+                {
+                    deps.AddRange(System.IO.Directory.GetFiles(a.name).Select(f => f.Replace('\\', '/')));
+                    deps.AddRange(System.IO.Directory.GetDirectories(a.name).Select(f => f.Replace('\\', '/')));
+                }
+
+                foreach (var p in deps)
+                {
+                    var ai = GetAsset(p);
+                    if (ai == null || assets.Contains(ai) || results.Contains(ai))
+                        continue;
+
+                    var b = AssetDatabase.GetImplicitAssetBundleName(ai.name);
+                    if (string.IsNullOrEmpty(b) || b == name)
+                    {
+                        results.Add(ai);
+                        GatherDependencies(ai, results);
+                    }
+                }
+            }
+
             public BundleInfo(string n)
             {
                 name = n;
             }
+
         }
 
         public class AssetInfo
         {
             public string name;                     
             public BundleInfo bundle;
-            public List<string> dependencies = new List<string>();  
-            public List<string> references = new List<string>();
             public AssetInfo(BundleInfo b, string n)
             {
                 bundle = b;
                 name = n;
             }
-        }
-        class AssetBundleChangeListener : AssetPostprocessor
-        {
-            public void OnPostprocessAssetbundleNameChanged(string assetPath, string previousAssetBundleName, string newAssetBundleName)
+
+            internal void GatherReferences(List<AssetInfo> references)
             {
-                if (!ignoreExternalAssetBundleChanges)
+                foreach (var a in AssetDatabase.GetAllAssetPaths())
                 {
-                    var bundleName = GetBundleName(assetPath);
-                    if (!bundles.ContainsKey(bundleName))
-                        CreateEmptyBundle(bundleName, false);
-                    BundleInfo curr = bundles[bundleName];
-                    MoveAssetsToBundle(curr, new AssetInfo[] { GetAsset(assetPath) });
-                    EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+                    foreach (var d in AssetDatabase.GetDependencies(a, false))
+                    {
+                        if (d == name)
+                        {
+                            var ai = GetAsset(a);
+                            if(ai != null)
+                                references.Add(ai);
+                        }
+                    }
                 }
             }
 
-            static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+            internal void GatherBundles(List<BundleInfo> results)
             {
-                foreach (string str in importedAssets)
+                if (bundle.name.Length > 0)
                 {
-                    if (!assets.ContainsKey(str))
+                    results.Add(bundle);
+                }
+                else
+                {
+                    var ib = AssetDatabase.GetImplicitAssetBundleName(name);
+                    if (ib.Length > 0)
                     {
-                        var bundleName = GetBundleName(str);
-                        if (!bundles.ContainsKey(bundleName))
-                            bundles.Add(bundleName, new BundleInfo(bundleName));
-
-                        var ai = new AssetInfo(bundles[bundleName], str);
-                        ai.bundle.assets.Add(ai);
-                        assets.Add(str, ai);
+                        results.Add(GetBundle(ib));
+                    }
+                    else
+                    {
+                        foreach (var b in bundles)
+                        {
+                            if (b.Key.Length == 0)
+                                continue;
+                            bool added = false;
+                            foreach (var a in b.Value.assets)
+                            {
+                                foreach (var d in AssetDatabase.GetDependencies(a.name, true))
+                                {
+                                    if (d == name)
+                                    {
+                                        results.Add(b.Value);
+                                        added = true;
+                                        break;
+                                    }
+                                }
+                                if (added)
+                                    break;
+                            }
+                        }
                     }
                 }
+            }
+        }
+
+        class AssetBundleChangeListener : AssetPostprocessor
+        {
+             static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+            {
+                foreach (string str in importedAssets)
+                     AddAsset(str);
                 foreach (string str in deletedAssets)
-                {
-					AssetInfo ai = null;
-					if (assets.TryGetValue(str, out ai))
-					{
-						ai.bundle.assets.Remove(ai);
-						assets.Remove(str);
-					}
-                }
+                    RemoveAsset(str);
 
                 for (int i = 0; i < movedAssets.Length; i++)
                 {
-                    AssetInfo ai = GetAsset(movedFromAssetPaths[i]);
-                    if (ai == null)
-                        continue;
-                    ai.name = movedAssets[i];
-                    assets.Remove(movedFromAssetPaths[i]);
-                    assets.Add(ai.name, ai);
-
-                    var bundleName = GetBundleName(ai.name);
-                    BundleInfo bi = bundles[bundleName];
-                    if (bi != ai.bundle)
-                    {
-                        ai.bundle.assets.Remove(ai);
-                        ai.bundle = bi;
-                        ai.bundle.assets.Add(ai);
-                    }
-
+                    RemoveAsset(movedFromAssetPaths[i]);
+                    AddAsset(movedAssets[i]);
                 }
+
                 EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+                dirty = true;
             }
         }
 
-        static bool ignoreExternalAssetBundleChanges = false;
-        public const string NoBundleName = "";
+ 
         public static Dictionary<string, BundleInfo> bundles = new Dictionary<string, BundleInfo>();
         public static Dictionary<string, AssetInfo> assets = new Dictionary<string, AssetInfo>();
-     //   public static List<IModification> modifications = new List<IModification>();
-        public static BundleInfo noneBundle = new BundleInfo(AssetBundleState.NoBundleName);
         static bool dirty = false;
 
         internal static AssetInfo GetAsset(string a)
@@ -123,7 +148,17 @@ namespace UnityEngine.AssetBundles
                 return ai;
             return null;
         }
-        
+
+        public static BundleInfo GetBundle(string n)
+        {
+            BundleInfo i;
+            if (bundles.TryGetValue(n, out i))
+                return i;
+            i = new BundleInfo(n);
+            bundles.Add(n, i);
+            return i;
+        }
+
         public static bool CheckAndClearDirtyFlag()
         {
             if (!dirty)
@@ -131,59 +166,51 @@ namespace UnityEngine.AssetBundles
             dirty = false;
             return true;
         }
- 
+
+        public static void RemoveAsset(string p)
+        {
+            AssetInfo ai;
+            if (assets.TryGetValue(p, out ai))
+            {
+                ai.bundle.assets.Remove(ai);
+                assets.Remove(ai.name);
+            }
+        }
+
+        public static AssetInfo AddAsset(string p)
+        {
+            if (!p.StartsWith("Assets/"))
+                return null;
+            string ext = System.IO.Path.GetExtension(p);
+            if (ext == ".dll" || ext == ".cs" || ext == ".meta")
+                return null;
+
+            var b = GetBundle(GetBundleName(p));
+            AssetInfo ai;
+            if (assets.TryGetValue(p, out ai))
+            {
+                ai.bundle = b;
+                b.assets.Remove(ai);
+                b.assets.Add(ai);
+                return ai;
+            }
+            
+            ai = new AssetInfo(b, p);
+            assets.Add(ai.name, ai);
+            b.assets.Add(ai);
+            return ai;
+        }
+
         public static void Rebuild()
         {
-            noneBundle = new BundleInfo(AssetBundleState.NoBundleName);
             AssetDatabase.Refresh(ImportAssetOptions.Default);
             AssetDatabase.RemoveUnusedAssetBundleNames();
-            dirty = true;
             bundles.Clear();
             assets.Clear();
-      //      modifications.Clear();
-
-            //TODO: change this to build the bundles using the asset importer so that folders are caught
             foreach (var asset in AssetDatabase.GetAllAssetPaths())
-            {
-                if (!asset.StartsWith("Assets/"))
-                    continue;
-                string ext = System.IO.Path.GetExtension(asset);
-                if (ext != ".dll" && ext != ".cs" && !asset.StartsWith("ProjectSettings") && !asset.StartsWith("Library"))
-                {
-                    var importer = AssetImporter.GetAtPath(asset);
-                    if (importer != null)
-                    {
-                        var bundle = CreateBundleInfo(importer.assetBundleName);
-                        AssetInfo ai = new AssetInfo(noneBundle, asset);
-                        assets.Add(asset, ai);
-                        bundle.assets.Add(ai);
-                    }
-                }
-            }
-            /*
-            foreach (var b in AssetDatabase.GetAllAssetBundleNames())
-            {
-                BundleInfo bi = new BundleInfo(b);
-                foreach (var a in AssetDatabase.GetAssetPathsFromAssetBundle(b))
-                {
-                    AssetInfo ai = null;
-                    if (!assets.TryGetValue(a, out ai))
-                    {
-                        Debug.Log("Can't find asset " + a + " referenced by bundle " + b);
-                        continue;
-                    }
-                    var importer = AssetImporter.GetAtPath(ai.name);
-                    if (importer.assetBundleName == b)
-                    {
-                        noneBundle.assets.Remove(ai);
-                        bi.assets.Add(ai);
-                        ai.bundle = bi;
-                    }
-                }
-                bundles.Add(b, bi);
-            }
-            bundles.Add(noneBundle.name, noneBundle);
-            */
+                AddAsset(asset);
+            EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+            dirty = true;
         }
 
         static BundleInfo CreateBundleInfo(string n)
@@ -207,141 +234,49 @@ namespace UnityEngine.AssetBundles
 
         internal static void DeleteBundle(BundleInfo bundleToRemove)
         {
+            foreach (var r in bundleToRemove.assets.ToArray())
+                AssetImporter.GetAtPath(r.name).SetAssetBundleNameAndVariant(string.Empty, string.Empty);
             bundles.Remove(bundleToRemove.name);
-            if (bundleToRemove.assets.Count > 0)
-                MoveAssetsToBundle(noneBundle, bundleToRemove.assets);
-            dirty = true;
-        }
-        /*
-        class MoveAssetsToBundleMod : IModification
-        {
-            public BundleInfo bundle;
-            public IEnumerable<AssetInfo> assetsToMove;
-            public MoveAssetsToBundleMod(BundleInfo b, IEnumerable<AssetInfo> a)
-            {
-                assetsToMove = a;
-                bundle = b;
-            }
-            public void Apply()
-            {
-                SetAssetBundle(bundle.name, assetsToMove);
-            }
-			public string GetDisplayString()
-			{
-				return "Move Assets to bundle " + bundle.name;
-			}
-
-			public IEnumerable<string> GetDisplaySubStrings()
-			{
-				return assetsToMove.Select(a => a.name);
-			}
-
-		}*/
-
-		static void SetAssetBundle(string bundleName, IEnumerable<AssetInfo> assetsToMove)
-        {
-            if (bundleName == AssetBundleState.NoBundleName)
-                bundleName = string.Empty;
-            var variantName = string.Empty;
-            int dot = bundleName.LastIndexOf('.');
-            if (dot > 0)
-            {
-                variantName = bundleName.Substring(dot + 1);
-                bundleName = bundleName.Substring(0, dot);
-            }
-            ignoreExternalAssetBundleChanges = true;
-            foreach (var a in assetsToMove)
-            {
-                if (a != null)
-                {
-                    AssetImporter importer = AssetImporter.GetAtPath(a.name);
-                    importer.SetAssetBundleNameAndVariant(bundleName, variantName);
-                }
-            }
-            ignoreExternalAssetBundleChanges = false;
             dirty = true;
         }
 
         public static void MoveAssetsToBundle(BundleInfo bi, IEnumerable<AssetInfo> ais)
         {
+            dirty = true;
             foreach (var a in ais)
             {
+                RemoveAsset(a.name);
                 if (a != null)
-                {
-                    a.bundle.assets.Remove(a);
-                    bi.assets.Add(a);
-                    a.bundle = bi;
-                }
+                    AssetImporter.GetAtPath(a.name).SetAssetBundleNameAndVariant(bi.name, string.Empty);
             }
-            SetAssetBundle(bi.name, ais);
-            /*
-             modifications.Add(new MoveAssetsToBundleMod(bi, ais));
-              */
-
         }
 
-
-        public static string editBundleName = string.Empty;
-        public static BundleInfo CreateEmptyBundle(string name, bool beginEdit)
-        {
-            dirty = true;
-            BundleInfo bi = new BundleInfo(name);
-            bundles.Add(bi.name, bi);
-            if (beginEdit)
-                editBundleName = name;
-            return bi;
-        }
-        /*
-        class RenameBundleMod : IModification
-        {
-            BundleInfo bundle;
-			string previousName;
-            public RenameBundleMod(BundleInfo bi, string prevName)
-            {
-				previousName = prevName;
-				bundle = bi;
-            }
-
-            public void Apply()
-            {
-                SetAssetBundle(bundle.name, bundle.assets);
-            }
-			public string GetDisplayString()
-			{
-				return "Rename bundle '" + previousName + "' to '" + bundle.name + "'";
-			}
-
-			public IEnumerable<string> GetDisplaySubStrings()
-			{
-				return null;
-			}
-		}
-        */
         internal static void RenameBundle(BundleInfo bi, string newName)
         {
-            bundles.Remove(bi.name);
-            bundles.Add(bi.name = newName, bi);
-            SetAssetBundle(bi.name, bi.assets);
-            //modifications.Add(new RenameBundleMod(bi, prevName));
+            dirty = true;
+            if (bi.assets.Count == 0)
+            {
+                bundles.Remove(bi.name);
+                bundles.Add(bi.name = newName, bi);
+            }
+            else
+            {
+                foreach (var a in bi.assets.ToArray())
+                    AssetImporter.GetAtPath(a.name).SetAssetBundleNameAndVariant(newName, string.Empty);
+                bundles.Remove(bi.name);
+            }
         }
 
-        /*
-
-        public static void ApplyChanges()
+        public static string editBundleName = string.Empty;
+        public static BundleInfo CreateEmptyBundle(string name)
         {
             dirty = true;
-            foreach (var m in modifications)
-                m.Apply();
-           
-            ClearChanges();
-        }
+            if (string.IsNullOrEmpty(name))
+                name = editBundleName = "newbundle";
 
-        public static void ClearChanges()
-        {
-            dirty = true;
-            modifications.Clear();
-            Rebuild();
+            BundleInfo bi = new BundleInfo(name);
+            bundles.Add(bi.name, bi);
+            return bi;
         }
-        */
     }
 }

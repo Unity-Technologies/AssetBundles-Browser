@@ -15,12 +15,17 @@ namespace UnityEngine.AssetBundles
         public Editor editor;
         BundleTree m_tree;
         static Dictionary<string, AssetBundleCreateRequest> bundles = new Dictionary<string, AssetBundleCreateRequest>();
+        [MenuItem("AssetBundles/Inspect", priority = 3)]
+        static void ShowWindow()
+        {
+            GetWindow<AssetBundleSummaryWindow>().titleContent = new GUIContent("ABInspect");
+        }
+        
 
         internal static void ShowWindow(string bundlePath)
 		{
             var window = GetWindow<AssetBundleSummaryWindow>();
             window.Init(bundlePath);
-            window.Show();
 		}
         
         public void OnDestroy()
@@ -46,9 +51,7 @@ namespace UnityEngine.AssetBundles
         {
             OnDestroy();
             m_bundlePath = bundlePath;
-            if (m_treeState == null)
-                m_treeState = new TreeViewState();
-            titleContent = new GUIContent("Asset Bundle Summary");
+            titleContent = new GUIContent("ABInspector");
         }
 
         class BundleTree : TreeView
@@ -158,13 +161,17 @@ namespace UnityEngine.AssetBundles
             protected override TreeViewItem BuildRoot()
             {
                 var root = new TreeViewItem(-1, -1);
-                foreach (var f in Directory.GetFiles(m_bundlePath))
+                root.children = new List<TreeViewItem>();
+                if (!string.IsNullOrEmpty(m_bundlePath))
                 {
-                    if (Path.GetExtension(f) == ".manifest")
+                    foreach (var f in Directory.GetFiles(m_bundlePath))
                     {
-                        var bundleFile = f.Substring(0, f.LastIndexOf('.'));
-                        if (File.Exists(bundleFile))
-                            root.AddChild(new Item(bundleFile));
+                        if (Path.GetExtension(f) == ".manifest")
+                        {
+                            var bundleFile = f.Substring(0, f.LastIndexOf('.'));
+                            if (File.Exists(bundleFile))
+                                root.AddChild(new Item(bundleFile));
+                        }
                     }
                 }
                 return root;
@@ -191,18 +198,31 @@ namespace UnityEngine.AssetBundles
             }
         }
 
+       // float borderSize = 4;
         void OnGUI()
 		{
+            GUILayout.BeginHorizontal();
+            var f = GUILayout.TextField(m_bundlePath, GUILayout.ExpandWidth(true));
+            if (GUILayout.Button("Browse"))
+                f = EditorUtility.OpenFolderPanel("Bundle Folder", f, string.Empty);
+            if (f != m_bundlePath)
+                Init(f);
+            GUILayout.EndHorizontal();
+
+            if (m_treeState == null)
+                m_treeState = new TreeViewState();
+
             if (m_tree == null)
             {
                 m_tree = new BundleTree(this, m_treeState, m_bundlePath);
                 m_tree.Reload();
             }
-            HandleHorizontalResize();
-            m_tree.OnGUI(new Rect(0, 0, m_horizontalSplitterRect.x, position.height));
+            float h = 21 + splitterWidth;
+            HandleHorizontalResize(h);
+            m_tree.OnGUI(new Rect(splitterWidth, h, m_horizontalSplitterRect.x - splitterWidth * 2, position.height - (h + splitterWidth)));
             if (editor != null)
             {
-                GUILayout.BeginArea(new Rect(m_horizontalSplitterRect.x + splitterWidth, 0, position.width - (m_horizontalSplitterRect.x + splitterWidth), position.height));
+                GUILayout.BeginArea(new Rect(m_horizontalSplitterRect.x + splitterWidth, h, position.width - (m_horizontalSplitterRect.x + splitterWidth), position.height - (h + splitterWidth)));
                 editor.Repaint();
                 editor.OnInspectorGUI();
                 GUILayout.EndArea();
@@ -217,12 +237,13 @@ namespace UnityEngine.AssetBundles
         Rect m_horizontalSplitterRect;
         const float splitterWidth = 3;
         bool m_resizingHorizontalSplitter = false;
-        private void HandleHorizontalResize()
+        private void HandleHorizontalResize(float h)
         {
             m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - splitterWidth) * .9f);
-            m_horizontalSplitterRect.height = position.height;
+            m_horizontalSplitterRect.y = h;
+            m_horizontalSplitterRect.height = position.height - (h + splitterWidth);
 
-            GUI.DrawTexture(m_horizontalSplitterRect, EditorGUIUtility.whiteTexture);
+           // GUI.DrawTexture(m_horizontalSplitterRect, EditorGUIUtility.whiteTexture);
             EditorGUIUtility.AddCursorRect(m_horizontalSplitterRect, MouseCursor.ResizeHorizontal);
             if (Event.current.type == EventType.mouseDown && m_horizontalSplitterRect.Contains(Event.current.mousePosition))
                 m_resizingHorizontalSplitter = true;

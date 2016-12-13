@@ -26,7 +26,7 @@ namespace UnityEngine.AssetBundles
 
         protected override bool CanRename(TreeViewItem item)
         {
-            return item.displayName != AssetBundleState.NoBundleName;
+            return item.displayName.Length > 0;
         }
 
         protected override void RenameEnded(RenameEndedArgs args)
@@ -51,7 +51,7 @@ namespace UnityEngine.AssetBundles
 
             foreach (var b in AssetBundleState.bundles)
             {
-                if (b.Key == AssetBundleState.NoBundleName)
+                if (b.Key.Length == 0)
                     continue;
                 var item = new TreeViewItem(b.Value.name.GetHashCode(), 0, root, b.Key);
                 item.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
@@ -83,19 +83,14 @@ namespace UnityEngine.AssetBundles
             GenericMenu menu = new GenericMenu();
             var i = TreeViewUtility.FindItem(id, rootItem);
             if (i != null)
-            {
                 menu.AddItem(new GUIContent("Delete " + i.displayName), false, DeleteBundle, i.userData);
-            }
-            else
-            {
-                menu.AddItem(new GUIContent("New Bundle"), false, DeleteBundle, null);
-            }
+
             menu.ShowAsContext();
         }
 
         void NewBundle(object o)
         {
-            var bi = AssetBundleState.CreateEmptyBundle("New Bundle", true);
+            var bi = AssetBundleState.CreateEmptyBundle(null);
             Reload();
         }
 
