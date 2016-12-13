@@ -15,8 +15,9 @@ namespace UnityEngine.AssetBundles
 		{
             AssetBundleState.Rebuild();
             m_assetList = alt;
-		//	Reload();
-		}
+            showBorder = true;
+            //	Reload();
+        }
 
         protected override bool CanMultiSelect(TreeViewItem item)
         {
@@ -66,7 +67,15 @@ namespace UnityEngine.AssetBundles
 
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
-            m_assetList.SetSelectedBundle(selectedIds.Count == 0 ? null : TreeViewUtility.FindItem(selectedIds[0], rootItem).userData as AssetBundleState.BundleInfo);
+            if (selectedIds.Count == 0)
+            {
+                m_assetList.SetSelectedBundle(null);
+            }
+            else
+            {
+                var item = TreeViewUtility.FindItem(selectedIds[0], rootItem);
+                m_assetList.SetSelectedBundle(item == null ? null : item.userData as AssetBundleState.BundleInfo);
+            }
         }
 
         protected override void ContextClickedItem(int id)
@@ -97,12 +106,15 @@ namespace UnityEngine.AssetBundles
 
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
+            if (args.dragAndDropPosition != DragAndDropPosition.UponItem)
+                return DragAndDropVisualMode.Rejected;
+
             if (args.performDrop)
             {
                 var targetBundle = args.parentItem.userData as AssetBundleState.BundleInfo;
                 if (targetBundle != null)
                 {
-                    AssetBundleState.MoveAssetsToBundle(targetBundle, DragAndDrop.paths.Select(a => AssetBundleState.assets[a]));
+                    AssetBundleState.MoveAssetsToBundle(targetBundle, DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)));
                     SelectionChanged(GetSelection());
                 }
             }

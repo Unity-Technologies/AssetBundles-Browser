@@ -10,6 +10,8 @@ namespace UnityEngine.AssetBundles
 {
     internal class SelectionListTree : TreeView
     {
+        public AssetBundleTree m_bundleTree;
+      //  public AssetListTree m_listTree;
         public SelectionListTree(TreeViewState state) : base(state)
         {
             showBorder = true;
@@ -41,7 +43,7 @@ namespace UnityEngine.AssetBundles
 							{
 								var di = new TreeViewItem(d.GetHashCode(), 2, d);
 								di.icon = AssetDatabase.GetCachedIcon(d) as Texture2D;
-								di.userData = AssetBundleState.assets[d];
+								di.userData = AssetBundleState.GetAsset(d);
 								refItem.AddChild(di);
 							}
 						}
@@ -56,13 +58,41 @@ namespace UnityEngine.AssetBundles
         {
             if (a == null)
                 return;
+
+            string currentBundle = AssetDatabase.GetImplicitAssetBundleName(a.name);
+
             foreach (var d in AssetDatabase.GetDependencies(a.name, true))
-                deps.Add(d);
+            {
+                if (d != a.name)
+                {
+                    var b = AssetDatabase.GetImplicitAssetBundleName(d);
+                    if(string.IsNullOrEmpty(b) || b == currentBundle)
+                        deps.Add(d);
+                }
+            }
+
             if (AssetDatabase.IsValidFolder(a.name))
             {
+                foreach (var f in System.IO.Directory.GetFiles(a.name))
+                {
+                    var ai = AssetBundleState.GetAsset(f.Replace('\\', '/'));
+                    if (ai != null)
+                    {
+                        var b = AssetDatabase.GetImplicitAssetBundleName(ai.name);
+                        if (string.IsNullOrEmpty(b) || b == currentBundle)
+                        {
+                            deps.Add(ai.name);
+                            GatherDependencies(ai, deps);
+                        }
+                    }
+                }
+
                 foreach (var f in AssetDatabase.GetSubFolders(a.name))
-                    GatherDependencies(AssetBundleState.GetAsset(f), deps);
-                //gather items in folder
+                {
+                    var b = AssetDatabase.GetImplicitAssetBundleName(f);
+                    if (string.IsNullOrEmpty(b) || b == currentBundle)
+                        GatherDependencies(AssetBundleState.GetAsset(f), deps);
+                }
             }
         }
 
@@ -98,6 +128,29 @@ namespace UnityEngine.AssetBundles
             DragAndDrop.PrepareStartDrag();
             DragAndDrop.paths = GetRowsFromIDs(args.draggedItemIDs).Select(a => a.userData == null ? string.Empty : (a.userData as AssetBundleState.AssetInfo).name).ToArray();
             DragAndDrop.StartDrag("SelectionListTree");
+        }
+
+        protected override void ContextClickedItem(int id)
+        {
+            var i = TreeViewUtility.FindItem(id, rootItem);
+            if (i != null)
+            {
+                GenericMenu menu = new GenericMenu();
+                foreach (var b in AssetBundleState.bundles)
+                    menu.AddItem(new GUIContent("Move to bundle/" + b.Key), false, MoveToBundle, b.Value);
+                menu.AddItem(new GUIContent("Move to bundle/<Create New Bundle...>"), false, MoveToBundle, null);
+                menu.ShowAsContext();
+            }
+        }
+
+        void MoveToBundle(object target)
+        {
+            AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
+            if (bi == null)
+                bi = AssetBundleState.CreateEmptyBundle("New Bundle", true);
+
+            AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
+            m_bundleTree.Refresh();
         }
 
     }

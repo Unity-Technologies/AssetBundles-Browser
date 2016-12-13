@@ -16,8 +16,10 @@ namespace UnityEngine.AssetBundles
 		public AssetListTree(TreeViewState state, SelectionListTree selList) : base(state)
 		{
             m_selectionList = selList;
+            showBorder = true;
+            showAlternatingRowBackgrounds = true;
             //Reload();
-		}
+        }
 
         protected override TreeViewItem BuildRoot()
         {

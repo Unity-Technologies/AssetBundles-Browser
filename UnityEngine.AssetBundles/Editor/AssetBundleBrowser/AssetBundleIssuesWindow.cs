@@ -17,25 +17,21 @@ namespace UnityEngine.AssetBundles
 		{
 			var window = GetWindow<AssetBundleIssuesWindow>();
 			window.titleContent = new GUIContent("Asset Bundle Issues");
-			window.Show();
+            window.Show();
 		}
 
 		class IssueTree : TreeView
 		{
 			Dictionary<string, List<Issue>> issues;
-			public IssueTree(TreeViewState s) : base(s)
+			public IssueTree(TreeViewState s, Dictionary<string, List<Issue>> i) : base(s)
 			{
-			}
-
-			public void SetIssues(Dictionary<string, List<Issue>> i)
-			{
-				issues = i;
-				Reload();
+                issues = i;
 			}
 
 			protected override TreeViewItem BuildRoot()
 			{
 				var root = new TreeViewItem(-1, -1);
+                root.children = new List<TreeViewItem>();
 				foreach (var c in issues)
 				{
 					var cat = new TreeViewItem(c.Key.GetHashCode(), 0, root, c.Key);
@@ -55,6 +51,8 @@ namespace UnityEngine.AssetBundles
 		/*
 		 * mismatched variant bundles
 		 * duplicated assets
+         * scenes and assets mixed
+         * 
 		*/
 
 		public class AssetDependencyData
@@ -185,18 +183,16 @@ namespace UnityEngine.AssetBundles
 
 		void OnGUI()
 		{
-			if (m_treeState == null)
-			{
+            if (m_treeState == null)
 				m_treeState = new TreeViewState();
-				m_tree = new IssueTree(m_treeState);
-				m_tree.SetIssues(FindIssues());
-			}
+            if(m_tree == null)
+				(m_tree = new IssueTree(m_treeState, FindIssues())).Reload();
 			GUILayout.BeginVertical();
 			m_tree.OnGUI(new Rect(0, 0, position.width, position.height));
 			GUILayout.FlexibleSpace();
 			GUILayout.BeginHorizontal();
-			if (GUILayout.Button("Refresh"))
-				m_tree.SetIssues(FindIssues());
+            if (GUILayout.Button("Refresh"))
+                m_tree = null;
 			GUILayout.EndHorizontal();
 			GUILayout.EndVertical();
 		}

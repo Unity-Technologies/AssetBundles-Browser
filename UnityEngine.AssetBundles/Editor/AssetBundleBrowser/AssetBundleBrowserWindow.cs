@@ -25,19 +25,12 @@ namespace UnityEngine.AssetBundles
         Rect m_horizontalSplitterRect, m_verticalSplitterRect;
         const float toolbarHeight = 25;
         const float splitterWidth = 3;
-        public static List<AssetBundleBrowserWindow> s_openWindows = new List<AssetBundleBrowserWindow>();
 		[MenuItem("Window/Asset Bundle Browser")]
 		static void ShowWindow()
 		{
 			var window = GetWindow<AssetBundleBrowserWindow>();
 			window.titleContent = new GUIContent("AssetBundles");
 			window.Show();
-			s_openWindows.Add(window);
-		}
-
-        void OnDestroy()
-        {
-            s_openWindows.Remove(this);
         }
 
         void OnEnable()
@@ -49,10 +42,12 @@ namespace UnityEngine.AssetBundles
 		void OnGUI()
         {
             GUILayout.BeginHorizontal();
+            if (GUILayout.Button("RESET"))
+                ResetAllBundles();
 			if (GUILayout.Button("Detect Issues", GUILayout.Height(toolbarHeight - 5)))
 				AssetBundleIssuesWindow.ShowWindow();
 
-			GUI.enabled = AssetBundleState.modifications.Count > 0;
+		/*	GUI.enabled = AssetBundleState.modifications.Count > 0;
 			if (GUILayout.Button("Revert Changes", GUILayout.Height(toolbarHeight - 5)))
 			{
 				if(EditorUtility.DisplayDialog("Revert Changes", "Are you sure you want to revert all asset bundle changes?", "Yes", "No"))
@@ -62,7 +57,7 @@ namespace UnityEngine.AssetBundles
             if (GUILayout.Button("Apply Changes", GUILayout.Height(toolbarHeight - 5)))
                 AssetBundleChangesWindow.ShowWindow();
             GUI.enabled = true;
-
+            */
             if (GUILayout.Button("Build Bundles", GUILayout.Height(toolbarHeight - 5)))
                 AssetBundleBuildWindow.ShowWindow();
 
@@ -85,7 +80,9 @@ namespace UnityEngine.AssetBundles
 					m_bundleTreeState = new TreeViewState();
 				m_bundleTree = new AssetBundleTree(m_bundleTreeState, m_assetList);
                 m_bundleTree.Reload();
-			}
+                m_selectionList.m_bundleTree = m_bundleTree;
+
+            }
             if (AssetBundleState.CheckAndClearDirtyFlag())
                 m_bundleTree.Reload();
             HandleHorizontalResize();
@@ -94,15 +91,30 @@ namespace UnityEngine.AssetBundles
             if (EditorGUI.Button(new Rect(0, toolbarHeight, m_horizontalSplitterRect.x, toolbarHeight), new GUIContent("New Bundle")))
                 AssetBundleState.CreateEmptyBundle("New Bundle", true);
             
-            m_bundleTree.OnGUI(new Rect(0, toolbarHeight * 2, m_horizontalSplitterRect.x, position.height - toolbarHeight * 2));
+            m_bundleTree.OnGUI(new Rect(0, toolbarHeight * 2 + splitterWidth, m_horizontalSplitterRect.x, position.height - (toolbarHeight * 2 + splitterWidth * 2)));
             float panelLeft = m_horizontalSplitterRect.x + splitterWidth;
-            float panelWidth = (position.width - m_horizontalSplitterRect.x) - splitterWidth;
+            float panelWidth = (position.width - m_horizontalSplitterRect.x) - splitterWidth * 2;
             float panelHeight = m_verticalSplitterRect.y - toolbarHeight;
             m_assetList.OnGUI(new Rect(panelLeft, toolbarHeight, panelWidth, panelHeight));
-            m_selectionList.OnGUI(new Rect(panelLeft, m_verticalSplitterRect.y + splitterWidth, panelWidth, (position.height - m_verticalSplitterRect.y) - splitterWidth));
+            m_selectionList.OnGUI(new Rect(panelLeft, m_verticalSplitterRect.y + splitterWidth, panelWidth, (position.height - m_verticalSplitterRect.y) - splitterWidth * 2));
 
             if (m_resizingHorizontalSplitter || m_resizingVerticalSplitter)
                 Repaint();
+        }
+
+        private void ResetAllBundles()
+        {
+            foreach (var a in AssetDatabase.GetAllAssetPaths())
+            {
+                var i = AssetImporter.GetAtPath(a);
+                if (i != null && !string.IsNullOrEmpty(i.assetBundleName))
+                    i.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
+            }
+
+            foreach (var b in AssetDatabase.GetAllAssetBundleNames())
+                AssetDatabase.RemoveAssetBundleName(b, true);
+            AssetDatabase.RemoveUnusedAssetBundleNames();
+            m_bundleTree = null;
         }
 
         internal void Refresh()
@@ -116,7 +128,6 @@ namespace UnityEngine.AssetBundles
             m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - splitterWidth) * .9f);
             m_horizontalSplitterRect.height = position.height - toolbarHeight;
 
-            GUI.DrawTexture(m_horizontalSplitterRect, EditorGUIUtility.whiteTexture);
             EditorGUIUtility.AddCursorRect(m_horizontalSplitterRect, MouseCursor.ResizeHorizontal);
             if (Event.current.type == EventType.mouseDown && m_horizontalSplitterRect.Contains(Event.current.mousePosition))
                 m_resizingHorizontalSplitter = true;
@@ -134,7 +145,6 @@ namespace UnityEngine.AssetBundles
             m_verticalSplitterRect.y = Mathf.Clamp(m_verticalSplitterRect.y, (position.height - toolbarHeight) * .1f + toolbarHeight, (position.height - splitterWidth) * .9f);
             m_verticalSplitterRect.width = position.width - m_horizontalSplitterRect.x;
 
-            GUI.DrawTexture(m_verticalSplitterRect, EditorGUIUtility.whiteTexture);
             EditorGUIUtility.AddCursorRect(m_verticalSplitterRect, MouseCursor.ResizeVertical);
             if (Event.current.type == EventType.mouseDown && m_verticalSplitterRect.Contains(Event.current.mousePosition))
                 m_resizingVerticalSplitter = true;

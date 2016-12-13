@@ -29,7 +29,7 @@ namespace UnityEngine.AssetBundles
 			{
                 if (string.IsNullOrEmpty(m_bundlePath))
                     BrowseForFolder();
-                AssetBundleState.ApplyChanges();
+              //  AssetBundleState.ApplyChanges();
                 BuildPipeline.BuildAssetBundles(m_bundlePath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
                 AssetBundleSummaryWindow.ShowWindow(m_bundlePath);
             }

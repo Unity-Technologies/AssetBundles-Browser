@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace UnityEngine.AssetBundles
 {
+    /*
 	internal class AssetBundleChangesWindow : EditorWindow
 	{
 		[SerializeField]
@@ -64,5 +65,5 @@ namespace UnityEngine.AssetBundles
 			GUILayout.EndHorizontal();
 			GUILayout.EndVertical();
 		}
-	}
+	}*/
 }

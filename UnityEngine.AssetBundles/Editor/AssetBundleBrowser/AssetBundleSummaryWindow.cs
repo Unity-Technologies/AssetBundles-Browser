@@ -59,6 +59,7 @@ namespace UnityEngine.AssetBundles
             {
                 window = w;
                 m_bundlePath = p;
+                showBorder = true;
             }
 
             public bool Update()
