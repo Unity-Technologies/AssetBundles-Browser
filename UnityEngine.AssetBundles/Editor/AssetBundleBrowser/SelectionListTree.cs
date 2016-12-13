@@ -23,9 +23,9 @@ namespace UnityEngine.AssetBundles
 
             if (m_selecteditems != null)
             {
+                int index = 0;
                 foreach (var a in m_selecteditems)
                 {
-                    int index = 0;
                     var item = new TreeViewItem(a.name.GetHashCode(), 0, root, a.name);
                     item.userData = a;
                     item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
