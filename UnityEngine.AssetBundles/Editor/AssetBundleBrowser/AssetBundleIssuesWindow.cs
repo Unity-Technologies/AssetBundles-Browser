@@ -11,6 +11,9 @@ namespace UnityEngine.AssetBundles
 		[SerializeField]
 		TreeViewState m_treeState;
 		IssueTree m_tree;
+        const string kMismatchedVariant = "Mismatched Variant Bundles";
+        const string kMixedScene = "Mixed Scene Bundles";
+        const string kDuplicateAssets = "Duplicated Assets";
 
         [MenuItem("AssetBundles/Analyze", priority = 1)]
         internal static void ShowWindow()
@@ -46,16 +49,27 @@ namespace UnityEngine.AssetBundles
 				}
 				return root;
 			}
-		}
 
-		/*
+            protected override void RowGUI(RowGUIArgs args)
+            {
+                Color oldColor = GUI.color;
+                if (args.item != null && args.item.depth == 0)
+                    GUI.color = (args.item.children != null && args.item.children.Count > 0) ? Color.red : Color.green;
+                base.RowGUI(args);
+                GUI.color = oldColor;
+
+            }
+
+        }
+
+        /*
 		 * mismatched variant bundles
 		 * duplicated assets
          * scenes and assets mixed
          * 
 		*/
 
-		public class AssetDependencyData
+        public class AssetDependencyData
 		{
 			public BundleInfo[] bundles;
 			public AssetInfo[] assets;
@@ -148,6 +162,10 @@ namespace UnityEngine.AssetBundles
 			List<int> assetsWithDuplicates = new List<int>();
 			AssetDependencyData add = new AssetDependencyData();
             var issues = new Dictionary<string, List<Issue>>();
+            issues.Add(kDuplicateAssets, new List<Issue>());
+            issues.Add(kMismatchedVariant, new List<Issue>());
+            issues.Add(kMixedScene, new List<Issue>());
+
             for (int bi = 0; bi < add.bundles.Length; bi++)
 			{
                 string sceneAssetName = null;
@@ -185,10 +203,7 @@ namespace UnityEngine.AssetBundles
                 {
                     var issue = new Issue(add.bundles[bi].name);
                     issue.subItems.Add(sceneAssetName);
-
-                    if (!issues.ContainsKey("Mixed Scene Bundles"))
-                        issues.Add("Mixed Scene Bundles", new List<Issue>());
-                    issues["Mixed Scene Bundles"].Add(issue);
+                    issues[kMixedScene].Add(issue);
                 }
             }
 
@@ -207,10 +222,8 @@ namespace UnityEngine.AssetBundles
                             continue;
                         if (!CompareVariantAssetLists(add, add.bundles[bi].assets, add.bundles[bi2].assets))
                         {
-                            if (!issues.ContainsKey("Mismatched Variant Bundle"))
-                                issues.Add("Mismatched Variant Bundle", new List<Issue>());
                             Issue issue = null;
-                            foreach (var i in issues["Mismatched Variant Bundle"])
+                            foreach (var i in issues[kMismatchedVariant])
                             {
                                 if (i.name == baseName)
                                 {
@@ -222,7 +235,7 @@ namespace UnityEngine.AssetBundles
                             if (issue == null)
                             {
                                 issue = new Issue(baseName);
-                                issues["Mismatched Variant Bundle"].Add(issue);
+                                issues[kMismatchedVariant].Add(issue);
                             }
 
                             if (!issue.subItems.Contains(add.bundles[bi].name))
@@ -245,9 +258,7 @@ namespace UnityEngine.AssetBundles
 				foreach (var bi in add.assets[ai].bundles)
 					issue.subItems.Add(add.bundles[bi].name);
 
-				if (!issues.ContainsKey("Duplicated Assets"))
-					issues.Add("Duplicated Assets", new List<Issue>());
-				issues["Duplicated Assets"].Add(issue);
+				issues[kDuplicateAssets].Add(issue);
 			}
 			return issues;
 		}
@@ -275,7 +286,6 @@ namespace UnityEngine.AssetBundles
             }
             return true;
         }
-
 
         void OnGUI()
 		{
