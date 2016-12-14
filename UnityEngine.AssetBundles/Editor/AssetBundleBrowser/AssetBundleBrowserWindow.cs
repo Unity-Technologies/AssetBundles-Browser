@@ -36,17 +36,20 @@ namespace UnityEngine.AssetBundles
         [MenuItem("AssetBundles/Reset", priority = 10)]
         static void ResetAllBundles()
         {
-            foreach (var a in AssetDatabase.GetAllAssetPaths())
+            if (EditorUtility.DisplayDialog("Asset Bundle Reset Confirmation", "Do you want to reset ALL AssetBundle data for this project?", "Yes", "No"))
             {
-                var i = AssetImporter.GetAtPath(a);
-                if (i != null && !string.IsNullOrEmpty(i.assetBundleName))
-                    i.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
-            }
+                foreach (var a in AssetDatabase.GetAllAssetPaths())
+                {
+                    var i = AssetImporter.GetAtPath(a);
+                    if (i != null && !string.IsNullOrEmpty(i.assetBundleName))
+                        i.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
+                }
 
-            foreach (var b in AssetDatabase.GetAllAssetBundleNames())
-                AssetDatabase.RemoveAssetBundleName(b, true);
-            AssetDatabase.RemoveUnusedAssetBundleNames();
-            AssetBundleState.Rebuild();
+                foreach (var b in AssetDatabase.GetAllAssetBundleNames())
+                    AssetDatabase.RemoveAssetBundleName(b, true);
+                AssetDatabase.RemoveUnusedAssetBundleNames();
+                AssetBundleState.Rebuild();
+            }
         }
 
 
@@ -56,30 +59,20 @@ namespace UnityEngine.AssetBundles
             m_verticalSplitterRect = new Rect(0, position.width / 2, (this.position.width - m_horizontalSplitterRect.width) - splitterWidth, splitterWidth);
         }
 
-		void OnGUI()
+        private void Update()
         {
-         //   GUILayout.BeginHorizontal();
-    //        if (GUILayout.Button("RESET"))
-    //            ResetAllBundles();
-	//		if (GUILayout.Button("Detect Issues", GUILayout.Height(toolbarHeight - 5)))
-	//			AssetBundleIssuesWindow.ShowWindow();
+            if (AssetBundleState.CheckAndClearDirtyFlag())
+            {
+                if (m_bundleTree != null)
+                {
+                    m_bundleTree.Refresh();
+                    Repaint();
+                }
+            }
+        }
 
-		/*	GUI.enabled = AssetBundleState.modifications.Count > 0;
-			if (GUILayout.Button("Revert Changes", GUILayout.Height(toolbarHeight - 5)))
-			{
-				if(EditorUtility.DisplayDialog("Revert Changes", "Are you sure you want to revert all asset bundle changes?", "Yes", "No"))
-					AssetBundleState.ClearChanges();
-			}
-
-            if (GUILayout.Button("Apply Changes", GUILayout.Height(toolbarHeight - 5)))
-                AssetBundleChangesWindow.ShowWindow();
-            GUI.enabled = true;
-            */
-      //      if (GUILayout.Button("Build Bundles", GUILayout.Height(toolbarHeight - 5)))
-     //           AssetBundleBuildWindow.ShowWindow();
-
-	//		GUILayout.EndHorizontal();
-
+        void OnGUI()
+        {
             if (m_bundleTree == null)
 			{
                 if (m_selectionTreeState == null)
@@ -96,10 +89,10 @@ namespace UnityEngine.AssetBundles
                 if (m_bundleTreeState == null)
 					m_bundleTreeState = new TreeViewState();
 				m_bundleTree = new AssetBundleTree(m_bundleTreeState, m_assetList);
+                m_bundleTree.Refresh();
+                m_resizingHorizontalSplitter = true; //orce a repaint
             }
 
-            if (AssetBundleState.CheckAndClearDirtyFlag())
-                m_bundleTree.Reload();
             HandleHorizontalResize();
             HandleVerticalResize();
 
@@ -115,13 +108,6 @@ namespace UnityEngine.AssetBundles
 
             if (m_resizingHorizontalSplitter || m_resizingVerticalSplitter)
                 Repaint();
-        }
-
-
-        internal void Refresh()
-        {
-			if(m_bundleTree != null)
-				m_bundleTree.Refresh();
         }
 
         private void HandleHorizontalResize()

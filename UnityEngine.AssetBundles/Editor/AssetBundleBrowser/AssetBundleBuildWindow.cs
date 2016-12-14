@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
-using System;
+using System.IO;
 
 namespace UnityEngine.AssetBundles
 {
@@ -9,6 +9,9 @@ namespace UnityEngine.AssetBundles
 	{
         [SerializeField]
         string m_bundlePath = string.Empty;
+        bool m_ForceRebuild = false;
+        BuildTarget buildTarget = BuildTarget.StandaloneWindows;
+
         [MenuItem("AssetBundles/Build", priority = 2)]
         internal static void ShowWindow()
 		{
@@ -17,6 +20,16 @@ namespace UnityEngine.AssetBundles
 			window.Show();
 		}
 
+        bool showSummary = false;
+        private void Update()
+        {
+            if (showSummary)
+            {
+                AssetBundleSummaryWindow.ShowWindow(m_bundlePath);
+                showSummary = false;
+            }
+        }
+
         void OnGUI()
 		{
 			GUILayout.BeginVertical();
@@ -24,15 +37,33 @@ namespace UnityEngine.AssetBundles
             m_bundlePath = GUILayout.TextField(m_bundlePath);
             if (GUILayout.Button("Browse"))
                 BrowseForFolder();
-
             GUILayout.EndHorizontal();
+
+            m_ForceRebuild = GUILayout.Toggle(m_ForceRebuild, "Force Rebuild");
+
 			if (GUILayout.Button("Build"))
 			{
                 if (string.IsNullOrEmpty(m_bundlePath))
                     BrowseForFolder();
-              //  AssetBundleState.ApplyChanges();
-                BuildPipeline.BuildAssetBundles(m_bundlePath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
-                AssetBundleSummaryWindow.ShowWindow(m_bundlePath);
+                
+                if (!Directory.Exists(m_bundlePath))
+                {
+                    Debug.Log("Invalid bundle path " + m_bundlePath);
+                }
+                else
+                {
+                    if (m_ForceRebuild)
+                    {
+                        if (EditorUtility.DisplayDialog("File delete confirmation", "Do you want to delete all files in the directory " + m_bundlePath + "?", "Yes", "No"))
+                        {
+                            Directory.Delete(m_bundlePath, true);
+                            Directory.CreateDirectory(m_bundlePath);
+                        }
+                    }
+                    BuildPipeline.BuildAssetBundles(m_bundlePath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
+                    AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                    showSummary = true;
+                }
             }
             GUILayout.EndVertical();
 		}

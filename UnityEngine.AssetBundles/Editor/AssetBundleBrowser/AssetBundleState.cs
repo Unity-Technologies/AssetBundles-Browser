@@ -133,7 +133,7 @@ namespace UnityEngine.AssetBundles
                     AddAsset(movedAssets[i]);
                 }
 
-                EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+                //EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
                 dirty = true;
             }
         }
@@ -220,7 +220,7 @@ namespace UnityEngine.AssetBundles
             assets.Clear();
             foreach (var asset in AssetDatabase.GetAllAssetPaths())
                 AddAsset(asset);
-            EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+            //EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
             dirty = true;
         }
 
@@ -324,7 +324,7 @@ namespace UnityEngine.AssetBundles
                 bi.bundle = CreateEmptyBundle(null);
 
             MoveAssetsToBundle(bi.bundle, bi.paths);
-            EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+            //EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
             dirty = true;
         }
 

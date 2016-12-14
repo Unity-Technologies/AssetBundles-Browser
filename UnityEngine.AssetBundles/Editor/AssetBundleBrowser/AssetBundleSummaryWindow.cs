@@ -8,8 +8,7 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetBundleSummaryWindow : EditorWindow
 	{
-        [SerializeField]
-        TreeViewState m_treeState;
+       // TreeViewState m_treeState;
         [SerializeField]
         string m_bundlePath = string.Empty;
         public Editor editor;
@@ -20,48 +19,30 @@ namespace UnityEngine.AssetBundles
         {
             GetWindow<AssetBundleSummaryWindow>().titleContent = new GUIContent("ABInspect");
         }
-        
 
         internal static void ShowWindow(string bundlePath)
 		{
             var window = GetWindow<AssetBundleSummaryWindow>();
+            window.titleContent = new GUIContent("ABInspect");
             window.Init(bundlePath);
 		}
-        
-        public void OnDestroy()
+
+        public AssetBundleSummaryWindow()
         {
-            editor = null;
-            m_tree = null;
-            List<string> toRemove = new List<string>();
-            foreach (var a in bundles)
-            {
-                Debug.Log("Unloading bundle " + a.Key);
-                if (a.Value.assetBundle != null)
-                {
-                    a.Value.assetBundle.Unload(true);
-                    toRemove.Add(a.Key);
-                }
-            }
-            foreach (var r in toRemove)
-                bundles.Remove(r);
+            Debug.Log("AssetBundleSummaryWindow created");
         }
-        
 
         private void Init(string bundlePath)
         {
-            OnDestroy();
             m_bundlePath = bundlePath;
-            titleContent = new GUIContent("ABInspector");
         }
 
         class BundleTree : TreeView
         {
-            string m_bundlePath = string.Empty;
             AssetBundleSummaryWindow window;
-            public BundleTree(AssetBundleSummaryWindow w, TreeViewState s, string p) : base(s)
+            public BundleTree(AssetBundleSummaryWindow w, TreeViewState s) : base(s)
             {
                 window = w;
-                m_bundlePath = p;
                 showBorder = true;
             }
 
@@ -83,7 +64,7 @@ namespace UnityEngine.AssetBundles
             class Item : TreeViewItem
             {
                 string bundlePath;
-                AssetBundleCreateRequest req;
+                AssetBundleCreateRequest req { get { return bundles[bundlePath]; } }
                 int prevPercent = -1;
                 bool loading = true;
                 public Editor editor
@@ -96,45 +77,15 @@ namespace UnityEngine.AssetBundles
 
                 public Item(string path) : base(path.GetHashCode(), 0, Path.GetFileName(path))
                 {
-                    bundlePath = path.Replace('\\', '/');
+                    bundlePath = path;
                 }
 
                 public bool Update()
                 {
                     if (!loading)
                         return false;
-
-                    if (req == null)
-                    {
-                        loading = true;
-                        AssetBundleCreateRequest r;
-                        if (bundles.TryGetValue(bundlePath, out r))
-                        {
-                            Debug.Log("Unloading bundle " + bundlePath);
-                            if (r.assetBundle != null)
-                            {
-                                Debug.Log("Found loaded bundle, unloading " + bundlePath);
-                                r.assetBundle.Unload(true);
-                                bundles.Remove(bundlePath);
-                            }
-                            else
-                            {
-                                Debug.Log("Found loading bundle, reusing req for " + bundlePath);
-                                req = r;
-                            }
-                        }
-
-                        if (req == null)
-                        {
-                            Debug.Log("No existing req, loading bundle " + bundlePath);
-                            req = AssetBundle.LoadFromFileAsync(bundlePath);
-                            bundles.Add(bundlePath, req);
-                        }
-                    }
-
                     if (req.isDone)
                     {
-                        Debug.Log("Req is done for " + bundlePath + ", bundle: " + req.assetBundle);
                         displayName = Path.GetFileName(bundlePath);
                         loading = false;
                         return true;
@@ -144,7 +95,6 @@ namespace UnityEngine.AssetBundles
                         int per = (int)(req.progress * 100);
                         if (per != prevPercent)
                         {
-                     //       Debug.Log("Req progress update for " + bundlePath + ": " + req.progress);
                             displayName = Path.GetFileName(bundlePath) + " " + (prevPercent = per) + "%";
                             return true;
                         }
@@ -162,27 +112,48 @@ namespace UnityEngine.AssetBundles
             {
                 var root = new TreeViewItem(-1, -1);
                 root.children = new List<TreeViewItem>();
-                if (!string.IsNullOrEmpty(m_bundlePath))
-                {
-                    foreach (var f in Directory.GetFiles(m_bundlePath))
-                    {
-                        if (Path.GetExtension(f) == ".manifest")
-                        {
-                            var bundleFile = f.Substring(0, f.LastIndexOf('.'));
-                            if (File.Exists(bundleFile))
-                                root.AddChild(new Item(bundleFile));
-                        }
-                    }
-                }
+                foreach (var b in bundles)
+                    root.AddChild(new Item(b.Key));
                 return root;
             }
         }
 
+        [SerializeField]
+        TreeViewState m_treeState;
         DateTime lastUpdate;
         private void Update()
         {
+            if (m_tree == null && Directory.Exists(m_bundlePath))
+            {
+                foreach (var fn in Directory.GetFiles(m_bundlePath))
+                {
+                    if (Path.GetExtension(fn) == ".manifest")
+                    {
+                        var f = fn.Substring(0, fn.LastIndexOf('.')).Replace('\\', '/');
+                        AssetBundleCreateRequest req;
+                        if (bundles.TryGetValue(f, out req))
+                        {
+                            if (req.isDone && req.assetBundle != null)
+                            {
+                                req.assetBundle.Unload(true);
+                                bundles.Remove(f);
+                            }
+                        }
+                        if (!bundles.ContainsKey(f))
+                            bundles.Add(f, AssetBundle.LoadFromFileAsync(f));
+                    }
+                }
+
+               // Debug.Log("m_tree created with " + bundles.Count);
+                if (m_treeState == null)
+                    m_treeState = new TreeViewState();
+                m_tree = new BundleTree(this, m_treeState);
+                m_tree.Reload();
+            }
+
             if (m_tree == null)
                 return;
+
 
             if (m_resizingHorizontalSplitter)
                 Repaint();
@@ -198,7 +169,6 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-       // float borderSize = 4;
         void OnGUI()
 		{
             GUILayout.BeginHorizontal();
@@ -209,14 +179,9 @@ namespace UnityEngine.AssetBundles
                 Init(f);
             GUILayout.EndHorizontal();
 
-            if (m_treeState == null)
-                m_treeState = new TreeViewState();
-
             if (m_tree == null)
-            {
-                m_tree = new BundleTree(this, m_treeState, m_bundlePath);
-                m_tree.Reload();
-            }
+                return;
+
             float h = 21 + splitterWidth;
             HandleHorizontalResize(h);
             m_tree.OnGUI(new Rect(splitterWidth, h, m_horizontalSplitterRect.x - splitterWidth * 2, position.height - (h + splitterWidth)));
