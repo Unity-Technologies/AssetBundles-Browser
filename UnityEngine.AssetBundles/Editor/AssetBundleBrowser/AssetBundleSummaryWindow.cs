@@ -27,11 +27,6 @@ namespace UnityEngine.AssetBundles
             window.Init(bundlePath);
 		}
 
-        public AssetBundleSummaryWindow()
-        {
-            Debug.Log("AssetBundleSummaryWindow created");
-        }
-
         private void Init(string bundlePath)
         {
             m_bundlePath = bundlePath;

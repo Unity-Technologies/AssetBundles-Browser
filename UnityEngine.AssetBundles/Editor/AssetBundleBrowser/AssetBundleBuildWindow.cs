@@ -10,7 +10,8 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         string m_bundlePath = string.Empty;
         bool m_ForceRebuild = false;
-        BuildTarget buildTarget = BuildTarget.StandaloneWindows;
+        BuildTarget m_buildTarget = BuildTarget.StandaloneWindows;
+        BuildAssetBundleOptions m_options = BuildAssetBundleOptions.None;
 
         [MenuItem("AssetBundles/Build", priority = 2)]
         internal static void ShowWindow()
@@ -39,9 +40,11 @@ namespace UnityEngine.AssetBundles
                 BrowseForFolder();
             GUILayout.EndHorizontal();
 
-            m_ForceRebuild = GUILayout.Toggle(m_ForceRebuild, "Force Rebuild");
+            m_ForceRebuild = GUILayout.Toggle(m_ForceRebuild, "Force Rebuild/Clear Bundle Folder");
+            m_buildTarget = (BuildTarget)EditorGUILayout.EnumPopup("Target", m_buildTarget);
+            m_options = (BuildAssetBundleOptions)EditorGUILayout.EnumMaskPopup("Options", m_options);
 
-			if (GUILayout.Button("Build"))
+            if (GUILayout.Button("Build"))
 			{
                 if (string.IsNullOrEmpty(m_bundlePath))
                     BrowseForFolder();
@@ -60,7 +63,7 @@ namespace UnityEngine.AssetBundles
                             Directory.CreateDirectory(m_bundlePath);
                         }
                     }
-                    BuildPipeline.BuildAssetBundles(m_bundlePath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
+                    BuildPipeline.BuildAssetBundles(m_bundlePath, BuildAssetBundleOptions.None, m_buildTarget);
                     AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
                     showSummary = true;
                 }
