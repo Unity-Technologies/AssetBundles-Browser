@@ -89,7 +89,7 @@ namespace UnityEngine.AssetBundles
 
         void NewBundle(object o)
         {
-            var bi = AssetBundleState.CreateEmptyBundle(null);
+            AssetBundleState.CreateEmptyBundle(null);
             Reload();
         }
 

@@ -33,18 +33,19 @@ namespace UnityEngine.AssetBundles
 
 			protected override TreeViewItem BuildRoot()
 			{
+                int index = 0;
 				var root = new TreeViewItem(-1, -1);
                 root.children = new List<TreeViewItem>();
 				foreach (var c in issues)
 				{
-					var cat = new TreeViewItem(c.Key.GetHashCode(), 0, root, c.Key);
+					var cat = new TreeViewItem(index++, 0, root, c.Key);
 					root.AddChild(cat);
 					foreach (var i in c.Value)
 					{
-						var item = new TreeViewItem(i.GetHashCode(), 1, cat, i.name);
+						var item = new TreeViewItem(index++, 1, cat, i.name);
 						cat.AddChild(item);
 						foreach (var si in i.subItems)
-							item.AddChild(new TreeViewItem(si.GetHashCode(), 2, item, si));
+							item.AddChild(new TreeViewItem(index++, 2, item, si));
 					}
 				}
 				return root;
@@ -200,11 +201,7 @@ namespace UnityEngine.AssetBundles
 					}
 				}
                 if (hasNonScene && hasScene)
-                {
-                    var issue = new Issue(add.bundles[bi].name);
-                    issue.subItems.Add(sceneAssetName);
-                    issues[kMixedScene].Add(issue);
-                }
+                    FindOrCreateIssue(issues, kMismatchedVariant, add.bundles[bi].name).subItems.Add(sceneAssetName);
             }
 
             for (int bi = 0; bi < add.bundles.Length; bi++)
@@ -222,46 +219,38 @@ namespace UnityEngine.AssetBundles
                             continue;
                         if (!CompareVariantAssetLists(add, add.bundles[bi].assets, add.bundles[bi2].assets))
                         {
-                            Issue issue = null;
-                            foreach (var i in issues[kMismatchedVariant])
-                            {
-                                if (i.name == baseName)
-                                {
-                                    issue = i;
-                                    break;
-                                }
-                            }
-
-                            if (issue == null)
-                            {
-                                issue = new Issue(baseName);
-                                issues[kMismatchedVariant].Add(issue);
-                            }
-
+                            Issue issue = FindOrCreateIssue(issues, kMismatchedVariant, baseName);
                             if (!issue.subItems.Contains(add.bundles[bi].name))
                                 issue.subItems.Add(add.bundles[bi].name);
                             if (!issue.subItems.Contains(add.bundles[bi2].name))
                                 issue.subItems.Add(add.bundles[bi2].name);
                         }
                     }
-
-                    for (int ai = 0; ai < add.bundles[bi].assets.Length; ai++)
-                    {
-                        var assetIndex = add.bundles[bi].assets[ai];
-                    }
                 }
             }
 
             foreach (var ai in assetsWithDuplicates)
 			{
-				var issue = new Issue(add.assets[ai].name);
+                var issue = FindOrCreateIssue(issues, kDuplicateAssets, add.assets[ai].name);
 				foreach (var bi in add.assets[ai].bundles)
-					issue.subItems.Add(add.bundles[bi].name);
-
-				issues[kDuplicateAssets].Add(issue);
+                    if(!issue.subItems.Contains(add.bundles[bi].name))
+                        issue.subItems.Add(add.bundles[bi].name);
 			}
+
 			return issues;
 		}
+
+        Issue FindOrCreateIssue(Dictionary<string, List<Issue>> issues, string cat, string name)
+        {
+            foreach (var i in issues[cat])
+            {
+                if (i.name == name)
+                    return i;
+            }
+            var issue = new Issue(name);
+            issues[cat].Add(issue);
+            return issue;
+        }
 
         private bool CompareVariantAssetLists(AssetDependencyData add, int[] a1, int[] a2)
         {
