@@ -90,7 +90,7 @@ namespace UnityEngine.AssetBundles
 					m_bundleTreeState = new TreeViewState();
 				m_bundleTree = new AssetBundleTree(m_bundleTreeState, m_assetList);
                 m_bundleTree.Refresh();
-                m_resizingHorizontalSplitter = true; //orce a repaint
+                Repaint();
             }
 
             HandleHorizontalResize();
