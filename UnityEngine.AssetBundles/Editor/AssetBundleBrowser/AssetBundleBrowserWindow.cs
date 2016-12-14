@@ -33,6 +33,23 @@ namespace UnityEngine.AssetBundles
 			window.Show();
         }
 
+        [MenuItem("AssetBundles/Reset", priority = 10)]
+        static void ResetAllBundles()
+        {
+            foreach (var a in AssetDatabase.GetAllAssetPaths())
+            {
+                var i = AssetImporter.GetAtPath(a);
+                if (i != null && !string.IsNullOrEmpty(i.assetBundleName))
+                    i.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
+            }
+
+            foreach (var b in AssetDatabase.GetAllAssetBundleNames())
+                AssetDatabase.RemoveAssetBundleName(b, true);
+            AssetDatabase.RemoveUnusedAssetBundleNames();
+            AssetBundleState.Rebuild();
+        }
+
+
         void OnEnable()
         {
             m_horizontalSplitterRect = new Rect(position.width / 2, toolbarHeight, splitterWidth, this.position.height - toolbarHeight);
@@ -42,8 +59,8 @@ namespace UnityEngine.AssetBundles
 		void OnGUI()
         {
          //   GUILayout.BeginHorizontal();
-         //   if (GUILayout.Button("RESET"))
-         //       ResetAllBundles();
+    //        if (GUILayout.Button("RESET"))
+    //            ResetAllBundles();
 	//		if (GUILayout.Button("Detect Issues", GUILayout.Height(toolbarHeight - 5)))
 	//			AssetBundleIssuesWindow.ShowWindow();
 
@@ -79,10 +96,8 @@ namespace UnityEngine.AssetBundles
                 if (m_bundleTreeState == null)
 					m_bundleTreeState = new TreeViewState();
 				m_bundleTree = new AssetBundleTree(m_bundleTreeState, m_assetList);
-                m_bundleTree.Reload();
-                m_selectionList.m_bundleTree = m_bundleTree;
-
             }
+
             if (AssetBundleState.CheckAndClearDirtyFlag())
                 m_bundleTree.Reload();
             HandleHorizontalResize();
@@ -102,20 +117,6 @@ namespace UnityEngine.AssetBundles
                 Repaint();
         }
 
-        private void ResetAllBundles()
-        {
-            foreach (var a in AssetDatabase.GetAllAssetPaths())
-            {
-                var i = AssetImporter.GetAtPath(a);
-                if (i != null && !string.IsNullOrEmpty(i.assetBundleName))
-                    i.SetAssetBundleNameAndVariant(string.Empty, string.Empty);
-            }
-
-            foreach (var b in AssetDatabase.GetAllAssetBundleNames())
-                AssetDatabase.RemoveAssetBundleName(b, true);
-            AssetDatabase.RemoveUnusedAssetBundleNames();
-            m_bundleTree = null;
-        }
 
         internal void Refresh()
         {

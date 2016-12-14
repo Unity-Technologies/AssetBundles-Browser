@@ -48,8 +48,6 @@ namespace UnityEngine.AssetBundles
 
         protected override void RowGUI(RowGUIArgs args)
         {
-            //var ai = args.item.userData as AssetBundleState.AssetInfo;
-
             Color oldColor = GUI.color;
             if(args.label.StartsWith(" "))
                 GUI.color = GUI.color * new Color(1, 1, 1, 0.35f);
@@ -69,7 +67,6 @@ namespace UnityEngine.AssetBundles
 			}
         }
 
-
         internal void SetSelectedBundle(AssetBundleState.BundleInfo b)
         {
             if (HasSelection() && m_selectedBundle != b)
@@ -81,36 +78,19 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
-            var i = TreeViewUtility.FindItem(id, rootItem);
-            if (i != null)
-            {
-                GenericMenu menu = new GenericMenu();
-                foreach(var b in AssetBundleState.bundles)
-                    if(b.Value != m_selectedBundle)
-                        menu.AddItem(new GUIContent("Move to bundle/" + b.Key), false, MoveToBundle, b.Value);
-                menu.AddItem(new GUIContent("Move to bundle/<Create New Bundle...>"), false, MoveToBundle, null);
-                menu.ShowAsContext();
-            }
-        }
-
-        void MoveToBundle(object target)
-        {
-            AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
-            if (bi == null)
-                bi = AssetBundleState.CreateEmptyBundle(null);
-
-            AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => (a.userData as AssetBundleState.AssetInfo)));
-            SetSelectedBundle(m_selectedBundle);
+            AssetBundleState.ShowAssetContextMenu(GetRowsFromIDs(GetSelection()).Select(a => (a.userData as AssetBundleState.AssetInfo)));
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
             m_selectionList.SetItems(GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
-            //TODO: update to assetrefs: m_selectionList.SetItems(GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
         }
 
         protected override bool CanStartDrag(CanStartDragArgs args)
         {
+            foreach (var o in GetRowsFromIDs(args.draggedItemIDs).Select(a => a.userData))
+                if (!(o is AssetBundleState.AssetInfo))
+                    return false;
             args.draggedItemIDs = GetSelection();
             return true;
         }
@@ -125,7 +105,10 @@ namespace UnityEngine.AssetBundles
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
             if (m_selectedBundle == null)
-                return DragAndDropVisualMode.None;
+                return DragAndDropVisualMode.Rejected;
+
+            if (!AssetBundleState.ValidateAssetPaths(DragAndDrop.paths))
+                return DragAndDropVisualMode.Rejected;
 
             if (args.performDrop)
             {
@@ -145,8 +128,5 @@ namespace UnityEngine.AssetBundles
                 Event.current.Use();
             }
         }
-
     }
-
-
 }

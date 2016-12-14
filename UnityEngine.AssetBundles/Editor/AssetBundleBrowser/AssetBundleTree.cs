@@ -16,7 +16,6 @@ namespace UnityEngine.AssetBundles
             AssetBundleState.Rebuild();
             m_assetList = alt;
             showBorder = true;
-            //	Reload();
         }
 
         protected override bool CanMultiSelect(TreeViewItem item)
@@ -102,6 +101,8 @@ namespace UnityEngine.AssetBundles
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
             if (args.dragAndDropPosition != DragAndDropPosition.UponItem)
+                return DragAndDropVisualMode.Rejected;
+            if(!AssetBundleState.ValidateAssetPaths(DragAndDrop.paths))
                 return DragAndDropVisualMode.Rejected;
 
             if (args.performDrop)

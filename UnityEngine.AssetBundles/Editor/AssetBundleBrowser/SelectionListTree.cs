@@ -10,8 +10,8 @@ namespace UnityEngine.AssetBundles
 {
     internal class SelectionListTree : TreeView
     {
-        public AssetBundleTree m_bundleTree;
-      //  public AssetListTree m_listTree;
+        IEnumerable<AssetBundleState.AssetInfo> m_selecteditems;
+
         public SelectionListTree(TreeViewState state) : base(state)
         {
             showBorder = true;
@@ -69,87 +69,6 @@ namespace UnityEngine.AssetBundles
             return root;
         }
 
-        /*
-        protected override TreeViewItem BuildRoot()
-        {
-            var root = new TreeViewItem(-1, -1);
-            root.children = new List<TreeViewItem>();
-
-            if (m_selecteditems != null)
-            {
-				int index = 0;
-				foreach (var a in m_selecteditems)
-				{
-					var item = new TreeViewItem(a.name.GetHashCode(), 0, root, a.name);
-					item.userData = a;
-					item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
-					root.AddChild(item);
-                    var deps = new HashSet<string>();
-                    GatherDependencies(a, deps);
-					if (deps.Count > 0)
-					{
-						var refItem = new TreeViewItem(index, 1, deps.Count + " dependenc" + (deps.Count == 1 ? "y" : "ies"));
-						refItem.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
-						item.AddChild(refItem);
-						foreach (var d in deps)
-						{
-							if (d != a.name)
-							{
-								var di = new TreeViewItem(d.GetHashCode(), 2, d);
-								di.icon = AssetDatabase.GetCachedIcon(d) as Texture2D;
-								di.userData = AssetBundleState.GetAsset(d);
-								refItem.AddChild(di);
-							}
-						}
-						index++;
-					}
-				}
-			}
-            return root;
-        }
-        /*
-        void GatherDependencies(AssetBundleState.AssetInfo a, HashSet<string> deps)
-        {
-            if (a == null)
-                return;
-
-            string currentBundle = AssetDatabase.GetImplicitAssetBundleName(a.name);
-
-            foreach (var d in AssetDatabase.GetDependencies(a.name, true))
-            {
-                if (d != a.name)
-                {
-                    var b = AssetDatabase.GetImplicitAssetBundleName(d);
-                    if(string.IsNullOrEmpty(b) || b == currentBundle)
-                        deps.Add(d);
-                }
-            }
-
-            if (AssetDatabase.IsValidFolder(a.name))
-            {
-                foreach (var f in System.IO.Directory.GetFiles(a.name))
-                {
-                    var ai = AssetBundleState.GetAsset(f.Replace('\\', '/'));
-                    if (ai != null)
-                    {
-                        var b = AssetDatabase.GetImplicitAssetBundleName(ai.name);
-                        if (string.IsNullOrEmpty(b) || b == currentBundle)
-                        {
-                            deps.Add(ai.name);
-                            GatherDependencies(ai, deps);
-                        }
-                    }
-                }
-
-                foreach (var f in AssetDatabase.GetSubFolders(a.name))
-                {
-                    var b = AssetDatabase.GetImplicitAssetBundleName(f);
-                    if (string.IsNullOrEmpty(b) || b == currentBundle)
-                        GatherDependencies(AssetBundleState.GetAsset(f), deps);
-                }
-            }
-        }
-        */
         protected override void DoubleClickedItem(int id)
         {
             var assetInfo = TreeViewUtility.FindItem(id, rootItem).userData as AssetBundleState.AssetInfo;
@@ -162,7 +81,7 @@ namespace UnityEngine.AssetBundles
             m_selecteditems = null;
             Reload();
         }
-        IEnumerable<AssetBundleState.AssetInfo> m_selecteditems;
+
         internal void SetItems(IEnumerable<AssetBundleState.AssetInfo> items)
         {
             if (HasSelection())
@@ -173,6 +92,9 @@ namespace UnityEngine.AssetBundles
 
         protected override bool CanStartDrag(CanStartDragArgs args)
         {
+            foreach (var o in GetRowsFromIDs(args.draggedItemIDs).Select(a => a.userData))
+                if (!(o is AssetBundleState.AssetInfo))
+                    return false;
             args.draggedItemIDs = GetSelection();
             return true;
         }
@@ -186,26 +108,7 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
-            var i = TreeViewUtility.FindItem(id, rootItem);
-            if (i != null)
-            {
-                GenericMenu menu = new GenericMenu();
-                foreach (var b in AssetBundleState.bundles)
-                    menu.AddItem(new GUIContent("Move to bundle/" + b.Key), false, MoveToBundle, b.Value);
-                menu.AddItem(new GUIContent("Move to bundle/<Create New Bundle...>"), false, MoveToBundle, null);
-                menu.ShowAsContext();
-            }
+            AssetBundleState.ShowAssetContextMenu(GetRowsFromIDs(GetSelection()).Select(a => (a.userData as AssetBundleState.AssetInfo)));
         }
-
-        void MoveToBundle(object target)
-        {
-            AssetBundleState.BundleInfo bi = target as AssetBundleState.BundleInfo;
-            if (bi == null)
-                bi = AssetBundleState.CreateEmptyBundle(null);
-
-            AssetBundleState.MoveAssetsToBundle(bi, GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
-            m_bundleTree.Refresh();
-        }
-
     }
 }

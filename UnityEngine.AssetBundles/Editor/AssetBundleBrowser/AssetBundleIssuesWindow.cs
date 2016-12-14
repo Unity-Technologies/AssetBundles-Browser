@@ -147,12 +147,27 @@ namespace UnityEngine.AssetBundles
 		{
 			List<int> assetsWithDuplicates = new List<int>();
 			AssetDependencyData add = new AssetDependencyData();
-			for (int bi = 0; bi < add.bundles.Length; bi++)
+            var issues = new Dictionary<string, List<Issue>>();
+            for (int bi = 0; bi < add.bundles.Length; bi++)
 			{
+                string sceneAssetName = null;
+                bool hasScene = false;
+                bool hasNonScene = false;
 				for (int ai = 0; ai < add.bundles[bi].assets.Length; ai++)
 				{
 					var assetIndex = add.bundles[bi].assets[ai];
-					HashSet<int> dependencies = new HashSet<int>();
+                    if (!hasScene || !hasNonScene)
+                    {
+                        if (AssetDatabase.GetMainAssetTypeAtPath(add.assets[assetIndex].name) == typeof(SceneAsset))
+                        {
+                            hasScene = true;
+                            sceneAssetName = add.assets[assetIndex].name;
+                        }
+                        else
+                            hasNonScene = true;
+                    }
+
+                    HashSet < int> dependencies = new HashSet<int>();
 					add.CollectDependencies(assetIndex, dependencies);
 					foreach (var d in dependencies)
 					{
@@ -166,9 +181,65 @@ namespace UnityEngine.AssetBundles
 						}
 					}
 				}
-			}
-			var issues = new Dictionary<string, List<Issue>>();
-			foreach (var ai in assetsWithDuplicates)
+                if (hasNonScene && hasScene)
+                {
+                    var issue = new Issue(add.bundles[bi].name);
+                    issue.subItems.Add(sceneAssetName);
+
+                    if (!issues.ContainsKey("Mixed Scene Bundles"))
+                        issues.Add("Mixed Scene Bundles", new List<Issue>());
+                    issues["Mixed Scene Bundles"].Add(issue);
+                }
+            }
+
+            for (int bi = 0; bi < add.bundles.Length; bi++)
+            {
+                int dot = add.bundles[bi].name.LastIndexOf('.');
+                if (dot > 0)
+                {
+                    var baseName = add.bundles[bi].name.Substring(0, dot);
+                    for (int bi2 = bi + 1; bi2 < add.bundles.Length; bi2++)
+                    {
+                        if (bi2 == bi)
+                            continue;
+                        int dot2 = add.bundles[bi2].name.LastIndexOf('.');
+                        if (dot2 <= 0)
+                            continue;
+                        if (!CompareVariantAssetLists(add, add.bundles[bi].assets, add.bundles[bi2].assets))
+                        {
+                            if (!issues.ContainsKey("Mismatched Variant Bundle"))
+                                issues.Add("Mismatched Variant Bundle", new List<Issue>());
+                            Issue issue = null;
+                            foreach (var i in issues["Mismatched Variant Bundle"])
+                            {
+                                if (i.name == baseName)
+                                {
+                                    issue = i;
+                                    break;
+                                }
+                            }
+
+                            if (issue == null)
+                            {
+                                issue = new Issue(baseName);
+                                issues["Mismatched Variant Bundle"].Add(issue);
+                            }
+
+                            if (!issue.subItems.Contains(add.bundles[bi].name))
+                                issue.subItems.Add(add.bundles[bi].name);
+                            if (!issue.subItems.Contains(add.bundles[bi2].name))
+                                issue.subItems.Add(add.bundles[bi2].name);
+                        }
+                    }
+
+                    for (int ai = 0; ai < add.bundles[bi].assets.Length; ai++)
+                    {
+                        var assetIndex = add.bundles[bi].assets[ai];
+                    }
+                }
+            }
+
+            foreach (var ai in assetsWithDuplicates)
 			{
 				var issue = new Issue(add.assets[ai].name);
 				foreach (var bi in add.assets[ai].bundles)
@@ -181,7 +252,32 @@ namespace UnityEngine.AssetBundles
 			return issues;
 		}
 
-		void OnGUI()
+        private bool CompareVariantAssetLists(AssetDependencyData add, int[] a1, int[] a2)
+        {
+            if ((a1 == null) != (a2 == null))
+                return false;
+            if (a1.Length != a2.Length)
+                return false;
+            for (int ai = 0; ai < a1.Length; ai++)
+            {
+                var lower = System.IO.Path.GetFileNameWithoutExtension(add.assets[a1[ai]].name).ToLower();
+                bool match = false;
+                for (int ai2 = 0; ai2 < a2.Length; ai2++)
+                {
+                    if (lower == System.IO.Path.GetFileNameWithoutExtension(add.assets[a2[ai2]].name).ToLower())
+                    {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match)
+                    return false;
+            }
+            return true;
+        }
+
+
+        void OnGUI()
 		{
             if (m_treeState == null)
 				m_treeState = new TreeViewState();

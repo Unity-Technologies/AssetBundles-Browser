@@ -64,7 +64,9 @@ namespace UnityEngine.AssetBundles
             {
                 foreach (var a in AssetDatabase.GetAllAssetPaths())
                 {
-                    foreach (var d in AssetDatabase.GetDependencies(a, false))
+                    if (a == name || !a.StartsWith("Assets/") || a.EndsWith(".cs") || a.EndsWith(".dll"))
+                        continue;
+                    foreach (var d in AssetDatabase.GetDependencies(a, true))
                     {
                         if (d == name)
                         {
@@ -141,6 +143,15 @@ namespace UnityEngine.AssetBundles
         public static Dictionary<string, AssetInfo> assets = new Dictionary<string, AssetInfo>();
         static bool dirty = false;
 
+        internal static bool ValidateAssetPaths(string[] paths)
+        {
+            if (paths == null)
+                return false;
+            foreach (var p in paths)
+                if (!assets.ContainsKey(p))
+                    return false;
+            return paths.Length > 0;
+        }
         internal static AssetInfo GetAsset(string a)
         {
             AssetInfo ai = null;
@@ -245,9 +256,11 @@ namespace UnityEngine.AssetBundles
             dirty = true;
             foreach (var a in ais)
             {
-                RemoveAsset(a.name);
-                if (a != null)
+                if (a != null && a.bundle != bi)
+                {
+                    RemoveAsset(a.name);
                     AssetImporter.GetAtPath(a.name).SetAssetBundleNameAndVariant(bi.name, string.Empty);
+                }
             }
         }
 
@@ -278,5 +291,42 @@ namespace UnityEngine.AssetBundles
             bundles.Add(bi.name, bi);
             return bi;
         }
+
+        class MoveToBundleData
+        {
+            public IEnumerable<AssetInfo> paths;
+            public BundleInfo bundle;
+            public MoveToBundleData(BundleInfo b, IEnumerable<AssetInfo> p)
+            {
+                bundle = b;
+                paths = p;
+            }
+        }
+
+        public static void ShowAssetContextMenu(IEnumerable<AssetInfo> targets)
+        {
+            foreach (var t in targets)
+                if(t == null)
+                    return;
+            GenericMenu menu = new GenericMenu();
+            foreach (var b in AssetBundleState.bundles)
+            {
+                menu.AddItem(new GUIContent("Move to bundle/" + (b.Key.Length == 0 ? "None" : b.Key)), false, MoveToBundle, new MoveToBundleData(b.Value, targets));
+            }
+            menu.AddItem(new GUIContent("Move to bundle/<Create New Bundle...>"), false, MoveToBundle, new MoveToBundleData(null, targets));
+            menu.ShowAsContext();
+        }
+
+        static void MoveToBundle(object target)
+        {
+            var bi = target as MoveToBundleData;
+            if (bi.bundle == null)
+                bi.bundle = CreateEmptyBundle(null);
+
+            MoveAssetsToBundle(bi.bundle, bi.paths);
+            EditorWindow.GetWindow<AssetBundleBrowserWindow>().Refresh();
+            dirty = true;
+        }
+
     }
 }
