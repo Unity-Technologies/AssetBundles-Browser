@@ -28,13 +28,14 @@ namespace UnityEngine.AssetBundles
             return item.displayName.Length > 0;
         }
 
+
+
         protected override void RenameEnded(RenameEndedArgs args)
         {
-            if (args.newName.Length > 0 && args.newName != args.originalName && !AssetBundleState.bundles.ContainsKey(args.newName))
+            if (args.newName.Length > 0 && args.newName != args.originalName && !AssetBundleState.m_bundles.ContainsKey(args.newName))
             {
-                var bi = TreeViewUtility.FindItem(args.itemID, rootItem).userData as AssetBundleState.BundleInfo;
                 args.acceptedRename = true;
-                AssetBundleState.RenameBundle(bi, args.newName);
+                AssetBundleState.RenameBundle(Utilities.FindItem<AssetBundleState.BundleInfo.TreeItem>(rootItem, args.itemID).bundle, args.newName);
             }
             else
             {
@@ -45,21 +46,19 @@ namespace UnityEngine.AssetBundles
 
         protected override TreeViewItem BuildRoot()
         {
-            var root = new TreeViewItem(-1, -1);
+            var root = new AssetBundleState.BundleInfo.TreeItem();
             root.children = new List<TreeViewItem>();
 
-            foreach (var b in AssetBundleState.bundles)
+            foreach (var b in AssetBundleState.m_bundles)
             {
                 if (b.Key.Length == 0)
                     continue;
-                var item = new TreeViewItem(b.Value.name.GetHashCode(), 0, root, b.Key);
-                item.icon = EditorGUIUtility.FindTexture(EditorResourcesUtility.folderIconName) as Texture2D;
-                item.userData = b.Value;
+                var item = new AssetBundleState.BundleInfo.TreeItem(b.Value, 0);
                 root.AddChild(item);
-                if (b.Key == AssetBundleState.editBundleName)
+                if (b.Key == AssetBundleState.m_editBundleName)
                     BeginRename(item, .25f);
             }
-            AssetBundleState.editBundleName = string.Empty;
+            AssetBundleState.m_editBundleName = string.Empty;
 
             return root;
         }
@@ -72,46 +71,54 @@ namespace UnityEngine.AssetBundles
             }
             else
             {
-                var item = TreeViewUtility.FindItem(selectedIds[0], rootItem);
-                m_assetList.SetSelectedBundle(item == null ? null : item.userData as AssetBundleState.BundleInfo);
+                var item = Utilities.FindItem<AssetBundleState.BundleInfo.TreeItem>(rootItem, selectedIds[0]);
+                m_assetList.SetSelectedBundle(item == null ? null : item.bundle);
             }
         }
 
         protected override void ContextClickedItem(int id)
         {
             GenericMenu menu = new GenericMenu();
-            var i = TreeViewUtility.FindItem(id, rootItem);
-            if (i != null)
-                menu.AddItem(new GUIContent("Delete " + i.displayName), false, DeleteBundle, i.userData);
-
+            var bundle = Utilities.FindItem<AssetBundleState.BundleInfo.TreeItem>(rootItem, id).bundle;
+            menu.AddItem(new GUIContent("Delete " + bundle.m_name), false, DeleteBundle, bundle);
             menu.ShowAsContext();
         }
-
-        void NewBundle(object o)
-        {
-            AssetBundleState.CreateEmptyBundle(null);
-            Reload();
-        }
-
+  
         void DeleteBundle(object b)
         {
-            AssetBundleState.DeleteBundle(b as AssetBundleState.BundleInfo);
+            AssetBundleState.RenameBundle(b as AssetBundleState.BundleInfo, string.Empty);
         }
 
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
-            if (args.dragAndDropPosition != DragAndDropPosition.UponItem)
-                return DragAndDropVisualMode.Rejected;
-            if(!AssetBundleState.ValidateAssetPaths(DragAndDrop.paths))
-                return DragAndDropVisualMode.Rejected;
-
-            if (args.performDrop)
+            if (args.dragAndDropPosition == DragAndDropPosition.UponItem)
             {
-                var targetBundle = args.parentItem.userData as AssetBundleState.BundleInfo;
-                if (targetBundle != null)
+                if (args.performDrop)
                 {
-                    AssetBundleState.MoveAssetsToBundle(targetBundle, DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)));
-                    SelectionChanged(GetSelection());
+                    var targetBundle = (args.parentItem as AssetBundleState.BundleInfo.TreeItem).bundle;
+                    if (targetBundle != null)
+                    {
+                        AssetBundleState.MoveAssetsToBundle(DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)), targetBundle.m_name);
+                        SelectionChanged(GetSelection());
+                    }
+                }
+                return DragAndDropVisualMode.Move;
+            }
+            else
+            {
+                if (args.performDrop)
+                {
+                    AssetBundleState.StartABMoveBatch();
+                    foreach (var a in DragAndDrop.paths)
+                    {
+                        if (AssetDatabase.GetMainAssetTypeAtPath(a) == typeof(SceneAsset))
+                        {
+                            var bundle = AssetBundleState.GetBundle(System.IO.Path.GetFileNameWithoutExtension(a).ToLower());
+                            AssetBundleState.MoveAssetsToBundle(new AssetBundleState.AssetInfo[] { AssetBundleState.GetAsset(a)}, bundle.m_name);
+                        }
+                    }
+                    AssetBundleState.EndABMoveBatch();
+                    return DragAndDropVisualMode.Move;
                 }
             }
             return DragAndDropVisualMode.Move;

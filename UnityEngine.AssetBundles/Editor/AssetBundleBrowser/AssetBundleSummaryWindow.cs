@@ -8,12 +8,20 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetBundleSummaryWindow : EditorWindow
 	{
-       // TreeViewState m_treeState;
         [SerializeField]
         string m_bundlePath = string.Empty;
-        public Editor editor;
+        [SerializeField]
+        TreeViewState m_treeState;
+        public Editor m_editor;
         BundleTree m_tree;
-        static Dictionary<string, AssetBundleCreateRequest> bundles = new Dictionary<string, AssetBundleCreateRequest>();
+        DateTime m_lastUpdate;
+        Rect m_horizontalSplitterRect;
+        const float m_splitterWidth = 3;
+        bool m_resizingHorizontalSplitter = false;
+        static Dictionary<string, AssetBundleCreateRequest> m_bundles = new Dictionary<string, AssetBundleCreateRequest>();
+
+
+
         [MenuItem("AssetBundles/Inspect", priority = 3)]
         static void ShowWindow()
         {
@@ -58,39 +66,39 @@ namespace UnityEngine.AssetBundles
 
             class Item : TreeViewItem
             {
-                string bundlePath;
-                AssetBundleCreateRequest req { get { return bundles[bundlePath]; } }
-                int prevPercent = -1;
-                bool loading = true;
+                string m_bundlePath;
+                AssetBundleCreateRequest m_bundleRequest { get { return m_bundles[m_bundlePath]; } }
+                int m_prevPercent = -1;
+                bool m_loading = true;
                 public Editor editor
                 {
                     get
                     {
-                        return (req == null || req.assetBundle == null) ? null : Editor.CreateEditor(req.assetBundle);
+                        return (m_bundleRequest == null || m_bundleRequest.assetBundle == null) ? null : Editor.CreateEditor(m_bundleRequest.assetBundle);
                     }
                 }
 
                 public Item(string path) : base(path.GetHashCode(), 0, Path.GetFileName(path))
                 {
-                    bundlePath = path;
+                    m_bundlePath = path;
                 }
 
                 public bool Update()
                 {
-                    if (!loading)
+                    if (!m_loading)
                         return false;
-                    if (req.isDone)
+                    if (m_bundleRequest.isDone)
                     {
-                        displayName = Path.GetFileName(bundlePath);
-                        loading = false;
+                        displayName = Path.GetFileName(m_bundlePath);
+                        m_loading = false;
                         return true;
                     }
                     else
                     {
-                        int per = (int)(req.progress * 100);
-                        if (per != prevPercent)
+                        int per = (int)(m_bundleRequest.progress * 100);
+                        if (per != m_prevPercent)
                         {
-                            displayName = Path.GetFileName(bundlePath) + " " + (prevPercent = per) + "%";
+                            displayName = Path.GetFileName(m_bundlePath) + " " + (m_prevPercent = per) + "%";
                             return true;
                         }
                     }
@@ -100,22 +108,19 @@ namespace UnityEngine.AssetBundles
 
             protected override void SelectionChanged(IList<int> selectedIds)
             {
-                window.editor = (TreeViewUtility.FindItem(selectedIds[0], rootItem) as Item).editor;
+                window.m_editor = Utilities.FindItem<Item>(rootItem, selectedIds[0]).editor;
             }
 
             protected override TreeViewItem BuildRoot()
             {
                 var root = new TreeViewItem(-1, -1);
                 root.children = new List<TreeViewItem>();
-                foreach (var b in bundles)
+                foreach (var b in m_bundles)
                     root.AddChild(new Item(b.Key));
                 return root;
             }
         }
 
-        [SerializeField]
-        TreeViewState m_treeState;
-        DateTime lastUpdate;
         private void Update()
         {
             if (m_tree == null && Directory.Exists(m_bundlePath))
@@ -126,20 +131,19 @@ namespace UnityEngine.AssetBundles
                     {
                         var f = fn.Substring(0, fn.LastIndexOf('.')).Replace('\\', '/');
                         AssetBundleCreateRequest req;
-                        if (bundles.TryGetValue(f, out req))
+                        if (m_bundles.TryGetValue(f, out req))
                         {
                             if (req.isDone && req.assetBundle != null)
                             {
                                 req.assetBundle.Unload(true);
-                                bundles.Remove(f);
+                                m_bundles.Remove(f);
                             }
                         }
-                        if (!bundles.ContainsKey(f))
-                            bundles.Add(f, AssetBundle.LoadFromFileAsync(f));
+                        if (!m_bundles.ContainsKey(f))
+                            m_bundles.Add(f, AssetBundle.LoadFromFileAsync(f));
                     }
                 }
 
-               // Debug.Log("m_tree created with " + bundles.Count);
                 if (m_treeState == null)
                     m_treeState = new TreeViewState();
                 m_tree = new BundleTree(this, m_treeState);
@@ -153,14 +157,14 @@ namespace UnityEngine.AssetBundles
             if (m_resizingHorizontalSplitter)
                 Repaint();
 
-            if ((DateTime.Now - lastUpdate).TotalSeconds > .5f)
+            if ((DateTime.Now - m_lastUpdate).TotalSeconds > .5f)
             {
                 if (m_tree.Update())
                 {
                     m_tree.SetSelection(m_tree.GetSelection());
                     Repaint();
                 }
-                lastUpdate = DateTime.Now;
+                m_lastUpdate = DateTime.Now;
             }
         }
 
@@ -177,39 +181,35 @@ namespace UnityEngine.AssetBundles
             if (m_tree == null)
                 return;
 
-            float h = 21 + splitterWidth;
+            float h = 21 + m_splitterWidth;
             HandleHorizontalResize(h);
-            m_tree.OnGUI(new Rect(splitterWidth, h, m_horizontalSplitterRect.x - splitterWidth * 2, position.height - (h + splitterWidth)));
-            if (editor != null)
+            m_tree.OnGUI(new Rect(m_splitterWidth, h, m_horizontalSplitterRect.x - m_splitterWidth * 2, position.height - (h + m_splitterWidth)));
+            if (m_editor != null)
             {
-                GUILayout.BeginArea(new Rect(m_horizontalSplitterRect.x + splitterWidth, h, position.width - (m_horizontalSplitterRect.x + splitterWidth), position.height - (h + splitterWidth)));
-                editor.Repaint();
-                editor.OnInspectorGUI();
+                GUILayout.BeginArea(new Rect(m_horizontalSplitterRect.x + m_splitterWidth, h, position.width - (m_horizontalSplitterRect.x + m_splitterWidth), position.height - (h + m_splitterWidth)));
+                m_editor.Repaint();
+                m_editor.OnInspectorGUI();
                 GUILayout.EndArea();
             }
         }
 
         void OnEnable()
         {
-            m_horizontalSplitterRect = new Rect(position.width / 2, 0, splitterWidth, this.position.height);
+            m_horizontalSplitterRect = new Rect(position.width / 2, 0, m_splitterWidth, this.position.height);
         }
 
-        Rect m_horizontalSplitterRect;
-        const float splitterWidth = 3;
-        bool m_resizingHorizontalSplitter = false;
         private void HandleHorizontalResize(float h)
         {
-            m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - splitterWidth) * .9f);
+            m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - m_splitterWidth) * .9f);
             m_horizontalSplitterRect.y = h;
-            m_horizontalSplitterRect.height = position.height - (h + splitterWidth);
+            m_horizontalSplitterRect.height = position.height - (h + m_splitterWidth);
 
-           // GUI.DrawTexture(m_horizontalSplitterRect, EditorGUIUtility.whiteTexture);
             EditorGUIUtility.AddCursorRect(m_horizontalSplitterRect, MouseCursor.ResizeHorizontal);
             if (Event.current.type == EventType.mouseDown && m_horizontalSplitterRect.Contains(Event.current.mousePosition))
                 m_resizingHorizontalSplitter = true;
 
             if (m_resizingHorizontalSplitter)
-                m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - splitterWidth) * .9f);
+                m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - m_splitterWidth) * .9f);
 
             if (Event.current.type == EventType.MouseUp)
                 m_resizingHorizontalSplitter = false;

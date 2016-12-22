@@ -26,6 +26,16 @@ namespace UnityEngine.AssetBundles
 		class IssueTree : TreeView
 		{
 			Dictionary<string, List<Issue>> issues;
+
+            class Item : TreeViewItem
+            {
+                public Issue issue;
+                public Item(Issue i, int id, int d) : base(id, d, i.name)
+                {
+                    issue = i;
+                }
+            }
+
 			public IssueTree(TreeViewState s, Dictionary<string, List<Issue>> i) : base(s)
 			{
                 issues = i;
@@ -38,18 +48,22 @@ namespace UnityEngine.AssetBundles
                 root.children = new List<TreeViewItem>();
 				foreach (var c in issues)
 				{
-					var cat = new TreeViewItem(index++, 0, root, c.Key);
+					var cat = new TreeViewItem(index++, 0, c.Key);
 					root.AddChild(cat);
 					foreach (var i in c.Value)
 					{
-						var item = new TreeViewItem(index++, 1, cat, i.name);
+						var item = new Item(i, index++, 1);
 						cat.AddChild(item);
 						foreach (var si in i.subItems)
-							item.AddChild(new TreeViewItem(index++, 2, item, si));
+							item.AddChild(new TreeViewItem(index++, 2, si));
 					}
 				}
 				return root;
 			}
+            protected override void ContextClickedItem(int id)
+            {
+              //  AssetBundleState.ShowAssetContextMenu(GetRowsFromIDs(GetSelection()).Select(a => ((a is Item) ?)));
+            }
 
             protected override void RowGUI(RowGUIArgs args)
             {
@@ -74,7 +88,7 @@ namespace UnityEngine.AssetBundles
 		{
 			public BundleInfo[] bundles;
 			public AssetInfo[] assets;
-
+            Dictionary<string, int> assetIndex = new Dictionary<string, int>();
 			public struct BundleInfo
 			{
 				public string name;         //name of bundle
@@ -104,7 +118,8 @@ namespace UnityEngine.AssetBundles
 				{
 					assets[i].name = assetPaths[i];
 					assets[i].bundle = -1;
-				}
+                    assetIndex[assets[i].name] = i;
+                }
 
 				//link assets to bundles
 				for (int i = 0; i < bundles.Length; i++)
@@ -118,22 +133,27 @@ namespace UnityEngine.AssetBundles
 				//find asset dependencies
 				for (int i = 0; i < assets.Length; i++)
 				{
-					var filtered = AssetDatabase.GetDependencies(assets[i].name, false).Where(a => a != assets[i].name);
-					assets[i].dependencies = new int[filtered.Count()];
+                    var ai = AssetBundleState.GetAsset(assets[i].name);
+                    if (ai == null)
+                    {
+                        assets[i].dependencies = new int[0];
+                        continue;
+                    }
+                    //var filtered = ai.dependencies;// AssetBundleState.GetDependencies(assets[i].name);//AssetDatabase.GetDependencies(assets[i].name, false).Where(a => a != assets[i].name && AssetBundleState.ValidateAssetPath(assets[i].name));
+                    assets[i].dependencies = new int[ai.dependencies.Count()];
 					int di = 0;
-					foreach (var d in filtered)
-						assets[i].dependencies[di++] = FindAssetIndex(d);
+					foreach (var d in ai.dependencies)
+						assets[i].dependencies[di++] = FindAssetIndex(d.m_name);
 				}
 			}
 
 			int FindAssetIndex(string a)
 			{
-				for (int i = 0; i < assets.Length; i++)
-					if (assets[i].name == a)
-						return i;
-				return -1;
+                int i = -1;
+                assetIndex.TryGetValue(a, out i);
+                return i;
 			}
-
+            /*
 			internal void CollectDependencies(int a, HashSet<int> deps)
 			{
 				var ai = assets[a];
@@ -144,7 +164,7 @@ namespace UnityEngine.AssetBundles
 						CollectDependencies(i, deps);
 					}
 				}
-			}
+			}*/
 		}
 
 
@@ -186,9 +206,7 @@ namespace UnityEngine.AssetBundles
                             hasNonScene = true;
                     }
 
-                    HashSet < int> dependencies = new HashSet<int>();
-					add.CollectDependencies(assetIndex, dependencies);
-					foreach (var d in dependencies)
+					foreach (var d in add.assets[assetIndex].dependencies)
 					{
 						if (add.assets[d].bundle < 0)
 						{

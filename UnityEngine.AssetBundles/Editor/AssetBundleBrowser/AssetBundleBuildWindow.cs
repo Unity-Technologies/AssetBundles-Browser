@@ -9,6 +9,7 @@ namespace UnityEngine.AssetBundles
 	{
         [SerializeField]
         string m_bundlePath = string.Empty;
+        bool m_showSummary = false;
         bool m_ForceRebuild = false;
         BuildTarget m_buildTarget = BuildTarget.StandaloneWindows;
         BuildAssetBundleOptions m_options = BuildAssetBundleOptions.None;
@@ -20,14 +21,24 @@ namespace UnityEngine.AssetBundles
 			window.titleContent = new GUIContent("ABBuild");
 			window.Show();
 		}
-
-        bool showSummary = false;
+        [MenuItem("AssetBundles/Create Test Assets", priority = 12)]
+        static void CreateTestAssets()
+        {
+            int count = 10;
+            for (int i = 0; i < count; i++)
+            {
+                GameObject o = new GameObject("GO_"+ i);
+                o.AddComponent<MeshRenderer>().sharedMaterial = new Material(Shader.Find("Transparent/Diffuse"));
+                o.AddComponent<MeshRenderer>().sharedMaterial.name = "MAT" + i;
+                PrefabUtility.CreatePrefab("Assets/" + o.name, o);                
+            }
+        }
         private void Update()
         {
-            if (showSummary)
+            if (m_showSummary)
             {
                 AssetBundleSummaryWindow.ShowWindow(m_bundlePath);
-                showSummary = false;
+                m_showSummary = false;
             }
         }
 
@@ -65,7 +76,7 @@ namespace UnityEngine.AssetBundles
                     }
                     BuildPipeline.BuildAssetBundles(m_bundlePath, BuildAssetBundleOptions.None, m_buildTarget);
                     AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-                    showSummary = true;
+                    m_showSummary = true;
                 }
             }
             GUILayout.EndVertical();
@@ -73,10 +84,9 @@ namespace UnityEngine.AssetBundles
 
         private void BrowseForFolder()
         {
-            var f = EditorUtility.OpenFolderPanel("Bundle Folder", m_bundlePath, string.Empty);
-            if (!string.IsNullOrEmpty(f))
-                m_bundlePath = f;
-
+            var newPath = EditorUtility.OpenFolderPanel("Bundle Folder", m_bundlePath, string.Empty);
+            if (!string.IsNullOrEmpty(newPath))
+                m_bundlePath = newPath;
         }
     }
 }

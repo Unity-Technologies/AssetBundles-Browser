@@ -10,8 +10,35 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetListTree : TreeView
 	{
-        AssetBundleState.BundleInfo m_selectedBundle = null;
+        DisplayData m_data;
         SelectionListTree m_selectionList;
+
+        class DisplayData
+        {
+            public AssetBundleState.BundleInfo m_bundle;
+            public List<AssetBundleState.AssetInfo> m_assets;
+            public List<AssetBundleState.AssetInfo> m_extendedAssets;
+            int index = -1;
+            public DisplayData(AssetBundleState.BundleInfo b)
+            {
+                m_bundle = b;
+                m_assets = new List<AssetBundleState.AssetInfo>(m_bundle.m_assets.Values);
+                m_extendedAssets = new List<AssetBundleState.AssetInfo>();
+            }
+
+            
+            public bool Update()
+            {
+                if (index >= m_assets.Count)
+                    return false;
+                int count = m_extendedAssets.Count;
+                if(index >= 0)
+                    m_bundle.GatherDependencies(m_assets[index], m_extendedAssets);
+                index++;
+                return count != m_extendedAssets.Count;
+            }
+
+        }
 
 		public AssetListTree(TreeViewState state, SelectionListTree selList) : base(state)
 		{
@@ -20,28 +47,39 @@ namespace UnityEngine.AssetBundles
             showAlternatingRowBackgrounds = true;
             DefaultStyles.label.richText = true;
         }
+
+        float lastUpdateTime = 0;
+        float updateDelay = 0;
+        bool needsReload = false;
+        public void Update()
+        {
+            if (m_data != null)
+            {
+                if(Time.realtimeSinceStartup - updateDelay > .1f)
+                    needsReload |= m_data.Update();
+
+                if (needsReload && Time.realtimeSinceStartup - lastUpdateTime > .3f)
+                {
+                    Reload();
+                    lastUpdateTime = Time.realtimeSinceStartup;
+                    needsReload = false;
+                }
+            }
+        }
+
+        Color greyColor = Color.white * .75f;
+
         protected override TreeViewItem BuildRoot()
         {
-            var root = new TreeViewItem(-1, -1);
+            var root = new AssetBundleState.AssetInfo.TreeItem();
             root.children = new List<TreeViewItem>();
-            if (m_selectedBundle != null)
+            if (m_data != null)
             {
-                foreach (var a in m_selectedBundle.assets)
-                {
-                    var item = new TreeViewItem(a.name.GetHashCode(), 0, root, System.IO.Path.GetFileNameWithoutExtension(a.name));
-                    item.userData = a;
-                    item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
-                    root.AddChild(item);
-                }
-                List<AssetBundleState.AssetInfo> deps = new List<AssetBundleState.AssetInfo>();
-                if (m_selectedBundle.GatherImplicitDependencies(deps) > 0)
-                foreach (var a in deps)
-                {
-                    var item = new TreeViewItem(a.name.GetHashCode(), 0, root, " " + System.IO.Path.GetFileNameWithoutExtension(a.name));
-                    item.userData = a;
-                    item.icon = AssetDatabase.GetCachedIcon(a.name) as Texture2D;
-                    root.AddChild(item);
-                }
+                foreach (var a in m_data.m_assets)
+                    root.AddChild(new AssetBundleState.AssetInfo.TreeItem(a, 0, Color.white));
+
+                foreach (var a in m_data.m_extendedAssets)
+                    root.AddChild(new AssetBundleState.AssetInfo.TreeItem(a, 0, greyColor));
             }
             return root;
         }
@@ -49,8 +87,7 @@ namespace UnityEngine.AssetBundles
         protected override void RowGUI(RowGUIArgs args)
         {
             Color oldColor = GUI.color;
-            if(args.label.StartsWith(" "))
-                GUI.color = GUI.color * new Color(1, 1, 1, 0.35f);
+            GUI.color = (args.item as AssetBundleState.AssetInfo.TreeItem).color;
             base.RowGUI(args);
             GUI.color = oldColor;
 
@@ -58,10 +95,10 @@ namespace UnityEngine.AssetBundles
 
         protected override void DoubleClickedItem(int id)
         {
-            var assetInfo = TreeViewUtility.FindItem(id, rootItem).userData as AssetBundleState.AssetInfo;
+            var assetInfo = Utilities.FindItem<AssetBundleState.AssetInfo.TreeItem>(rootItem, id).asset;
 			if (assetInfo != null)
 			{
-				Object o = AssetDatabase.LoadAssetAtPath<Object>(assetInfo.name);
+				Object o = AssetDatabase.LoadAssetAtPath<Object>(assetInfo.m_name);
 				EditorGUIUtility.PingObject(o);
 				Selection.activeObject = o;
 			}
@@ -69,28 +106,33 @@ namespace UnityEngine.AssetBundles
 
         internal void SetSelectedBundle(AssetBundleState.BundleInfo b)
         {
-            if (HasSelection() && m_selectedBundle != b)
-                SetSelection(new List<int>());
-            m_selectedBundle = b;
+            m_data = b == null ? null : new DisplayData(b);
+            updateDelay = lastUpdateTime = Time.realtimeSinceStartup;
+            needsReload = true;
             Reload();
-            SelectionChanged(GetSelection());
+        }
+
+        IEnumerable<AssetBundleState.AssetInfo> GetSelectedAssets()
+        {
+            return GetAssets(GetSelection());
+        }
+        IEnumerable<AssetBundleState.AssetInfo> GetAssets(IList<int> ids)
+        {
+            return GetRowsFromIDs(ids).Select(a => (a as AssetBundleState.AssetInfo.TreeItem).asset);
         }
 
         protected override void ContextClickedItem(int id)
         {
-            AssetBundleState.ShowAssetContextMenu(GetRowsFromIDs(GetSelection()).Select(a => (a.userData as AssetBundleState.AssetInfo)));
+            AssetBundleState.ShowAssetContextMenu(GetSelectedAssets());
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
-            m_selectionList.SetItems(GetRowsFromIDs(GetSelection()).Select(a => a.userData as AssetBundleState.AssetInfo));
+            m_selectionList.SetItems(GetSelectedAssets());
         }
 
         protected override bool CanStartDrag(CanStartDragArgs args)
         {
-            foreach (var o in GetRowsFromIDs(args.draggedItemIDs).Select(a => a.userData))
-                if (!(o is AssetBundleState.AssetInfo))
-                    return false;
             args.draggedItemIDs = GetSelection();
             return true;
         }
@@ -98,22 +140,19 @@ namespace UnityEngine.AssetBundles
         protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
         {
             DragAndDrop.PrepareStartDrag();
-            DragAndDrop.paths = GetRowsFromIDs(args.draggedItemIDs).Select(a => (a.userData as AssetBundleState.AssetInfo).name).ToArray();
+            DragAndDrop.paths = GetAssets(args.draggedItemIDs).Select(a=>a.m_name).ToArray();
             DragAndDrop.StartDrag("AssetListTree");
         }
 
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
-            if (m_selectedBundle == null)
-                return DragAndDropVisualMode.Rejected;
-
-            if (!AssetBundleState.ValidateAssetPaths(DragAndDrop.paths))
+            if (m_data == null)
                 return DragAndDropVisualMode.Rejected;
 
             if (args.performDrop)
             {
-                AssetBundleState.MoveAssetsToBundle(m_selectedBundle, DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)));
-                SetSelectedBundle(m_selectedBundle);
+                AssetBundleState.MoveAssetsToBundle(DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)), m_data.m_bundle.m_name);
+                SetSelectedBundle(m_data.m_bundle);
             }
 
             return DragAndDropVisualMode.Move;
@@ -121,10 +160,10 @@ namespace UnityEngine.AssetBundles
 
         protected override void KeyEvent()
         {
-            if (Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
+            if (m_data != null && Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
             {
-                AssetBundleState.MoveAssetsToBundle(AssetBundleState.bundles[string.Empty], GetRowsFromIDs(GetSelection()).Select(a => (a.userData as AssetBundleState.AssetInfo)));
-                SetSelectedBundle(m_selectedBundle);
+                AssetBundleState.MoveAssetsToBundle(GetSelectedAssets(), string.Empty);
+                SetSelectedBundle(m_data.m_bundle);
                 Event.current.Use();
             }
         }

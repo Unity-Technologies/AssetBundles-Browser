@@ -1,10 +1,15 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-using System.Collections.Generic;
-using System;
-using System.Linq;
-using System.IO;
+
+/*
+ * handle large number of bundles in dropdown list
+ * new bundle button is not working
+ * clean up code
+ * handle context/dragging cases where the item is not of valid type
+ * add support for bundle folders (make sure "folder" bundles are supported)
+ * probably need an optimized dependency graph to speed things up, needs to support changes
+ * dictionary based on asset name or index based?  
+ */
 
 namespace UnityEngine.AssetBundles
 {
@@ -23,8 +28,8 @@ namespace UnityEngine.AssetBundles
         bool m_resizingHorizontalSplitter = false;
         bool m_resizingVerticalSplitter = false;
         Rect m_horizontalSplitterRect, m_verticalSplitterRect;
-        const float toolbarHeight = 5;
-        const float splitterWidth = 3;
+        const float kToolbarHeight = 5;
+        const float kSplitterWidth = 3;
 		[MenuItem("AssetBundles/Manage", priority = 0)]
 		static void ShowWindow()
 		{
@@ -55,12 +60,15 @@ namespace UnityEngine.AssetBundles
 
         void OnEnable()
         {
-            m_horizontalSplitterRect = new Rect(position.width / 2, toolbarHeight, splitterWidth, this.position.height - toolbarHeight);
-            m_verticalSplitterRect = new Rect(0, position.width / 2, (this.position.width - m_horizontalSplitterRect.width) - splitterWidth, splitterWidth);
+            m_horizontalSplitterRect = new Rect(position.width / 2, kToolbarHeight, kSplitterWidth, this.position.height - kToolbarHeight);
+            m_verticalSplitterRect = new Rect(0, position.width / 2, (this.position.width - m_horizontalSplitterRect.width) - kSplitterWidth, kSplitterWidth);
         }
 
         private void Update()
         {
+            AssetBundleState.Update();
+            if (m_assetList != null)
+                m_assetList.Update();
             if (AssetBundleState.CheckAndClearDirtyFlag())
             {
                 if (m_bundleTree != null)
@@ -96,15 +104,17 @@ namespace UnityEngine.AssetBundles
             HandleHorizontalResize();
             HandleVerticalResize();
 
-            if (EditorGUI.Button(new Rect(0, toolbarHeight, m_horizontalSplitterRect.x, 25), new GUIContent("New Bundle")))
-                AssetBundleState.CreateEmptyBundle(null);
-            
-            m_bundleTree.OnGUI(new Rect(0, toolbarHeight + 25 + splitterWidth, m_horizontalSplitterRect.x, position.height - (toolbarHeight * 2 + splitterWidth * 2)));
-            float panelLeft = m_horizontalSplitterRect.x + splitterWidth;
-            float panelWidth = (position.width - m_horizontalSplitterRect.x) - splitterWidth * 2;
-            float panelHeight = m_verticalSplitterRect.y - toolbarHeight;
-            m_assetList.OnGUI(new Rect(panelLeft, toolbarHeight, panelWidth, panelHeight));
-            m_selectionList.OnGUI(new Rect(panelLeft, m_verticalSplitterRect.y + splitterWidth, panelWidth, (position.height - m_verticalSplitterRect.y) - splitterWidth * 2));
+            if (GUI.Button(new Rect(0, kToolbarHeight, m_horizontalSplitterRect.x/2, 25), new GUIContent("New Bundle")))
+                AssetBundleState.GetBundle(null);
+        //    if (GUI.Button(new Rect(m_horizontalSplitterRect.x / 2, kToolbarHeight, m_horizontalSplitterRect.x/2, 25), new GUIContent("RESET")))
+        //        AssetBundleState.Rebuild();
+
+            m_bundleTree.OnGUI(new Rect(0, kToolbarHeight + 25 + kSplitterWidth, m_horizontalSplitterRect.x, position.height - (kToolbarHeight * 2 + kSplitterWidth * 2 + 25)));
+            float panelLeft = m_horizontalSplitterRect.x + kSplitterWidth;
+            float panelWidth = (position.width - m_horizontalSplitterRect.x) - kSplitterWidth * 2;
+            float panelHeight = m_verticalSplitterRect.y - kToolbarHeight;
+            m_assetList.OnGUI(new Rect(panelLeft, kToolbarHeight, panelWidth, panelHeight));
+            m_selectionList.OnGUI(new Rect(panelLeft, m_verticalSplitterRect.y + kSplitterWidth, panelWidth, (position.height - m_verticalSplitterRect.y) - kSplitterWidth * 2));
 
             if (m_resizingHorizontalSplitter || m_resizingVerticalSplitter)
                 Repaint();
@@ -112,15 +122,15 @@ namespace UnityEngine.AssetBundles
 
         private void HandleHorizontalResize()
         {
-            m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - splitterWidth) * .9f);
-            m_horizontalSplitterRect.height = position.height - toolbarHeight;
+            m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
+            m_horizontalSplitterRect.height = position.height - kToolbarHeight;
 
             EditorGUIUtility.AddCursorRect(m_horizontalSplitterRect, MouseCursor.ResizeHorizontal);
             if (Event.current.type == EventType.mouseDown && m_horizontalSplitterRect.Contains(Event.current.mousePosition))
                 m_resizingHorizontalSplitter = true;
 
             if (m_resizingHorizontalSplitter)
-                m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - splitterWidth) * .9f);
+                m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
 
             if (Event.current.type == EventType.MouseUp)
                 m_resizingHorizontalSplitter = false;
@@ -129,7 +139,7 @@ namespace UnityEngine.AssetBundles
         private void HandleVerticalResize()
         {
             m_verticalSplitterRect.x = m_horizontalSplitterRect.x;
-            m_verticalSplitterRect.y = Mathf.Clamp(m_verticalSplitterRect.y, (position.height - toolbarHeight) * .1f + toolbarHeight, (position.height - splitterWidth) * .9f);
+            m_verticalSplitterRect.y = Mathf.Clamp(m_verticalSplitterRect.y, (position.height - kToolbarHeight) * .1f + kToolbarHeight, (position.height - kSplitterWidth) * .9f);
             m_verticalSplitterRect.width = position.width - m_horizontalSplitterRect.x;
 
             EditorGUIUtility.AddCursorRect(m_verticalSplitterRect, MouseCursor.ResizeVertical);
@@ -137,7 +147,7 @@ namespace UnityEngine.AssetBundles
                 m_resizingVerticalSplitter = true;
 
             if (m_resizingVerticalSplitter)
-                m_verticalSplitterRect.y = Mathf.Clamp(Event.current.mousePosition.y, (position.height - toolbarHeight) * .1f + toolbarHeight, (position.height - splitterWidth) * .9f);
+                m_verticalSplitterRect.y = Mathf.Clamp(Event.current.mousePosition.y, (position.height - kToolbarHeight) * .1f + kToolbarHeight, (position.height - kSplitterWidth) * .9f);
 
             if (Event.current.type == EventType.MouseUp)
                 m_resizingVerticalSplitter = false;
