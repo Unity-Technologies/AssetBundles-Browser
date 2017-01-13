@@ -13,16 +13,36 @@ namespace UnityEngine.AssetBundles
         DisplayData m_data;
         SelectionListTree m_selectionList;
 
+        class AssetColumn : MultiColumnHeaderState.Column
+        {
+            public AssetColumn(string label)
+            {
+                headerContent = new GUIContent(label, label + " tooltip");
+                minWidth = 50;
+                width = 100;
+                maxWidth = 200;
+                headerTextAlignment = TextAlignment.Left;
+                canSort = true;
+            }
+        }
+
+        public static MultiColumnHeaderState.Column[] GetColumns()
+        {
+            return new MultiColumnHeaderState.Column[] { new AssetColumn("Asset"), new AssetColumn("Bundle"), new AssetColumn("Size") };
+        }
+
         class DisplayData
         {
-            public AssetBundleState.BundleInfo m_bundle;
+            public IEnumerable<AssetBundleState.BundleInfo> m_bundles;
             public List<AssetBundleState.AssetInfo> m_assets;
             public List<AssetBundleState.AssetInfo> m_extendedAssets;
             int index = -1;
-            public DisplayData(AssetBundleState.BundleInfo b)
+            public DisplayData(IEnumerable<AssetBundleState.BundleInfo> bundles)
             {
-                m_bundle = b;
-                m_assets = new List<AssetBundleState.AssetInfo>(m_bundle.m_assets.Values);
+                m_bundles = bundles;
+                m_assets = new List<AssetBundleState.AssetInfo>();
+                foreach (var b in bundles)
+                    m_assets.AddRange(b.m_assets.Values);
                 m_extendedAssets = new List<AssetBundleState.AssetInfo>();
             }
 
@@ -32,15 +52,15 @@ namespace UnityEngine.AssetBundles
                 if (index >= m_assets.Count)
                     return false;
                 int count = m_extendedAssets.Count;
-                if(index >= 0)
-                    m_bundle.GatherDependencies(m_assets[index], m_extendedAssets);
+                if (index >= 0)
+                    m_assets[index].m_bundle.GatherDependencies(m_assets[index], m_extendedAssets);
                 index++;
                 return count != m_extendedAssets.Count;
             }
 
         }
 
-		public AssetListTree(TreeViewState state, SelectionListTree selList) : base(state)
+		public AssetListTree(TreeViewState state, MultiColumnHeaderState mchs, SelectionListTree selList) : base(state, new MultiColumnHeader(mchs))
 		{
             m_selectionList = selList;
             showBorder = true;
@@ -69,6 +89,14 @@ namespace UnityEngine.AssetBundles
 
         Color greyColor = Color.white * .75f;
 
+        protected override IList<TreeViewItem> BuildRows(TreeViewItem root)
+        {
+            var rows = base.BuildRows(root);
+           // SortIfNeeded(root, rows);
+            return rows;
+        }
+
+
         protected override TreeViewItem BuildRoot()
         {
             var root = new AssetBundleState.AssetInfo.TreeItem();
@@ -87,10 +115,31 @@ namespace UnityEngine.AssetBundles
         protected override void RowGUI(RowGUIArgs args)
         {
             Color oldColor = GUI.color;
-            GUI.color = (args.item as AssetBundleState.AssetInfo.TreeItem).color;
-            base.RowGUI(args);
+            for (int i = 0; i < args.GetNumVisibleColumns(); ++i)
+                CellGUI(args.GetCellRect(i), args.item as AssetBundleState.AssetInfo.TreeItem, args.GetColumn(i), ref args);
             GUI.color = oldColor;
+        }
 
+        private void CellGUI(Rect cellRect, AssetBundleState.AssetInfo.TreeItem item, int column, ref RowGUIArgs args)
+        {
+            CenterRectUsingSingleLineHeight(ref cellRect);
+            GUI.color = item.color;
+            switch (column)
+            {
+                case 0:
+                    {
+                        var iconRect = new Rect(cellRect.x + 1, cellRect.y + 1, cellRect.height - 2, cellRect.height - 2);
+                        GUI.DrawTexture(iconRect, item.icon, ScaleMode.ScaleToFit);
+                        DefaultGUI.Label(new Rect(cellRect.x + iconRect.xMax + 1, cellRect.y, cellRect.width - iconRect.width, cellRect.height), item.displayName, args.selected, args.focused);
+                    }
+                    break;
+                case 1:
+                    DefaultGUI.Label(cellRect, item.asset.m_bundle == null ? string.Empty : item.asset.m_bundle.m_name, args.selected, args.focused);
+                    break;
+                case 2:
+                    DefaultGUI.Label(cellRect, item.asset.GetSizeString(), args.selected, args.focused);
+                    break;
+            }
         }
 
         protected override void DoubleClickedItem(int id)
@@ -104,9 +153,10 @@ namespace UnityEngine.AssetBundles
 			}
         }
 
-        internal void SetSelectedBundle(AssetBundleState.BundleInfo b)
+        internal void SetSelectedBundles(IEnumerable<AssetBundleState.BundleInfo> b)
         {
-            m_data = b == null ? null : new DisplayData(b);
+            m_selectionList.SetItems(null);
+            m_data = new DisplayData(b);
             updateDelay = lastUpdateTime = Time.realtimeSinceStartup;
             needsReload = true;
             Reload();
@@ -151,8 +201,11 @@ namespace UnityEngine.AssetBundles
 
             if (args.performDrop)
             {
-                AssetBundleState.MoveAssetsToBundle(DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)), m_data.m_bundle.m_name);
-                SetSelectedBundle(m_data.m_bundle);
+                AssetBundleState.StartABMoveBatch();
+                foreach (var b in m_data.m_bundles)
+                    AssetBundleState.MoveAssetsToBundle(DragAndDrop.paths.Select(a => AssetBundleState.GetAsset(a)), b.m_name);
+                AssetBundleState.EndABMoveBatch();
+                SetSelectedBundles(m_data.m_bundles);
             }
 
             return DragAndDropVisualMode.Move;
@@ -162,8 +215,10 @@ namespace UnityEngine.AssetBundles
         {
             if (m_data != null && Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
             {
+                AssetBundleState.StartABMoveBatch();
                 AssetBundleState.MoveAssetsToBundle(GetSelectedAssets(), string.Empty);
-                SetSelectedBundle(m_data.m_bundle);
+                AssetBundleState.EndABMoveBatch();
+                SetSelectedBundles(m_data.m_bundles);
                 Event.current.Use();
             }
         }

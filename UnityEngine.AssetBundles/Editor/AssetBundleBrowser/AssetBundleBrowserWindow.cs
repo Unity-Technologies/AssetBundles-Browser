@@ -20,6 +20,8 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         TreeViewState m_assetListState;
         [SerializeField]
+        MultiColumnHeaderState m_assetListMCHState;
+        [SerializeField]
         TreeViewState m_selectionTreeState;
 
         AssetBundleTree m_bundleTree;
@@ -89,8 +91,11 @@ namespace UnityEngine.AssetBundles
                 m_selectionList.Reload();
 
                 if (m_assetListState == null)
-					m_assetListState = new TreeViewState();
-				m_assetList = new AssetListTree(m_assetListState, m_selectionList);
+                {
+                    m_assetListState = new TreeViewState();
+                    m_assetListMCHState = new MultiColumnHeaderState(AssetListTree.GetColumns());
+                }
+				m_assetList = new AssetListTree(m_assetListState, m_assetListMCHState, m_selectionList);
                 m_assetList.Reload();
 
 
@@ -106,10 +111,12 @@ namespace UnityEngine.AssetBundles
 
             if (GUI.Button(new Rect(0, kToolbarHeight, m_horizontalSplitterRect.x/2, 25), new GUIContent("New Bundle")))
                 AssetBundleState.GetBundle(null);
-        //    if (GUI.Button(new Rect(m_horizontalSplitterRect.x / 2, kToolbarHeight, m_horizontalSplitterRect.x/2, 25), new GUIContent("RESET")))
-        //        AssetBundleState.Rebuild();
+           // if (GUI.Button(new Rect(m_horizontalSplitterRect.x / 2, kToolbarHeight, m_horizontalSplitterRect.x / 2, 25), new GUIContent("New Folder")))
+            //    ;// m_bundleTree.Add
+                //    if (GUI.Button(new Rect(m_horizontalSplitterRect.x / 2, kToolbarHeight, m_horizontalSplitterRect.x/2, 25), new GUIContent("RESET")))
+                //        AssetBundleState.Rebuild();
 
-            m_bundleTree.OnGUI(new Rect(0, kToolbarHeight + 25 + kSplitterWidth, m_horizontalSplitterRect.x, position.height - (kToolbarHeight * 2 + kSplitterWidth * 2 + 25)));
+                m_bundleTree.OnGUI(new Rect(0, kToolbarHeight + 25 + kSplitterWidth, m_horizontalSplitterRect.x, position.height - (kToolbarHeight * 2 + kSplitterWidth * 2 + 25)));
             float panelLeft = m_horizontalSplitterRect.x + kSplitterWidth;
             float panelWidth = (position.width - m_horizontalSplitterRect.x) - kSplitterWidth * 2;
             float panelHeight = m_verticalSplitterRect.y - kToolbarHeight;

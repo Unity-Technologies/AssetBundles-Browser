@@ -11,17 +11,24 @@ namespace UnityEngine.AssetBundles
         public static Texture2D FoldlerIcon { get { return EditorGUIUtility.FindTexture(Utilities.kFolderIconName) as Texture2D; } }
         public static T FindItem<T>(TreeViewItem root, int id) where T : TreeViewItem
         {
+            if (!root.hasChildren)
+                return null;
             for (int i = 0; i < root.children.Count; i++)
             {
                 if (root.children[i].id == id)
-                {
                     return root.children[i] as T;
-                }
+                var r = FindItem<T>(root.children[i], id);
+                if (r != null)
+                    return r;
             }
             return null;
         }
 
+
+
     }
+
+
 
     //TODO: not currently used, clean up for use
     public class AssetDependencyCache

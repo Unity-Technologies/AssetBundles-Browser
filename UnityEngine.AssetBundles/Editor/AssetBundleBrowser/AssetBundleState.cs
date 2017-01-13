@@ -15,10 +15,26 @@ namespace UnityEngine.AssetBundles
             {
                 public BundleInfo bundle;
                 public TreeItem() : base(-1, -1) { }
-                public TreeItem(BundleInfo b, int depth) : base(b.m_name.GetHashCode(), depth, b.m_name)
+                public TreeItem(int i, int d, string n) : base(i, d, n)
+                {
+                    icon = Utilities.FoldlerIcon;
+                }
+                public TreeItem(BundleInfo b, int depth) : base(b.m_name.GetHashCode(), depth, b.DisplayName)
                 {
                     bundle = b;
                     icon = Utilities.FoldlerIcon;
+                }
+
+                internal string GetPath()
+                {
+                    var n = displayName;
+                    TreeViewItem p = parent;
+                    while (p != null && !string.IsNullOrEmpty(p.displayName))
+                    {
+                        n = p.displayName + "/" + n;
+                        p = p.parent;
+                    }
+                    return n;
                 }
             }
 
@@ -47,6 +63,26 @@ namespace UnityEngine.AssetBundles
             public BundleInfo(string n)
             {
                 m_name = n;
+            }
+
+            public string DisplayName
+            {
+                get
+                {
+                    if (!m_name.Contains('/'))
+                        return m_name;
+                    return m_name.Substring(m_name.LastIndexOf('/') + 1);
+                }
+            }
+
+            public string Folder
+            {
+                get
+                {
+                    if (!m_name.Contains('/'))
+                        return string.Empty;
+                    return m_name.Substring(0, m_name.LastIndexOf('/'));
+                }
             }
 
         }
@@ -104,6 +140,11 @@ namespace UnityEngine.AssetBundles
                     }
                     return _dependencies;
                 }
+            }
+
+            internal string GetSizeString()
+            {
+                return "100kb";
             }
 
             public AssetInfo(BundleInfo b, string n)
@@ -186,6 +227,12 @@ namespace UnityEngine.AssetBundles
             }
         }
 
+        internal static void RemoveBundle(string v)
+        {
+            m_bundles.Remove(v);
+            AssetDatabase.RemoveAssetBundleName(v, true);
+        }
+
         static List<string> m_importedAssets = new List<string>();
         static List<string> m_deletedAssets = new List<string>();
         static List<KeyValuePair<string, string>> m_movedAssets = new List<KeyValuePair<string, string>>();
@@ -253,9 +300,12 @@ namespace UnityEngine.AssetBundles
             var b = GetBundle(GetBundleName(p));
             if (m_assets.TryGetValue(p, out ai))
             {
-                ai.m_bundle.m_assets.Remove(ai.m_name);
-                ai.m_bundle = b;
-                b.m_assets.Add(ai.m_name, ai);
+                if (ai.m_bundle != b)
+                {
+                    ai.m_bundle.m_assets.Remove(ai.m_name);
+                    ai.m_bundle = b;
+                    b.m_assets.Add(ai.m_name, ai);
+                }
                 return ai;
             }
 
@@ -326,8 +376,8 @@ namespace UnityEngine.AssetBundles
 
         class ABMove
         {
-            string asset;
-            string bundle;
+            public string asset;
+            public string bundle;
             public ABMove(string a, string b)
             {
                 asset = a;
@@ -343,15 +393,24 @@ namespace UnityEngine.AssetBundles
 
         public static void StartABMoveBatch()
         {
-            moveBatches = new List<ABMove>();
+            if (moveBatches == null)
+                moveBatches = new List<ABMove>();
         }
 
         public static void EndABMoveBatch()
         {
+            if (moveBatches == null)
+                return;
             bool autoRefresh = EditorPrefs.GetBool("kAutoRefresh");
             EditorPrefs.SetBool("kAutoRefresh", false);
-            foreach (var m in moveBatches)
-                m.Apply();
+            EditorUtility.DisplayProgressBar("Moving assets to bundles", "", 0);
+            //foreach (var m in moveBatches)
+            for (int i = 0; i < moveBatches.Count; i++)
+            {
+                EditorUtility.DisplayProgressBar("Moving assets to bundle " + moveBatches[i].bundle, System.IO.Path.GetFileNameWithoutExtension(moveBatches[i].asset), (float)i / (float)moveBatches.Count);
+                moveBatches[i].Apply();
+            }
+            EditorUtility.ClearProgressBar();
             EditorPrefs.SetBool("kAutoRefresh", autoRefresh);
             moveBatches = null;
         }
@@ -404,7 +463,9 @@ namespace UnityEngine.AssetBundles
         static void MoveToBundle(object target)
         {
             var bi = target as MoveToBundleData;
+            StartABMoveBatch();
             MoveAssetsToBundle(bi.paths, bi.bundle);
+            EndABMoveBatch();
         }
     }
 }

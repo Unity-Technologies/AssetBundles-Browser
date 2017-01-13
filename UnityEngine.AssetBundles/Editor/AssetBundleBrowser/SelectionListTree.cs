@@ -80,7 +80,7 @@ namespace UnityEngine.AssetBundles
 
         IEnumerable<AssetBundleState.AssetInfo> GetAssets(IList<int> ids)
         {
-            return GetRowsFromIDs(ids).Select(a => (a as AssetBundleState.AssetInfo.TreeItem).asset);
+            return new List<AssetBundleState.AssetInfo>(GetRowsFromIDs(ids).Select(a => (a as AssetBundleState.AssetInfo.TreeItem).asset));
         }
 
         bool VeryifyItemsAreAssets(IList<int> ids)
