@@ -415,6 +415,7 @@ namespace UnityEngine.AssetBundles
             EditorUtility.ClearProgressBar();
             EditorPrefs.SetBool("kAutoRefresh", autoRefresh);
             moveBatches = null;
+            m_dirty = true;
         }
 
         public static void MoveAssetsToBundle(IEnumerable<AssetInfo> ais, string bundleName)
