@@ -361,6 +361,8 @@ namespace UnityEngine.AssetBundles
         internal static string GetBundleName(string asset)
         {
             var importer = AssetImporter.GetAtPath(asset);
+            if (importer == null)
+                return string.Empty;
             var bundleName = importer.assetBundleName;
             if (importer.assetBundleVariant.Length > 0)
                 bundleName = bundleName + "." + importer.assetBundleVariant;
