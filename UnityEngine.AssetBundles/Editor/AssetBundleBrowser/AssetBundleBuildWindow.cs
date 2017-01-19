@@ -59,25 +59,27 @@ namespace UnityEngine.AssetBundles
 			{
                 if (string.IsNullOrEmpty(m_bundlePath))
                     BrowseForFolder();
-                
-                if (!Directory.Exists(m_bundlePath))
+
+                if (m_ForceRebuild)
                 {
-                    Debug.Log("Invalid bundle path " + m_bundlePath);
-                }
-                else
-                {
-                    if (m_ForceRebuild)
+                    if (EditorUtility.DisplayDialog("File delete confirmation", "Do you want to delete all files in the directory " + m_bundlePath + "?", "Yes", "No"))
                     {
-                        if (EditorUtility.DisplayDialog("File delete confirmation", "Do you want to delete all files in the directory " + m_bundlePath + "?", "Yes", "No"))
+                        try
                         {
-                            Directory.Delete(m_bundlePath, true);
-                            Directory.CreateDirectory(m_bundlePath);
+                            if(Directory.Exists(m_bundlePath))
+                                Directory.Delete(m_bundlePath, true);
+                        }
+                        catch (System.Exception e)
+                        {
+                            Debug.LogException(e);
                         }
                     }
-                    BuildPipeline.BuildAssetBundles(m_bundlePath, BuildAssetBundleOptions.None, m_buildTarget);
-                    AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
-                    m_showSummary = true;
                 }
+                if (!Directory.Exists(m_bundlePath))
+                    Directory.CreateDirectory(m_bundlePath);
+                BuildPipeline.BuildAssetBundles(m_bundlePath, m_options, m_buildTarget);
+                AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                // m_showSummary = true;
             }
             GUILayout.EndVertical();
 		}
