@@ -46,7 +46,11 @@ namespace UnityEngine.AssetBundles
 		{
 			GUILayout.BeginVertical();
             GUILayout.BeginHorizontal();
-            m_bundlePath = GUILayout.TextField(m_bundlePath);
+            if(string.IsNullOrEmpty(m_bundlePath))
+                m_bundlePath = EditorUserBuildSettings.GetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath");
+            var bp = GUILayout.TextField(m_bundlePath);
+            if(bp != m_bundlePath)
+                EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_bundlePath = bp);
             if (GUILayout.Button("Browse"))
                 BrowseForFolder();
             GUILayout.EndHorizontal();
@@ -88,7 +92,7 @@ namespace UnityEngine.AssetBundles
         {
             var newPath = EditorUtility.OpenFolderPanel("Bundle Folder", m_bundlePath, string.Empty);
             if (!string.IsNullOrEmpty(newPath))
-                m_bundlePath = newPath;
+                EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_bundlePath = newPath);
         }
     }
 }

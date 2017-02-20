@@ -168,7 +168,7 @@ namespace UnityEngine.AssetBundles
         }
         IEnumerable<AssetBundleState.AssetInfo> GetAssets(IList<int> ids)
         {
-            return GetRowsFromIDs(ids).Select(a => (a as AssetBundleState.AssetInfo.TreeItem).asset);
+            return GetRows().Where(a => ids.Contains(a.id)).Select(a => (a as AssetBundleState.AssetInfo.TreeItem).asset);
         }
 
         protected override void ContextClickedItem(int id)
