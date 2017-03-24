@@ -100,7 +100,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
                 //TODO - maybe there's a way to ask the AssetDatabase for this size info.
                 System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_name);
-                fileSize = fileInfo.Length;
+                if (fileInfo.Exists)
+                    fileSize = fileInfo.Length;
+                else
+                    fileSize = 0;
             }
         }
         public string DisplayName
@@ -175,6 +178,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         public long fileSize;
         public string GetSizeString()
         {
+            if (fileSize == 0)
+                return "--";
             return EditorUtility.FormatBytes(fileSize); ;
         }
 
@@ -187,7 +192,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 m_dependencies = new List<AssetInfo>();
                 if (AssetDatabase.IsValidFolder(m_name))
                 {
-                    GatherFoldersAndFiles();
+                    //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
+
+                    //GatherFoldersAndFiles();
                 }
                 else
                 {
@@ -205,28 +212,28 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             return m_dependencies;
             
         }
-        private void GatherFoldersAndFiles()
-        {
-            foreach (var f in System.IO.Directory.GetFiles(m_name))
-            {
-                string ext = System.IO.Path.GetExtension(f);
-                if (ext == ".cs" || ext == ".dll" || ext == ".js" || ext == ".boo")
-                    continue;
-                var ai = Model.CreateAsset(f.Replace('\\', '/'), this);// Model.GetAsset(f.Replace('\\', '/'));
-                if (ai != null)
-                    m_dependencies.Add(ai);
-            }
+        //private void GatherFoldersAndFiles()
+        //{
+        //    foreach (var f in System.IO.Directory.GetFiles(m_name))
+        //    {
+        //        string ext = System.IO.Path.GetExtension(f);
+        //        if (ext == ".cs" || ext == ".dll" || ext == ".js" || ext == ".boo")
+        //            continue;
+        //        var ai = Model.CreateAsset(f.Replace('\\', '/'), this);// Model.GetAsset(f.Replace('\\', '/'));
+        //        if (ai != null)
+        //            m_dependencies.Add(ai);
+        //    }
 
-            foreach (var f in System.IO.Directory.GetDirectories(m_name))
-            {
-                string path = f.Replace('\\', '/');
-                var ai = Model.CreateAsset(path, this);// Model.GetAsset(path);
-                if (ai != null)
-                {
-                    m_dependencies.Add(ai);
-                    GatherFoldersAndFiles();
-                }
-            }
-        }
+        //    foreach (var f in System.IO.Directory.GetDirectories(m_name))
+        //    {
+        //        string path = f.Replace('\\', '/');
+        //        var ai = Model.CreateAsset(path, this);// Model.GetAsset(path);
+        //        if (ai != null)
+        //        {
+        //            m_dependencies.Add(ai);
+        //            GatherFoldersAndFiles();
+        //        }
+        //    }
+        //}
     }
 }

@@ -23,8 +23,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             ExecuteAssetMove();     //this should never do anything. just a safety check.
 
             //TODO - look into EditorApplication callback functions.
-
-            EditorApplication.assetBundleNameChanged
+            
             int size = m_bundlesToUpdate.Count;
             if (size > 0)
             {
@@ -308,7 +307,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             if (ValidateAsset(name))
             {
-                var bundleName = GetBundleName(name);
+                var bundleName = GetBundleName(name);  //TODO - I don't think I want to call this here because I can't get here without bundle being "".
                 return CreateAsset(name, bundleName, parent);
             }
             return null;

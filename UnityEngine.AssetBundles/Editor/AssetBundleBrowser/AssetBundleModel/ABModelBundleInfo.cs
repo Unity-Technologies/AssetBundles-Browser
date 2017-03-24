@@ -254,22 +254,48 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_concreteAssets.Clear();
             m_totalSize = 0;
             m_isSceneBundle = false;
-            var assets = AssetDatabase.GetAssetPathsFromAssetBundle(m_name.Name);
-            foreach(var assetName in assets)
-            {
-                m_concreteAssets.Add(Model.CreateAsset(assetName, m_name.Name));
-                m_totalSize += m_concreteAssets.Last().fileSize;
-                if (AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset))
-                {
-                    m_isSceneBundle = true;
-                    m_concreteAssets.Last().IsScene = true;
-                }
-            }
-            foreach(var asset in m_dependentAssets)
+
+            foreach (var asset in m_dependentAssets)
             {
                 AssetBundleModel.Model.UnRegisterAsset(asset, m_name.Name);
             }
             m_dependentAssets.Clear();
+
+            var assets = AssetDatabase.GetAssetPathsFromAssetBundle(m_name.Name);
+            foreach(var assetName in assets)
+            {
+                var bundleName = Model.GetBundleName(assetName);
+                if (bundleName == string.Empty)
+                {
+                    var partialPath = assetName;
+                    while(
+                        partialPath != string.Empty && 
+                        partialPath != "Assets" &&
+                        bundleName == string.Empty)
+                    {
+                        partialPath = partialPath.Substring(0, partialPath.LastIndexOf('/'));
+                        bundleName = Model.GetBundleName(partialPath);
+                    }
+                    if(bundleName != string.Empty)
+                    {
+                        var folderAsset = Model.CreateAsset(partialPath, bundleName);
+                        if (m_concreteAssets.FindIndex(a => a.DisplayName == folderAsset.DisplayName) == -1)
+                            m_concreteAssets.Add(folderAsset);
+
+                        m_dependentAssets.Add(Model.CreateAsset(assetName, folderAsset));
+                    }
+                }
+                else
+                {
+                    m_concreteAssets.Add(Model.CreateAsset(assetName, m_name.Name));
+                    m_totalSize += m_concreteAssets.Last().fileSize;
+                    if (AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset))
+                    {
+                        m_isSceneBundle = true;
+                        m_concreteAssets.Last().IsScene = true;
+                    }
+                }
+            }
             
             if(IsSceneBundle && m_concreteAssets.Count > 1)
             {
@@ -309,7 +335,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
             else if (m_dependentCounter < m_dependentAssets.Count)
             {
-                GatherDependencies(m_dependentAssets[m_dependentCounter]);
+                GatherDependencies(m_dependentAssets[m_dependentCounter], m_name.Name);
                 m_dependentCounter++;
                 m_doneUpdating = false;
             }
@@ -320,8 +346,11 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_dirty = dependents != m_dependentAssets.Count;
         }
 
-        private void GatherDependencies(AssetInfo asset)
+        private void GatherDependencies(AssetInfo asset, string parentBundle = "")
         {
+            if (parentBundle == string.Empty)
+                parentBundle = asset.BundleName;
+
             foreach (var ai in asset.GetDependencies())
             {
                 if (ai == asset || m_concreteAssets.Contains(ai) || m_dependentAssets.Contains(ai))
@@ -332,7 +361,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 {
                     m_dependentAssets.Add(ai);
                     m_totalSize += ai.fileSize;
-                    if (Model.RegisterAsset(ai, asset.BundleName) > 1)
+                    if (Model.RegisterAsset(ai, parentBundle) > 1)
                     {
                         SetDuplicateWarning();
                     }
