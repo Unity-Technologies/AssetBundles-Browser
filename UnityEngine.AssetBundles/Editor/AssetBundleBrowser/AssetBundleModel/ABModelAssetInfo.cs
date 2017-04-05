@@ -116,7 +116,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         public Color GetColor()
         {
             if (m_bundleName == "")
-                return Color.grey * 1.5f;
+                return Model.kLightGrey;
             else
                 return Color.white;
         }

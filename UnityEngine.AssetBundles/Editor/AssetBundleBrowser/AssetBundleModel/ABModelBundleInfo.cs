@@ -749,13 +749,13 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
     }
 
-    public class BundleFolderInfoConcrete : BundleFolderInfo
+    public class BundleFolderConcreteInfo : BundleFolderInfo
     {
-        public BundleFolderInfoConcrete(string name, BundleFolderInfo parent) : base(name, parent)
+        public BundleFolderConcreteInfo(string name, BundleFolderInfo parent) : base(name, parent)
         {
         }
 
-        public BundleFolderInfoConcrete(List<string> path, int depth, BundleFolderInfo parent) : base(path, depth, parent)
+        public BundleFolderConcreteInfo(List<string> path, int depth, BundleFolderInfo parent) : base(path, depth, parent)
         {
         }
 

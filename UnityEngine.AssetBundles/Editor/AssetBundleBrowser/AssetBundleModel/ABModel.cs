@@ -11,8 +11,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
     {
         const string kNewBundleBaseName = "newbundle";
         const string kNewVariantBaseName = "newvariant";
+        public static /*const*/ Color kLightGrey = Color.grey * 1.5f;
 
-        private static BundleFolderInfoConcrete m_rootLevelBundles = new BundleFolderInfoConcrete("", null);
+        private static BundleFolderConcreteInfo m_rootLevelBundles = new BundleFolderConcreteInfo("", null);
         private static List<ABMoveData> m_moveData = new List<ABMoveData>();
         private static List<BundleInfo> m_bundlesToUpdate = new List<BundleInfo>();
         private static Dictionary<string, AssetInfo> m_globalAssetList = new Dictionary<string, AssetInfo>();
@@ -65,7 +66,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
         public static void Rebuild()
         {
-            m_rootLevelBundles = new BundleFolderInfoConcrete("", null);
+            m_rootLevelBundles = new BundleFolderConcreteInfo("", null);
             m_moveData = new List<ABMoveData>();
             m_bundlesToUpdate = new List<BundleInfo>();
             m_globalAssetList = new Dictionary<string, AssetInfo>();
@@ -98,7 +99,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
             if(m_inErrorState)
             {
-                m_rootLevelBundles = new BundleFolderInfoConcrete("", null);
+                m_rootLevelBundles = new BundleFolderConcreteInfo("", null);
                 m_emptyMessageString = kProblemEmptyMessage;
             }
         }
@@ -200,7 +201,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             BundleNameData nameData = new BundleNameData(variantName);
             return AddBundleToFolder(folder.Parent, nameData);
         }
-        public static BundleFolderInfo CreateEmptyBundleFolder(BundleFolderInfoConcrete folder = null)
+        public static BundleFolderInfo CreateEmptyBundleFolder(BundleFolderConcreteInfo folder = null)
         {
             folder = (folder == null) ? m_rootLevelBundles : folder;
             string name = GetUniqueName(folder) + "/dummy";
@@ -220,10 +221,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
             return currInfo;
         }
-        private static BundleFolderInfoConcrete AddFoldersToBundle(BundleFolderInfo root, BundleNameData nameData)
+        private static BundleFolderConcreteInfo AddFoldersToBundle(BundleFolderInfo root, BundleNameData nameData)
         {
             BundleInfo currInfo = root;
-            var folder = currInfo as BundleFolderInfoConcrete;
+            var folder = currInfo as BundleFolderConcreteInfo;
             var size = nameData.PathTokens.Count;
             for (var index = 0; index < size; index++)
             {
@@ -232,11 +233,11 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     currInfo = folder.GetChild(nameData.PathTokens[index]);
                     if (currInfo == null)
                     {
-                        currInfo = new BundleFolderInfoConcrete(nameData.PathTokens, index + 1, folder);
+                        currInfo = new BundleFolderConcreteInfo(nameData.PathTokens, index + 1, folder);
                         folder.AddChild(currInfo);
                     }
 
-                    folder = currInfo as BundleFolderInfoConcrete;
+                    folder = currInfo as BundleFolderConcreteInfo;
                     if (folder == null)
                     {
                         m_inErrorState = true;
@@ -245,7 +246,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     }
                 }
             }
-            return currInfo as BundleFolderInfoConcrete;
+            return currInfo as BundleFolderConcreteInfo;
         }
         private static BundleInfo AddBundleToFolder(BundleFolderInfo root, BundleNameData nameData)
         {

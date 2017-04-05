@@ -13,7 +13,6 @@ namespace UnityEngine.AssetBundles
         {
             Browser,
             Builder,
-            //Inspector
         }
         Mode m_Mode = Mode.Browser;
 
@@ -55,8 +54,6 @@ namespace UnityEngine.AssetBundles
         {
             switch (m_Mode)
             {
-                //case Mode.Inspector:
-                //    break;
                 case Mode.Builder:
                     //m_BuildTab.Update();
                     break;
@@ -73,8 +70,6 @@ namespace UnityEngine.AssetBundles
 
             switch(m_Mode)
             {
-                //case Mode.Inspector:
-                //    break;
                 case Mode.Builder:
                     m_BuildTab.OnGUI(GetSubWindowArea());
                     break;
