@@ -31,20 +31,34 @@ namespace UnityEngine.AssetBundles
 
         protected override void RowGUI(RowGUIArgs args)
         {
+            var bundleItem = (args.item as AssetBundleModel.BundleTreeItem);
             if (args.item.icon == null)
                 extraSpaceBeforeIconAndLabel = 16f;
             else
                 extraSpaceBeforeIconAndLabel = 0f;
 
-            base.RowGUI(args);
+            //if( (bundleItem.bundle as AssetBundleModel.BundleVariantDataInfo) != null)
+            //{
+            //    extraSpaceBeforeIconAndLabel += 40f;
+            //}
 
-            var errorIcon = (args.item as AssetBundleModel.BundleTreeItem).GetErrorIcon();
+            Color old = GUI.color;
+ //           GUI.color = Color.grey;
+ //           if( (args.item.displayName == "variantbundle") )
+ ////               (args.item.displayName[0] != 'V') )
+ //           {
+ //               args.item.displayName = "variantbundle (highdef, ...)";
+ //           }
+            base.RowGUI(args);
+            GUI.color = old;
+
+            var errorIcon = bundleItem.GetErrorIcon();
             if (errorIcon != null)
             {
                 var size = args.rowRect.height;
                 var right = args.rowRect.xMax;
                 Rect messageRect = new Rect(right - size, args.rowRect.yMin, size, size);
-                GUI.Label(messageRect, new GUIContent(errorIcon, (args.item as AssetBundleModel.BundleTreeItem).ErrorMessage() ));
+                GUI.Label(messageRect, new GUIContent(errorIcon, bundleItem.ErrorMessage() ));
             }
         }
 
@@ -123,52 +137,101 @@ namespace UnityEngine.AssetBundles
             }
             
             GenericMenu menu = new GenericMenu();
-
+            
             if(selectedNodes.Count == 1)
             {
-                var folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderInfo;
-                if(folder != null)
+                if ((selectedNodes[0].bundle as AssetBundleModel.BundleFolderInfoConcrete) != null)
                 {
                     menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes);
-                    menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes); 
+                    menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
                 }
+                else if( (selectedNodes[0].bundle as AssetBundleModel.BundleVariantFolderInfo) != null)
+                {
+                    menu.AddItem(new GUIContent("Add new variant"), false, CreateNewVariant, selectedNodes);
+                }
+                else
+                {
+                    var variant = selectedNodes[0].bundle as AssetBundleModel.BundleVariantDataInfo;
+                    if(variant == null)
+                       menu.AddItem(new GUIContent("Convert to variant"), false, ConvertToVariant, selectedNodes);
+                }
+                menu.AddItem(new GUIContent("Move duplicates existing in ANY selected"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Delete " + selectedNodes[0].displayName), false, DeleteBundles, selectedNodes);
-
+                
             }
             else if (selectedNodes.Count > 1)
             {
-                menu.AddItem(new GUIContent("Move duplicated assets to new bundle"), false, DedupeBundles, selectedNodes);
+                menu.AddItem(new GUIContent("Move duplicates existing in ALL selected"), false, DedupeOverlappedBundles, selectedNodes);
+                menu.AddItem(new GUIContent("Move duplicates existing in ANY selected"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Delete multiple bundles"), false, DeleteBundles, selectedNodes);
             }
             menu.ShowAsContext();
         }
-
+        void DoNothing(object context) { }
         void CreateFolder(object context)
         {
-            AssetBundleModel.BundleFolderInfo folder = null;
+            AssetBundleModel.BundleFolderInfoConcrete folder = null;
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
             if (selectedNodes != null && selectedNodes.Count > 0)
             {
-                folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderInfo;
+                folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderInfoConcrete;
             }
             var newBundle = AssetBundleModel.Model.CreateEmptyBundleFolder(folder);
             ReloadAndSelect(newBundle.NameHashCode, true);
         }
         void CreateNewBundle(object context)
         {
-            AssetBundleModel.BundleFolderInfo folder = null;
+            AssetBundleModel.BundleFolderInfoConcrete folder = null;
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
             if (selectedNodes != null && selectedNodes.Count > 0)
             {
-                folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderInfo;
+                folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderInfoConcrete;
             }
             var newBundle = AssetBundleModel.Model.CreateEmptyBundle(folder);
             ReloadAndSelect(newBundle.NameHashCode, true);
         }
-        void DedupeBundles(object context)
+
+        void CreateNewVariant(object context)
+        {
+            AssetBundleModel.BundleVariantFolderInfo folder = null;
+            var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
+            if (selectedNodes != null && selectedNodes.Count == 1)
+            {
+                folder = selectedNodes[0].bundle as AssetBundleModel.BundleVariantFolderInfo;
+                if (folder != null)
+                {
+                    var newBundle = AssetBundleModel.Model.CreateEmptyVariant(folder);
+                    ReloadAndSelect(newBundle.NameHashCode, true);
+                }
+            }
+        }
+
+        void ConvertToVariant(object context)
         {
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
-            var newBundle = AssetBundleModel.Model.HandleDedupeBundles(selectedNodes.Select(item => item.bundle));
+            if (selectedNodes.Count == 1)
+            {
+                var bundle = selectedNodes[0].bundle as AssetBundleModel.BundleDataInfo;
+                var newBundle = AssetBundleModel.Model.ConvertToVariant(bundle);
+                int hash = 0;
+                if (newBundle != null)
+                    hash = newBundle.NameHashCode;
+                ReloadAndSelect(hash, true);
+            }
+        }
+
+        void DedupeOverlappedBundles(object context)
+        {
+            DedupeBundles(context, true);
+        }
+        void DedupeAllBundles(object context)
+        {
+            DedupeBundles(context, false);
+        }
+        void DedupeBundles(object context, bool onlyOverlappedAssets)
+        {
+            var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
+            var newBundle = AssetBundleModel.Model.HandleDedupeBundles(selectedNodes.Select(item => item.bundle), onlyOverlappedAssets);
             var selection = new List<int>();
             selection.Add(newBundle.NameHashCode);
             ReloadAndSelect(selection);
@@ -198,6 +261,7 @@ namespace UnityEngine.AssetBundles
             public bool hasBundleFolder = false;
             public bool hasScene = false;
             public bool hasNonScene = false;
+            public bool hasVariantChild = false;
             public List<AssetBundleModel.BundleInfo> draggedNodes;
             public AssetBundleModel.BundleTreeItem targetNode;
             public DragAndDropArgs args;
@@ -227,6 +291,9 @@ namespace UnityEngine.AssetBundles
                                     hasScene = true;
                                 else
                                     hasNonScene = true;
+
+                                if ( (dataBundle as AssetBundleModel.BundleVariantDataInfo) != null)
+                                    hasVariantChild = true;
                             }
                         }
                     }
@@ -249,7 +316,8 @@ namespace UnityEngine.AssetBundles
             DragAndDropVisualMode visualMode = DragAndDropVisualMode.None;
             DragAndDropData data = new DragAndDropData(args);
             
-            if (data.hasScene && data.hasNonScene)
+            if ( (data.hasScene && data.hasNonScene) ||
+                (data.hasVariantChild) )
                 return DragAndDropVisualMode.Rejected;
             
             switch (args.dragAndDropPosition)
@@ -261,14 +329,18 @@ namespace UnityEngine.AssetBundles
                     visualMode = HandleDragDropBetween(data);
                     break;
                 case DragAndDropPosition.OutsideItems:
-                    if(data.draggedNodes != null)
+                    if (data.draggedNodes != null)
                     {
-                        visualMode = DragAndDropVisualMode.Rejected;
+                        visualMode = DragAndDropVisualMode.Generic;
+                        if (data.args.performDrop)
+                        {
+                            AssetBundleModel.Model.HandleBundleReparent(data.draggedNodes, null);
+                            Reload();
+                        }
                     }
                     else if(data.paths != null)
                     {
                         visualMode = DragAndDropVisualMode.Generic;
-
                         if(data.args.performDrop)
                         {
                             DragPathsToNewSpace(data.paths, null, data.hasScene);
@@ -289,7 +361,7 @@ namespace UnityEngine.AssetBundles
                     visualMode = DragAndDropVisualMode.Rejected;
                 else
                 {
-                    if (data.hasScene || data.hasBundleFolder)
+                    if( (data.hasBundleFolder) || (data.hasScene && !targetDataBundle.IsEmpty()))
                     {
                         return DragAndDropVisualMode.Rejected;
                     }
@@ -304,7 +376,7 @@ namespace UnityEngine.AssetBundles
                             }
                             else if (data.paths != null)
                             {
-                                AssetBundleModel.Model.MoveAssetToBundle(data.paths, targetDataBundle.m_name.Name);
+                                AssetBundleModel.Model.MoveAssetToBundle(data.paths, targetDataBundle.m_name.BundleName, targetDataBundle.m_name.Variant);
                                 AssetBundleModel.Model.ExecuteAssetMove();
                                 ReloadAndSelect(targetDataBundle.NameHashCode, false);
                             }
@@ -314,19 +386,24 @@ namespace UnityEngine.AssetBundles
             }
             else
             {
-                var folder = data.targetNode.bundle as AssetBundleModel.BundleFolderInfo;
-                if (folder != null && data.args.performDrop)
+                var folder = data.targetNode.bundle as AssetBundleModel.BundleFolderInfoConcrete;
+                if (folder != null)
                 {
-                    if (data.draggedNodes != null)
+                    if(data.args.performDrop)
                     {
-                        AssetBundleModel.Model.HandleBundleReparent(data.draggedNodes, folder);
-                        Reload();
-                    }
-                    else if (data.paths != null)
-                    {
-                        DragPathsToNewSpace(data.paths, folder, data.hasScene);
+                        if (data.draggedNodes != null)
+                        {
+                            AssetBundleModel.Model.HandleBundleReparent(data.draggedNodes, folder);
+                            Reload();
+                        }
+                        else if (data.paths != null)
+                        {
+                            DragPathsToNewSpace(data.paths, folder, data.hasScene);
+                        }
                     }
                 }
+                else
+                    visualMode = DragAndDropVisualMode.Rejected; //must be a variantfolder
             }
             return visualMode;
         }
@@ -334,12 +411,17 @@ namespace UnityEngine.AssetBundles
         {
             DragAndDropVisualMode visualMode = DragAndDropVisualMode.Move;
 
-            if (data.args.performDrop)
+            var parent = (data.args.parentItem as AssetBundleModel.BundleTreeItem);
+
+            if (parent != null)
             {
-                var parent = (data.args.parentItem as AssetBundleModel.BundleTreeItem);
-                if (parent != null)
+                var variantFolder = parent.bundle as AssetBundleModel.BundleVariantFolderInfo;
+                if (variantFolder != null)
+                    return DragAndDropVisualMode.Rejected;
+
+                if (data.args.performDrop)
                 {
-                    var folder = parent.bundle as AssetBundleModel.BundleFolderInfo;
+                    var folder = parent.bundle as AssetBundleModel.BundleFolderInfoConcrete;
                     if (folder != null)
                     {
                         if (data.draggedNodes != null)
@@ -366,7 +448,7 @@ namespace UnityEngine.AssetBundles
                 foreach (var assetPath in paths)
                 {
                     var newBundle = AssetBundleModel.Model.CreateEmptyBundle(root, System.IO.Path.GetFileNameWithoutExtension(assetPath).ToLower());
-                    AssetBundleModel.Model.MoveAssetToBundle(assetPath, newBundle.m_name.Name);
+                    AssetBundleModel.Model.MoveAssetToBundle(assetPath, newBundle.m_name.BundleName, string.Empty);
                     hashCodes.Add(newBundle.NameHashCode);
                 }
                 AssetBundleModel.Model.ExecuteAssetMove();
@@ -375,7 +457,7 @@ namespace UnityEngine.AssetBundles
             else
             {
                 var newBundle = AssetBundleModel.Model.CreateEmptyBundle(root);
-                AssetBundleModel.Model.MoveAssetToBundle(paths, newBundle.m_name.Name);
+                AssetBundleModel.Model.MoveAssetToBundle(paths, newBundle.m_name.BundleName, string.Empty);
                 AssetBundleModel.Model.ExecuteAssetMove();
                 ReloadAndSelect(newBundle.NameHashCode, true);
             }
@@ -423,7 +505,7 @@ namespace UnityEngine.AssetBundles
         private void ReloadAndSelect(IList<int> hashCodes)
         {
             Reload();
-            SetSelection(hashCodes);
+            SetSelection(hashCodes, TreeViewSelectionOptions.RevealAndFrame);
             SelectionChanged(hashCodes);
         }
     }

@@ -15,9 +15,9 @@ namespace UnityEngine.AssetBundles
 
         class AssetColumn : MultiColumnHeaderState.Column
         {
-            public AssetColumn(string label)
+            public AssetColumn(string label, string tooltip)
             {
-                headerContent = new GUIContent(label, label + " tooltip");
+                headerContent = new GUIContent(label, tooltip);
                 minWidth = 50;
                 width = 100;
                 maxWidth = 300;
@@ -27,9 +27,9 @@ namespace UnityEngine.AssetBundles
         }
         class ErrorColumn : MultiColumnHeaderState.Column
         {
-            public ErrorColumn(string label)
+            public ErrorColumn(string label, string tooltip)
             {
-                headerContent = new GUIContent(label, label + " tooltip");
+                headerContent = new GUIContent(label, tooltip);
                 minWidth = 16;
                 width = 16;
                 maxWidth = 16;
@@ -41,7 +41,11 @@ namespace UnityEngine.AssetBundles
 
         public static MultiColumnHeaderState.Column[] GetColumns()
         {
-            return new MultiColumnHeaderState.Column[] { new AssetColumn("Asset"), new AssetColumn("Bundle"), new AssetColumn("Size"), new ErrorColumn("!") };
+            return new MultiColumnHeaderState.Column[] {
+                new AssetColumn("Asset", "Short name of asset. For full name select asset and see message below"),
+                new AssetColumn("Bundle", "Bundle name. 'auto' means asset was pulled in due to dependency"),
+                new AssetColumn("Size", "Size on disk"),
+                new ErrorColumn("!", "Errors, Warnings, or Info") };
         }
         enum MyColumns
         {
@@ -203,11 +207,11 @@ namespace UnityEngine.AssetBundles
         
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
-            if(m_sourceBundles.Count == 1 && DragAndDrop.paths != null)
+            if(IsValidDragDrop(args))
             {
                 if (args.performDrop)
                 {
-                    AssetBundleModel.Model.MoveAssetToBundle(DragAndDrop.paths, m_sourceBundles[0].m_name.Name);
+                    AssetBundleModel.Model.MoveAssetToBundle(DragAndDrop.paths, m_sourceBundles[0].m_name.BundleName, m_sourceBundles[0].m_name.Variant);
                     AssetBundleModel.Model.ExecuteAssetMove();
                     foreach (var bundle in m_sourceBundles)
                     {
@@ -219,6 +223,41 @@ namespace UnityEngine.AssetBundles
             }
 
             return DragAndDropVisualMode.Rejected;
+        }
+        protected bool IsValidDragDrop(DragAndDropArgs args)
+        {
+            //can't drag onto none or >1 bundles
+            if (m_sourceBundles.Count == 0 || m_sourceBundles.Count > 1)
+                return false;
+            
+            //can't drag nothing
+            if (DragAndDrop.paths == null || DragAndDrop.paths.Length == 0)
+                return false;
+
+            //can't drag into a folder
+            var folder = m_sourceBundles[0] as AssetBundleModel.BundleFolderInfo;
+            if (folder != null)
+                return false;
+
+            var data = m_sourceBundles[0] as AssetBundleModel.BundleDataInfo;
+            if(data == null)
+                return false; // this should never happen.
+            
+            if(data.IsEmpty())
+                return true;
+
+            if (data.IsSceneBundle)
+                return false;
+
+
+            foreach (var assetPath in DragAndDrop.paths)
+            {
+                if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(SceneAsset))
+                    return false;
+            }
+
+            return true;
+
         }
 
         protected override void ContextClickedItem(int id)
@@ -247,7 +286,7 @@ namespace UnityEngine.AssetBundles
                 if (node.asset.BundleName != string.Empty)
                     assets.Add(node.asset);
             }
-            AssetBundleModel.Model.MoveAssetToBundle(assets, string.Empty);
+            AssetBundleModel.Model.MoveAssetToBundle(assets, string.Empty, string.Empty);
             AssetBundleModel.Model.ExecuteAssetMove();
             foreach (var bundle in m_sourceBundles)
             {

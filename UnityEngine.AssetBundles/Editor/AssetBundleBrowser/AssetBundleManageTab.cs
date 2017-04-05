@@ -114,7 +114,7 @@ namespace UnityEngine.AssetBundles
                 style.wordWrap = true;
                 GUI.Label(
                     new Rect(bundleTreeRect.x + 1f, bundleTreeRect.y + 1f, bundleTreeRect.width - 2f, bundleTreeRect.height - 2f), 
-                    new GUIContent("Drag assets here or right-click to begin creating bundles."),
+                    new GUIContent(AssetBundleModel.Model.GetEmptyMessage()),
                     style);
             }
 

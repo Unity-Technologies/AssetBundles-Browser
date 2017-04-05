@@ -87,19 +87,19 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public bool IsScene { get; set; }
         private HashSet<string> m_parents;
-        private string m_name;
+        private string m_assetName;
         private string m_displayName;
         private string m_bundleName;
         public string Name
         {
-            get { return m_name; }
+            get { return m_assetName; }
             set
             {
-                m_name = value;
-                m_displayName = System.IO.Path.GetFileNameWithoutExtension(m_name);
+                m_assetName = value;
+                m_displayName = System.IO.Path.GetFileNameWithoutExtension(m_assetName);
 
                 //TODO - maybe there's a way to ask the AssetDatabase for this size info.
-                System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_name);
+                System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_assetName);
                 if (fileInfo.Exists)
                     fileSize = fileInfo.Length;
                 else
@@ -147,18 +147,19 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 {
                     message += bundleName + ", ";
                 }
+                message = message.Substring(0, message.Length - 2);//remove trailing comma.
                 messages.Add(new ProblemMessage(message, ProblemMessage.Severity.Warning));
             }
 
             if (m_bundleName == string.Empty && m_parents.Count > 0)
             {
-                var message = DisplayName + "\n" + "Is auto included in ";
-                message += "bundle(s) due to parent(s): \n";
+                //TODO - refine the parent list to only include those in the current asset list
+                var message = DisplayName + "\n" + "Is auto included in bundle(s) due to parent(s): \n";
                 foreach (var parent in m_parents)
                 {
                     message += parent + ", ";
                 }
-
+                message = message.Substring(0, message.Length - 2);//remove trailing comma.
                 messages.Add(new ProblemMessage(message, ProblemMessage.Severity.Info));
             }
 
@@ -190,7 +191,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             if (m_dependencies == null)
             {
                 m_dependencies = new List<AssetInfo>();
-                if (AssetDatabase.IsValidFolder(m_name))
+                if (AssetDatabase.IsValidFolder(m_assetName))
                 {
                     //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
 
@@ -198,9 +199,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 }
                 else
                 {
-                    foreach (var dep in AssetDatabase.GetDependencies(m_name, true))
+                    foreach (var dep in AssetDatabase.GetDependencies(m_assetName, true))
                     {
-                        if (dep != m_name)
+                        if (dep != m_assetName)
                         {
                             var asset = Model.CreateAsset(dep, this);
                             if (asset != null)
@@ -212,28 +213,5 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             return m_dependencies;
             
         }
-        //private void GatherFoldersAndFiles()
-        //{
-        //    foreach (var f in System.IO.Directory.GetFiles(m_name))
-        //    {
-        //        string ext = System.IO.Path.GetExtension(f);
-        //        if (ext == ".cs" || ext == ".dll" || ext == ".js" || ext == ".boo")
-        //            continue;
-        //        var ai = Model.CreateAsset(f.Replace('\\', '/'), this);// Model.GetAsset(f.Replace('\\', '/'));
-        //        if (ai != null)
-        //            m_dependencies.Add(ai);
-        //    }
-
-        //    foreach (var f in System.IO.Directory.GetDirectories(m_name))
-        //    {
-        //        string path = f.Replace('\\', '/');
-        //        var ai = Model.CreateAsset(path, this);// Model.GetAsset(path);
-        //        if (ai != null)
-        //        {
-        //            m_dependencies.Add(ai);
-        //            GatherFoldersAndFiles();
-        //        }
-        //    }
-        //}
     }
 }
