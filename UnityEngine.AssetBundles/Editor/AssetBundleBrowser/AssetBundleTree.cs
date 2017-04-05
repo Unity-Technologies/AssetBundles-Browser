@@ -331,7 +331,7 @@ namespace UnityEngine.AssetBundles
                 case DragAndDropPosition.OutsideItems:
                     if (data.draggedNodes != null)
                     {
-                        visualMode = DragAndDropVisualMode.Generic;
+                        visualMode = DragAndDropVisualMode.Copy;// Generic;
                         if (data.args.performDrop)
                         {
                             AssetBundleModel.Model.HandleBundleReparent(data.draggedNodes, null);
@@ -340,8 +340,8 @@ namespace UnityEngine.AssetBundles
                     }
                     else if(data.paths != null)
                     {
-                        visualMode = DragAndDropVisualMode.Generic;
-                        if(data.args.performDrop)
+                        visualMode = DragAndDropVisualMode.Copy;//Generic;
+                        if (data.args.performDrop)
                         {
                             DragPathsToNewSpace(data.paths, null, data.hasScene);
                         }
@@ -353,7 +353,7 @@ namespace UnityEngine.AssetBundles
 
         private DragAndDropVisualMode HandleDragDropUpon(DragAndDropData data)
         {
-            DragAndDropVisualMode visualMode = DragAndDropVisualMode.Move;
+            DragAndDropVisualMode visualMode = DragAndDropVisualMode.Copy;//Move;
             var targetDataBundle = data.targetNode.bundle as AssetBundleModel.BundleDataInfo;
             if (targetDataBundle != null)
             {
@@ -409,7 +409,7 @@ namespace UnityEngine.AssetBundles
         }
         private DragAndDropVisualMode HandleDragDropBetween(DragAndDropData data)
         {
-            DragAndDropVisualMode visualMode = DragAndDropVisualMode.Move;
+            DragAndDropVisualMode visualMode = DragAndDropVisualMode.Copy;//Move;
 
             var parent = (data.args.parentItem as AssetBundleModel.BundleTreeItem);
 
@@ -475,7 +475,7 @@ namespace UnityEngine.AssetBundles
             DragAndDrop.paths = null;
             DragAndDrop.objectReferences = new UnityEngine.Object[] { };
             DragAndDrop.SetGenericData("AssetBundleModel.BundleInfo", selectedBundles);
-            DragAndDrop.visualMode = DragAndDropVisualMode.Move;
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;//Move;
             DragAndDrop.StartDrag("AssetBundleTree");
         }
 

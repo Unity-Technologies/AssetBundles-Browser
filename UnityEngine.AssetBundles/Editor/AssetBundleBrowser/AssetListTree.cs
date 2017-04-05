@@ -219,7 +219,7 @@ namespace UnityEngine.AssetBundles
                     }
                     m_controller.UpdateSelectedBundles(m_sourceBundles);
                 }
-                return DragAndDropVisualMode.Move;
+                return DragAndDropVisualMode.Copy;//Move;
             }
 
             return DragAndDropVisualMode.Rejected;
