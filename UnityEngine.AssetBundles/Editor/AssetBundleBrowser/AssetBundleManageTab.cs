@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace UnityEngine.AssetBundles
 {
+    [System.Serializable]
 	public class AssetBundleManageTab 
 	{
         //TODO - serialization is broken. 
@@ -31,6 +32,8 @@ namespace UnityEngine.AssetBundles
 
         public void OnEnable(Rect pos, EditorWindow parent)
         {
+
+
             m_parent = parent;
             m_position = pos;
             m_horizontalSplitterPercent = 0.4f;
@@ -74,14 +77,10 @@ namespace UnityEngine.AssetBundles
 
         public void OnGUI(Rect pos)
         {
-
             m_position = pos;
-            if (m_bundleTree == null)
-			{
-                if (m_messageList == null)
-                    m_messageList = new MessageList();
 
-
+            if(m_bundleTree == null)
+            {
                 if (m_assetListState == null)
                 {
                     m_assetListState = new TreeViewState();
@@ -89,11 +88,11 @@ namespace UnityEngine.AssetBundles
                 }
                 m_assetList = new AssetListTree(m_assetListState, m_assetListMCHState, this);
                 m_assetList.Reload();
-
+                m_messageList = new MessageList();
 
                 if (m_bundleTreeState == null)
-					m_bundleTreeState = new TreeViewState();
-                  m_bundleTree = new AssetBundleTree(m_bundleTreeState, this);
+                    m_bundleTreeState = new TreeViewState();
+                m_bundleTree = new AssetBundleTree(m_bundleTreeState, this);
                 m_bundleTree.Refresh();
                 m_parent.Repaint();
             }

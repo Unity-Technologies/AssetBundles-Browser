@@ -17,9 +17,9 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         Mode m_Mode;
 
-        //[SerializeField]
+        [SerializeField]
         public AssetBundleManageTab m_ManageTab;
-        //[SerializeField]
+        //no need to serialize build tab because it uses EditorPrefs
         public AssetBundleBuildTab m_BuildTab;
 
         private Texture2D m_RefreshTexture;
@@ -36,9 +36,11 @@ namespace UnityEngine.AssetBundles
         private void OnEnable()
         {
             Rect subPos = GetSubWindowArea();
-            m_ManageTab = new AssetBundleManageTab();
+            if(m_ManageTab == null)
+                m_ManageTab = new AssetBundleManageTab();
             m_ManageTab.OnEnable(subPos, this);
-            m_BuildTab = new AssetBundleBuildTab();
+            if(m_BuildTab == null)
+                m_BuildTab = new AssetBundleBuildTab();
             m_BuildTab.OnEnable(subPos, this);
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
