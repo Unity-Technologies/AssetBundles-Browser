@@ -482,9 +482,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             RefreshAssetList();
             if(IsSceneBundle)
-                return new BundleTreeItem(this, depth, "SceneAsset Icon");  
+                return new BundleTreeItem(this, depth, "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/sceneIcon.png");  
             else
-                return new BundleTreeItem(this, depth, "CheckerFloor");
+                return new BundleTreeItem(this, depth, "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/bundleIcon.png");
         }
 
         public override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
@@ -805,11 +805,11 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             //icon = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/someIcon.png", typeof(Texture2D));
             //var result = new BundleTreeItem(this, depth, "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/varfolder.png");
-            string iconName = "CheckerFloor";
+            string iconName = "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/bundleIcon.png";
             if ( (m_children.Count > 0) && 
                 ((m_children.First().Value as BundleVariantDataInfo).IsSceneVariant()) )
             {
-                iconName = "SceneAsset Icon";
+                iconName = "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/sceneIcon.png";
             }
             var result = new BundleTreeItem(this, depth, iconName);
             foreach (var child in m_children)

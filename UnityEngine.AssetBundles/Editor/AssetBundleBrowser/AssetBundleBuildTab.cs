@@ -108,7 +108,7 @@ namespace UnityEngine.AssetBundles
                 "After build completes, will copy all build content to " + m_streamingPath + " for use in stand-alone player.");
 
             m_UseDefaultPath = new ToggleData(
-                false,
+                true,
                 "Use default output directory",
                 "Allows setting or browsing to custom output directory.");
 
@@ -167,16 +167,14 @@ namespace UnityEngine.AssetBundles
                 if (GUILayout.Button("Browse"))
                     BrowseForFolder();
                 m_outputPath = GUILayout.TextArea(m_outputPath);
-            }
+            }  
             if(m_outputPath != origPath)
             {
                 EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_outputPath);
             }
             GUILayout.EndHorizontal();
             EditorGUILayout.Space();
-
-
-
+            
             // build.
             EditorGUILayout.Space();
             if (GUILayout.Button("Build") )

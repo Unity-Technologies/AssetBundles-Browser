@@ -14,11 +14,12 @@ namespace UnityEngine.AssetBundles
             Browser,
             Builder,
         }
-        Mode m_Mode = Mode.Browser;
+        [SerializeField]
+        Mode m_Mode;
 
-        [SerializeField]
+        //[SerializeField]
         public AssetBundleManageTab m_ManageTab;
-        [SerializeField]
+        //[SerializeField]
         public AssetBundleBuildTab m_BuildTab;
 
         private Texture2D m_RefreshTexture;
