@@ -10,7 +10,7 @@ The window is broken into three sections:
 ### Bundle List
 Left hand pane showing a list of all bundles in the project.  Available functionality:
 * Select a bundle or set of bundles to see a list of the assets that will be in the bundle in the Asset List pane.
-* Icons indicate if the bundle is a standard or a scene bundle.
+* Icons indicate if the bundle is a standard (![standardbundle](https://github.com/Unity-Technologies/AssetBundles-Browser/blob/master/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/ABundleBrowserIconY1756Basic.png)) or a scene bundle (![scenebundle](https://github.com/Unity-Technologies/AssetBundles-Browser/blob/master/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/ABundleBrowserIconY1756Scene.png)).
 * Bundles with variants are a darker grey and can be expanded to show the list of variants.
 * Right-click or slow-double-click to rename bundle or bundle folder.
 * If a bundle has any error, warning, or info message, an icon will appear on the right side.  Mouse over the icon for more information.
