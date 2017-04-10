@@ -4,9 +4,13 @@ This tool enables the user to view and edit the configuration of asset bundles f
 
 This tool can be dropped into any Unity project with a version of 5.6 or greater.  It will create a new menu item in *Window->AssetBundle Browser*.  The bundle configuration and build functionality are split into two tabs within the new window.
 
+![BrowserHeader](http://i.imgur.com/gAZnlR5.png)
+
 # Usage - Configure
 This window provides an explorer like interface to managing and modifying asset bundles in your project.  When first opened, the tool will parse all bundle data in the background, slowly marking warnings or errors it detects.  It does what it can to stay in sync with the project, but cannot always be aware of activity outside the tool.  To force a quick pass at error detection, or to update the tool with changes made externally, hit the Refresh button in the upper left.  
-The window is broken into three sections:
+The window is broken into three sections: Bundle List, Asset List, and Asset Details.
+![BroserConfigure](http://i.imgur.com/pMeylnk.png)
+
 ### Bundle List
 Left hand pane showing a list of all bundles in the project.  Available functionality:
 * Select a bundle or set of bundles to see a list of the assets that will be in the bundle in the Asset List pane.
@@ -16,7 +20,7 @@ Left hand pane showing a list of all bundles in the project.  Available function
 * If a bundle has any error, warning, or info message, an icon will appear on the right side.  Mouse over the icon for more information.
 * If a bundle has a scene in it (making it a scene bundle) and anything else explicitly included, it will be marked as having an error. This bundle will not build until fixed.
 * Bundles with duplicated assets will be marked with a warning (more information on duplciation in Asset List section below)
-* Empty bundles will be marked with an info message.
+* Empty bundles will be marked with an info message.  For a number of reasons, empty bundles are not very stable and can dissapear from this list at times.
 * Folders of bundles will be marked with the highest message from the contained bundles.
 * To fix the duplicated inclusion of assets in bundles, you can:
   * Right click on a single bundle to move all assets determined to be duplicates into a new bundle.
