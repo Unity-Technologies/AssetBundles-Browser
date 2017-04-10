@@ -662,12 +662,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             string[] icons = AssetDatabase.FindAssets("ABundleBrowserIconY1756");
             foreach (string i in icons)
             {
-                if(i.Contains("ABundleBrowserIconY1756Basic.png"))
-                    m_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(i, typeof(Texture2D));
-                else if (i.Contains("ABundleBrowserIconY1756Scene.png"))
-                    m_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(i, typeof(Texture2D));
+                string name = AssetDatabase.GUIDToAssetPath(i);
+                if (name.Contains("ABundleBrowserIconY1756Basic.png"))
+                    m_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(name, typeof(Texture2D));
+                else if (name.Contains("ABundleBrowserIconY1756Scene.png"))
+                    m_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(name, typeof(Texture2D));
             }
-
         }
     }
 
