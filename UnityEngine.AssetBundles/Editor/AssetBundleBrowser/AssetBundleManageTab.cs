@@ -24,28 +24,33 @@ namespace UnityEngine.AssetBundles
         bool m_resizingHorizontalSplitter = false;
         bool m_resizingVerticalSplitter = false;
         Rect m_horizontalSplitterRect, m_verticalSplitterRect;
-        float m_horizontalSplitterPercent, m_verticalSplitterPercent;
+        [SerializeField]
+        float m_horizontalSplitterPercent;
+        [SerializeField]
+        float m_verticalSplitterPercent;
         const float kSplitterWidth = 3;
         
 
         EditorWindow m_parent = null;
 
-        public void OnEnable(Rect pos, EditorWindow parent)
+        public AssetBundleManageTab()
         {
-
-
-            m_parent = parent;
-            m_position = pos;
             m_horizontalSplitterPercent = 0.4f;
             m_verticalSplitterPercent = 0.7f;
+        }
+
+        public void OnEnable(Rect pos, EditorWindow parent)
+        {
+            m_parent = parent;
+            m_position = pos;
             m_horizontalSplitterRect = new Rect(
-                m_position.x + m_position.width * m_horizontalSplitterPercent,
+                (int)(m_position.x + m_position.width * m_horizontalSplitterPercent),
                 m_position.y,
                 kSplitterWidth,
                 m_position.height);
             m_verticalSplitterRect = new Rect(
                 m_position.x,
-                m_position.y + m_horizontalSplitterRect.height * m_verticalSplitterPercent,
+                (int)(m_position.y + m_horizontalSplitterRect.height * m_verticalSplitterPercent),
                 (m_position.width - m_horizontalSplitterRect.width) - kSplitterWidth,
                 kSplitterWidth);
         }
@@ -82,10 +87,14 @@ namespace UnityEngine.AssetBundles
             if(m_bundleTree == null)
             {
                 if (m_assetListState == null)
-                {
                     m_assetListState = new TreeViewState();
-                    m_assetListMCHState = new MultiColumnHeaderState(AssetListTree.GetColumns());
-                }
+
+                var headerState = AssetListTree.CreateDefaultMultiColumnHeaderState();// multiColumnTreeViewRect.width);
+                if (MultiColumnHeaderState.CanOverwriteSerializedFields(m_assetListMCHState, headerState))
+                    MultiColumnHeaderState.OverwriteSerializedFields(m_assetListMCHState, headerState);
+                m_assetListMCHState = headerState;
+
+
                 m_assetList = new AssetListTree(m_assetListState, m_assetListMCHState, this);
                 m_assetList.Reload();
                 m_messageList = new MessageList();
@@ -138,7 +147,7 @@ namespace UnityEngine.AssetBundles
         private void HandleHorizontalResize()
         {
             //m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
-            m_horizontalSplitterRect.x = m_position.width * m_horizontalSplitterPercent;
+            m_horizontalSplitterRect.x = (int)(m_position.width * m_horizontalSplitterPercent);
             m_horizontalSplitterRect.height = m_position.height;
 
             EditorGUIUtility.AddCursorRect(m_horizontalSplitterRect, MouseCursor.ResizeHorizontal);
@@ -149,7 +158,7 @@ namespace UnityEngine.AssetBundles
             {
                 //m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
                 m_horizontalSplitterPercent = Mathf.Clamp(Event.current.mousePosition.x / m_position.width, 0.1f, 0.9f);
-                m_horizontalSplitterRect.x = m_position.width * m_horizontalSplitterPercent;
+                m_horizontalSplitterRect.x = (int)(m_position.width * m_horizontalSplitterPercent);
             }
 
             if (Event.current.type == EventType.MouseUp)
@@ -160,7 +169,7 @@ namespace UnityEngine.AssetBundles
         {
             m_verticalSplitterRect.x = m_horizontalSplitterRect.x;
             //m_verticalSplitterRect.y = Mathf.Clamp(m_verticalSplitterRect.y, (position.height - toolbarPadding) * .1f + toolbarPadding, (position.height - kSplitterWidth) * .9f);
-            m_verticalSplitterRect.y = m_horizontalSplitterRect.height * m_verticalSplitterPercent;
+            m_verticalSplitterRect.y = (int)(m_horizontalSplitterRect.height * m_verticalSplitterPercent);
             m_verticalSplitterRect.width = m_position.width - m_horizontalSplitterRect.x;
 
             EditorGUIUtility.AddCursorRect(m_verticalSplitterRect, MouseCursor.ResizeVertical);
@@ -171,7 +180,7 @@ namespace UnityEngine.AssetBundles
             {
                 //m_verticalSplitterRect.y = Mathf.Clamp(Event.current.mousePosition.y, (position.height - toolbarPadding) * .1f + toolbarPadding, (position.height - kSplitterWidth) * .9f);
                 m_verticalSplitterPercent = Mathf.Clamp(Event.current.mousePosition.y / m_horizontalSplitterRect.height, 0.2f, 0.98f);
-                m_verticalSplitterRect.y = m_horizontalSplitterRect.height * m_verticalSplitterPercent;
+                m_verticalSplitterRect.y = (int)(m_horizontalSplitterRect.height * m_verticalSplitterPercent);
             }
 
                 if (Event.current.type == EventType.MouseUp)

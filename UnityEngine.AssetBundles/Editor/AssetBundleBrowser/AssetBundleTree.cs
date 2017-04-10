@@ -115,6 +115,7 @@ namespace UnityEngine.AssetBundles
             GenericMenu menu = new GenericMenu();
             menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
             menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
+            menu.AddItem(new GUIContent("Reload all data"), false, ForceReloadData, selectedNodes);
             menu.ShowAsContext();
         }
 
@@ -146,19 +147,24 @@ namespace UnityEngine.AssetBundles
                     if(variant == null)
                        menu.AddItem(new GUIContent("Convert to variant"), false, ConvertToVariant, selectedNodes);
                 }
-                menu.AddItem(new GUIContent("Move duplicates existing in ANY selected"), false, DedupeAllBundles, selectedNodes);
+                if(selectedNodes[0].bundle.HasWarning())
+                    menu.AddItem(new GUIContent("Move duplicates to new bundle"), false, DedupeAllBundles, selectedNodes);
+                menu.AddItem(new GUIContent("Rename"), false, RenameBundle, selectedNodes);
                 menu.AddItem(new GUIContent("Delete " + selectedNodes[0].displayName), false, DeleteBundles, selectedNodes);
                 
             }
             else if (selectedNodes.Count > 1)
             {
-                menu.AddItem(new GUIContent("Move duplicates existing in ALL selected"), false, DedupeOverlappedBundles, selectedNodes);
-                menu.AddItem(new GUIContent("Move duplicates existing in ANY selected"), false, DedupeAllBundles, selectedNodes);
+                menu.AddItem(new GUIContent("Move duplicates shared by selected"), false, DedupeOverlappedBundles, selectedNodes);
+                menu.AddItem(new GUIContent("Move duplicates existing in any selected"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Delete multiple bundles"), false, DeleteBundles, selectedNodes);
             }
             menu.ShowAsContext();
         }
-        void DoNothing(object context) { }
+        void ForceReloadData(object context)
+        {
+            AssetBundleModel.Model.ForceReloadData(this);
+        }
         void CreateFolder(object context)
         {
             AssetBundleModel.BundleFolderConcreteInfo folder = null;
@@ -170,6 +176,15 @@ namespace UnityEngine.AssetBundles
             var newBundle = AssetBundleModel.Model.CreateEmptyBundleFolder(folder);
             ReloadAndSelect(newBundle.NameHashCode, true);
         }
+        void RenameBundle(object context)
+        {
+            var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
+            if (selectedNodes != null && selectedNodes.Count > 0)
+            {
+                BeginRename(FindItem(selectedNodes[0].bundle.NameHashCode, rootItem), 0.1f);
+            }
+        }
+
         void CreateNewBundle(object context)
         {
             AssetBundleModel.BundleFolderConcreteInfo folder = null;
@@ -223,9 +238,19 @@ namespace UnityEngine.AssetBundles
         {
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
             var newBundle = AssetBundleModel.Model.HandleDedupeBundles(selectedNodes.Select(item => item.bundle), onlyOverlappedAssets);
-            var selection = new List<int>();
-            selection.Add(newBundle.NameHashCode);
-            ReloadAndSelect(selection);
+            if(newBundle != null)
+            {
+                var selection = new List<int>();
+                selection.Add(newBundle.NameHashCode);
+                ReloadAndSelect(selection);
+            }
+            else
+            {
+                if (onlyOverlappedAssets)
+                    Debug.LogWarning("There were no duplicated assets that existed across all selected bundles.");
+                else
+                    Debug.LogWarning("No duplicate assets found after refreshing bundle contents.");
+            }
         }
 
         void DeleteBundles(object b)

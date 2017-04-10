@@ -396,7 +396,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 }
             }
 
-
+            if (dupeAssets.Count == 0)
+                return null;
+            
             MoveAssetToBundle(dupeAssets, newBundle.m_name.BundleName, string.Empty);
             ExecuteAssetMove();
             return newBundle;
@@ -541,7 +543,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             if (!name.StartsWith("Assets/"))
                 return false;
             string ext = System.IO.Path.GetExtension(name);
-            if (ext == ".dll" || ext == ".cs" || ext == ".meta")
+            if (ext == ".dll" || ext == ".cs" || ext == ".meta" || ext == ".js" || ext == ".boo")
                 return false;
 
             return true;
@@ -632,6 +634,41 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             Debug.LogWarning("AssetBundleBrowser: " + message);
         }
 
+        static private Texture2D m_folderIcon = null;
+        static private Texture2D m_bundleIcon = null;
+        static private Texture2D m_sceneIcon = null;
+
+        static public Texture2D GetFolderIcon()
+        {
+            if (m_folderIcon == null)
+                FindBundleIcons();
+            return m_folderIcon;
+        }
+        static public Texture2D GetBundleIcon()
+        {
+            if (m_bundleIcon == null)
+                FindBundleIcons();
+            return m_bundleIcon;
+        }
+        static public Texture2D GetSceneIcon()
+        {
+            if (m_sceneIcon == null)
+                FindBundleIcons();
+            return m_sceneIcon;
+        }
+        static private void FindBundleIcons()
+        {
+            m_folderIcon = EditorGUIUtility.FindTexture("Folder Icon");
+            string[] icons = AssetDatabase.FindAssets("ABundleBrowserIconY1756");
+            foreach (string i in icons)
+            {
+                if(i.Contains("ABundleBrowserIconY1756Basic.png"))
+                    m_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(i, typeof(Texture2D));
+                else if (i.Contains("ABundleBrowserIconY1756Scene.png"))
+                    m_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(i, typeof(Texture2D));
+            }
+
+        }
     }
 
     public class ProblemMessage

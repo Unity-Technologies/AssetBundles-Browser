@@ -13,39 +13,51 @@ namespace UnityEngine.AssetBundles
         List<AssetBundleModel.BundleInfo> m_sourceBundles = new List<AssetBundleModel.BundleInfo>();
         AssetBundleManageTab m_controller;
 
-        class AssetColumn : MultiColumnHeaderState.Column
+        public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
         {
-            public AssetColumn(string label, string tooltip)
-            {
-                headerContent = new GUIContent(label, tooltip);
-                minWidth = 50;
-                width = 100;
-                maxWidth = 300;
-                headerTextAlignment = TextAlignment.Left;
-                canSort = true;
-            }
+            return new MultiColumnHeaderState(GetColumns());
         }
-        class ErrorColumn : MultiColumnHeaderState.Column
+        private static MultiColumnHeaderState.Column[] GetColumns()
         {
-            public ErrorColumn(string label, string tooltip)
-            {
-                headerContent = new GUIContent(label, tooltip);
-                minWidth = 16;
-                width = 16;
-                maxWidth = 16;
-                headerTextAlignment = TextAlignment.Left;
-                canSort = true;
-                autoResize = false;
-            }
-        }
+            var retVal = new MultiColumnHeaderState.Column[] {
+                new MultiColumnHeaderState.Column(),
+                new MultiColumnHeaderState.Column(),
+                new MultiColumnHeaderState.Column(),
+                new MultiColumnHeaderState.Column()
+            };
+            retVal[0].headerContent = new GUIContent("Asset", "Short name of asset. For full name select asset and see message below");
+            retVal[0].minWidth = 50;
+            retVal[0].width = 100;
+            retVal[0].maxWidth = 300;
+            retVal[0].headerTextAlignment = TextAlignment.Left;
+            retVal[0].canSort = true;
+            retVal[0].autoResize = true;
 
-        public static MultiColumnHeaderState.Column[] GetColumns()
-        {
-            return new MultiColumnHeaderState.Column[] {
-                new AssetColumn("Asset", "Short name of asset. For full name select asset and see message below"),
-                new AssetColumn("Bundle", "Bundle name. 'auto' means asset was pulled in due to dependency"),
-                new AssetColumn("Size", "Size on disk"),
-                new ErrorColumn("!", "Errors, Warnings, or Info") };
+            retVal[1].headerContent = new GUIContent("Bundle", "Bundle name. 'auto' means asset was pulled in due to dependency");
+            retVal[1].minWidth = 50;
+            retVal[1].width = 100;
+            retVal[1].maxWidth = 300;
+            retVal[1].headerTextAlignment = TextAlignment.Left;
+            retVal[1].canSort = true;
+            retVal[1].autoResize = true;
+
+            retVal[2].headerContent = new GUIContent("Size", "Size on disk");
+            retVal[2].minWidth = 30;
+            retVal[2].width = 75;
+            retVal[2].maxWidth = 100;
+            retVal[2].headerTextAlignment = TextAlignment.Left;
+            retVal[2].canSort = true;
+            retVal[2].autoResize = true;
+
+            retVal[3].headerContent = new GUIContent("!", "Errors, Warnings, or Info");
+            retVal[3].minWidth = 16;
+            retVal[3].width = 16;
+            retVal[3].maxWidth = 16;
+            retVal[3].headerTextAlignment = TextAlignment.Left;
+            retVal[3].canSort = true;
+            retVal[3].autoResize = false;
+
+            return retVal;
         }
         enum MyColumns
         {
@@ -202,6 +214,7 @@ namespace UnityEngine.AssetBundles
                 new List<AssetBundleModel.AssetTreeItem>(args.draggedItemIDs.Select(id => FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem));
             DragAndDrop.paths = items.Select(a => a.asset.Name).ToArray();
             DragAndDrop.objectReferences = new UnityEngine.Object[] { };
+            DragAndDrop.SetGenericData("AssetListTreeSource", this);
             DragAndDrop.StartDrag("AssetListTree");
         }
         
@@ -242,6 +255,10 @@ namespace UnityEngine.AssetBundles
             var data = m_sourceBundles[0] as AssetBundleModel.BundleDataInfo;
             if(data == null)
                 return false; // this should never happen.
+
+            var thing = DragAndDrop.GetGenericData("AssetListTreeSource") as AssetListTree;
+            if (thing != null)
+                return false;
             
             if(data.IsEmpty())
                 return true;

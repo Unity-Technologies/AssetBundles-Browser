@@ -14,20 +14,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             get { return m_bundle; }
         }
-        public BundleTreeItem(BundleInfo b, int depth, string iconName) : base(b.NameHashCode, depth, b.DisplayName)
+        public BundleTreeItem(BundleInfo b, int depth, Texture2D iconTexture) : base(b.NameHashCode, depth, b.DisplayName)
         {
             m_bundle = b;
-            if (iconName == "")
-                icon = null;
-            else
-            {
-                icon = EditorGUIUtility.FindTexture(iconName);
-                if (icon == null)
-                {
-                    icon = (Texture2D)AssetDatabase.LoadAssetAtPath(iconName, typeof(Texture2D));
-                }
-            }
-            
+            icon = iconTexture;
             children = new List<TreeViewItem>();
         }
 
@@ -481,10 +471,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         public override BundleTreeItem CreateTreeView(int depth)
         {
             RefreshAssetList();
-            if(IsSceneBundle)
-                return new BundleTreeItem(this, depth, "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/sceneIcon.png");  
+            if (IsSceneBundle)
+                return new BundleTreeItem(this, depth, Model.GetSceneIcon());
             else
-                return new BundleTreeItem(this, depth, "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/bundleIcon.png");
+                return new BundleTreeItem(this, depth, Model.GetBundleIcon());
         }
 
         public override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
@@ -765,7 +755,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
         public override BundleTreeItem CreateTreeView(int depth)
         {
-            var result = new BundleTreeItem(this, depth, "Folder Icon");
+            var result = new BundleTreeItem(this, depth, Model.GetFolderIcon());
             foreach (var child in m_children)
             {
                 result.AddChild(child.Value.CreateTreeView(depth + 1));
@@ -803,15 +793,16 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
         public override BundleTreeItem CreateTreeView(int depth)
         {
-            //icon = (Texture2D)AssetDatabase.LoadAssetAtPath("Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/someIcon.png", typeof(Texture2D));
-            //var result = new BundleTreeItem(this, depth, "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/varfolder.png");
-            string iconName = "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/bundleIcon.png";
-            if ( (m_children.Count > 0) && 
-                ((m_children.First().Value as BundleVariantDataInfo).IsSceneVariant()) )
+            Texture2D icon = null;
+            if ((m_children.Count > 0) &&
+                ((m_children.First().Value as BundleVariantDataInfo).IsSceneVariant()))
             {
-                iconName = "Assets/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/sceneIcon.png";
+                icon = Model.GetSceneIcon();
             }
-            var result = new BundleTreeItem(this, depth, iconName);
+            else
+                icon = Model.GetBundleIcon();
+
+            var result = new BundleTreeItem(this, depth, icon);
             foreach (var child in m_children)
             {
                 result.AddChild(child.Value.CreateTreeView(depth + 1));

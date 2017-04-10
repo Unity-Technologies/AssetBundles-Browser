@@ -19,7 +19,8 @@ namespace UnityEngine.AssetBundles
 
         [SerializeField]
         public AssetBundleManageTab m_ManageTab;
-        //no need to serialize build tab because it uses EditorPrefs
+
+        [SerializeField]
         public AssetBundleBuildTab m_BuildTab;
 
         private Texture2D m_RefreshTexture;
@@ -35,6 +36,7 @@ namespace UnityEngine.AssetBundles
         }
         private void OnEnable()
         {
+
             Rect subPos = GetSubWindowArea();
             if(m_ManageTab == null)
                 m_ManageTab = new AssetBundleManageTab();
@@ -98,7 +100,7 @@ namespace UnityEngine.AssetBundles
                 GUILayout.Space(m_RefreshTexture.width + kToolbarPadding);
             }
             float toolbarWidth = position.width - kToolbarPadding * 4 - m_RefreshTexture.width;
-            string[] labels = new string[2] { "Manage", "Build" };
+            string[] labels = new string[2] { "Configure", "Build" };
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal(); 
