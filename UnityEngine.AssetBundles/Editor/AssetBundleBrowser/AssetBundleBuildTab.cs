@@ -20,6 +20,8 @@ namespace UnityEngine.AssetBundles
         string m_streamingPath = "Assets/StreamingAssets";
         [SerializeField]
         bool m_advancedSettings;
+        [SerializeField]
+        Vector2 m_scrollPosition;
 
         class ToggleData
         {
@@ -69,11 +71,6 @@ namespace UnityEngine.AssetBundles
                 "Exclude Type Information",
                 "Do not include type information within the asset bundle (don't write type tree).",
                 BuildAssetBundleOptions.DisableWriteTypeTree));
-            //m_toggleData.Add(new ToggleData(
-            //    false,
-            //    "Deterministic AssetBundle",
-            //    "Builds an asset bundle using a hash for the id of the object stored in the asset bundle",
-            //    BuildAssetBundleOptions.DeterministicAssetBundle));
             m_toggleData.Add(new ToggleData(
                 false,
                 "Force Rebuild",
@@ -123,6 +120,7 @@ namespace UnityEngine.AssetBundles
 
         public void OnGUI(Rect pos)
         {
+            m_scrollPosition = EditorGUILayout.BeginScrollView(m_scrollPosition);
             bool newState = false;
 
             //basic options
@@ -222,6 +220,7 @@ namespace UnityEngine.AssetBundles
                 ExecuteBuild();
             }
             GUILayout.EndVertical();
+            EditorGUILayout.EndScrollView();
             
            
         }
