@@ -2,7 +2,7 @@
 
 This tool enables the user to view and edit the configuration of asset bundles for their Unity project.  It will block editing that would create invalid bundles, and inform you of any issues with existing bundles.  It also provides basic build functionality.
 
-This tool is intended to replace the current workflow of selecting assets and setting their AssetBundle manually in the inspector.  It can be dropped into any Unity project with a version of 5.6 or greater.  It will create a new menu item in *Window->AssetBundle Browser*.  The bundle configuration and build functionality are split into two tabs within the new window.
+This tool is intended to replace the current workflow of selecting assets and setting their asset bundle manually in the inspector.  It can be dropped into any Unity project with a version of 5.6 or greater.  It will create a new menu item in *Window->AssetBundle Browser*.  The bundle configuration and build functionality are split into two tabs within the new window.
 
 ![BrowserHeader](http://i.imgur.com/gAZnlR5.png)
 
@@ -75,10 +75,10 @@ The Build tab provides basic build functionality to get you started using asset 
 * *Copy to StreamingAssets* - After the build is complete, this will copy the results to Assets/StreamingAssets. This can be useful for testing, but would not be used in production.
 * *Advanced Settings*
   * *Compression* - Choose between no compression, standard LZMA, or chunk-based LZ4 compression.
-  * *Exclude Type Information* - Do not include type information within the AssetBundle
+  * *Exclude Type Information* - Do not include type information within the asset bundle
   * *Force Rebuild* - Rebuild bundles needing to be built. This is different than "Clear Folders" as this option will not delete bundles that no longer exist.
   * *Ignore Type Tree Changes* - Ignore the type tree changes when doing the incremental build check.
-  * *Append Hash* - Append the hash to the assetBundle name.
+  * *Append Hash* - Append the hash to the asset bundle name.
   * *Strict Mode* - Do not allow the build to succeed if any errors are reporting during it.
   * *Dry Run Build* - Do a dry run build.
 * *Build* - Executes build.
