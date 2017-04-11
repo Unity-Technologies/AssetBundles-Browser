@@ -2,7 +2,7 @@
 
 This tool enables the user to view and edit the configuration of asset bundles for their Unity project.  It will block editing that would create invalid bundles, and inform you of any issues with existing bundles.  It also provides basic build functionality.
 
-This tool can be dropped into any Unity project with a version of 5.6 or greater.  It will create a new menu item in *Window->AssetBundle Browser*.  The bundle configuration and build functionality are split into two tabs within the new window.
+This tool is intended to replace the current workflow of selecting assets and setting their AssetBundle manually in the inspector.  It can be dropped into any Unity project with a version of 5.6 or greater.  It will create a new menu item in *Window->AssetBundle Browser*.  The bundle configuration and build functionality are split into two tabs within the new window.
 
 ![BrowserHeader](http://i.imgur.com/gAZnlR5.png)
 
