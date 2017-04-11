@@ -6,6 +6,10 @@ This tool can be dropped into any Unity project with a version of 5.6 or greater
 
 ![BrowserHeader](http://i.imgur.com/gAZnlR5.png)
 
+---
+### Note: this utility is in a pre-release state, and accordingly we recommend creating a backup of your project before using it.
+---
+
 # Usage - Configure
 This window provides an explorer like interface to managing and modifying asset bundles in your project.  When first opened, the tool will parse all bundle data in the background, slowly marking warnings or errors it detects.  It does what it can to stay in sync with the project, but cannot always be aware of activity outside the tool.  To force a quick pass at error detection, or to update the tool with changes made externally, hit the Refresh button in the upper left.  
 The window is broken into three sections: Bundle List, Asset List, and Asset Details.
