@@ -23,7 +23,7 @@ Left hand pane showing a list of all bundles in the project.  Available function
 * Right-click or slow-double-click to rename bundle or bundle folder.
 * If a bundle has any error, warning, or info message, an icon will appear on the right side.  Mouse over the icon for more information.
 * If a bundle has a scene in it (making it a scene bundle) and anything else explicitly included, it will be marked as having an error. This bundle will not build until fixed.
-* Bundles with duplicated assets will be marked with a warning (more information on duplciation in Asset List section below)
+* Bundles with duplicated assets will be marked with a warning (more information on duplication in Asset List section below)
 * Empty bundles will be marked with an info message.  For a number of reasons, empty bundles are not very stable and can dissapear from this list at times.
 * Folders of bundles will be marked with the highest message from the contained bundles.
 * To fix the duplicated inclusion of assets in bundles, you can:
