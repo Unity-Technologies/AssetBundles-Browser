@@ -35,17 +35,17 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             set { m_color = value; }
         }
 
-        public ProblemMessage.Severity HighestMessageLevel()
+        public MessageType HighestMessageLevel()
         {
             if (m_asset.HasError())
             { 
-                return ProblemMessage.Severity.Error;
+                return MessageType.Error;
             }
             else if (m_asset.HasWarning())
             {
-                return ProblemMessage.Severity.Warning;
+                return MessageType.Warning;
             }
-            return ProblemMessage.Severity.None;
+            return MessageType.None;
         }
 
         public bool ContainsChild(AssetInfo asset)
@@ -137,7 +137,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     message += "Is a scene that is in a bundle with other assets. Scene bundles must have a single scene as the only asset.";
                 else
                     message += "Is included in a bundle with a scene. Scene bundles must have a single scene as the only asset.";
-                messages.Add(new ProblemMessage(message, ProblemMessage.Severity.Error));
+                messages.Add(new ProblemMessage(message, MessageType.Error));
             }
             if (HasWarning())
             {
@@ -148,7 +148,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     message += bundleName + ", ";
                 }
                 message = message.Substring(0, message.Length - 2);//remove trailing comma.
-                messages.Add(new ProblemMessage(message, ProblemMessage.Severity.Warning));
+                messages.Add(new ProblemMessage(message, MessageType.Warning));
             }
 
             if (m_bundleName == string.Empty && m_parents.Count > 0)
@@ -160,10 +160,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     message += parent + ", ";
                 }
                 message = message.Substring(0, message.Length - 2);//remove trailing comma.
-                messages.Add(new ProblemMessage(message, ProblemMessage.Severity.Info));
+                messages.Add(new ProblemMessage(message, MessageType.Info));
             }
 
-            messages.Add(new ProblemMessage(DisplayName + "\n" + "Path: " + Name, ProblemMessage.Severity.Info));
+            messages.Add(new ProblemMessage(DisplayName + "\n" + "Path: " + Name, MessageType.Info));
 
             return messages;
         }
@@ -181,7 +181,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             if (fileSize == 0)
                 return "--";
-            return EditorUtility.FormatBytes(fileSize); ;
+            return EditorUtility.FormatBytes(fileSize);
         }
 
         List<AssetInfo> m_dependencies = null;

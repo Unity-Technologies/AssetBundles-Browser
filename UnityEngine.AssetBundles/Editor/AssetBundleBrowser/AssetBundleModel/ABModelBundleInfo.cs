@@ -27,15 +27,15 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             if(m_bundle.HasError())
             {
-                return ProblemMessage.GetIcon(ProblemMessage.Severity.Error);
+                return ProblemMessage.GetIcon(MessageType.Error);
             }
             else if (m_bundle.HasWarning())
             {
-                return ProblemMessage.GetIcon(ProblemMessage.Severity.Warning);
+                return ProblemMessage.GetIcon(MessageType.Warning);
             }
             else if (m_bundle.HasInfo())
             {
-                return ProblemMessage.GetIcon(ProblemMessage.Severity.Info);
+                return ProblemMessage.GetIcon(MessageType.Info);
             }
             return null;
         }
@@ -207,15 +207,28 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             if(HasError())
             {
-                return m_errorMessage;
+                return ErrorMessage(MessageType.Error);
             }
             if(HasWarning())
             {
-                return m_warningMessage;
+                return ErrorMessage(MessageType.Warning);
             }
             if(HasInfo())
             {
-                return InfoMessage;
+                return ErrorMessage(MessageType.Info);
+            }
+            return ErrorMessage(MessageType.None);
+        }
+        public virtual string ErrorMessage(MessageType type)
+        {
+            switch(type)
+            {
+                case MessageType.Error:
+                    return m_errorMessage;
+                case MessageType.Warning:
+                    return m_warningMessage;
+                case MessageType.Info:
+                    return InfoMessage;
             }
             return string.Empty;
         }
@@ -256,10 +269,19 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
     public class BundleDataInfo : BundleInfo
     {
+        protected List<AssetInfo> m_concreteAssets;
+        protected List<AssetInfo> m_dependentAssets;
+        protected HashSet<string> m_bundleDependencies;
+        protected int m_concreteCounter;
+        protected int m_dependentCounter;
+        protected bool m_isSceneBundle;
+        protected long m_totalSize;
+
         public BundleDataInfo(string name, BundleFolderInfo parent) : base(name, parent)
         {
             m_concreteAssets = new List<AssetInfo>();
             m_dependentAssets = new List<AssetInfo>();
+            m_bundleDependencies = new HashSet<string>();
             m_concreteCounter = 0;
             m_dependentCounter = 0;
         }
@@ -285,12 +307,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             Model.MoveAssetToBundle(m_concreteAssets, forcedNewName, forcedNewVariant);
         }
 
-        protected List<AssetInfo> m_concreteAssets;
-        protected List<AssetInfo> m_dependentAssets;
-        protected int m_concreteCounter;
-        protected int m_dependentCounter;
-        protected bool m_isSceneBundle;
-        protected long m_totalSize;
+        public string TotalSize()
+        {
+            if (m_totalSize == 0)
+                return "--";
+            return EditorUtility.FormatBytes(m_totalSize);
+        }
 
         public override void RefreshAssetList()
         {
@@ -305,14 +327,17 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 AssetBundleModel.Model.UnRegisterAsset(asset, m_name.FullNativeName);
             }
             m_dependentAssets.Clear();
+            m_bundleDependencies.Clear();
 
             bool sceneInDependency = false;
             var assets = AssetDatabase.GetAssetPathsFromAssetBundle(m_name.FullNativeName);
             foreach(var assetName in assets)
             {
                 var bundleName = Model.GetBundleName(assetName);
-                if (bundleName == string.Empty)
+                if (bundleName == string.Empty)  
                 {
+                    ///we get here if the current asset is only added due to being in an explicitly added folder
+                    
                     var partialPath = assetName;
                     while(
                         partialPath != string.Empty && 
@@ -326,9 +351,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     {
                         var folderAsset = Model.CreateAsset(partialPath, bundleName);
                         if (m_concreteAssets.FindIndex(a => a.DisplayName == folderAsset.DisplayName) == -1)
+                        {
                             m_concreteAssets.Add(folderAsset);
+                        }
 
                         m_dependentAssets.Add(Model.CreateAsset(assetName, folderAsset));
+                        m_totalSize += m_dependentAssets.Last().fileSize;
 
                         if (AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset))
                         {
@@ -367,6 +395,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_dependentCounter = 0;
             m_dirty = true;
         }
+
         public override void AddAssetsToNode(AssetTreeItem node)
         {
             foreach (var asset in m_concreteAssets)
@@ -380,10 +409,15 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
             m_dirty = false;
         }
+        public HashSet<string> GetBundleDependencies()
+        {
+            return m_bundleDependencies;
+        }
 
         public override void Update()
         {
             int dependents = m_dependentAssets.Count;
+            int bundleDep = m_bundleDependencies.Count;
             if(m_concreteCounter < m_concreteAssets.Count)
             {
                 GatherDependencies(m_concreteAssets[m_concreteCounter]);
@@ -400,7 +434,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             {
                 m_doneUpdating = true;
             }
-            m_dirty = dependents != m_dependentAssets.Count;
+            m_dirty = (dependents != m_dependentAssets.Count) || (bundleDep != m_bundleDependencies.Count);
         }
 
         private void GatherDependencies(AssetInfo asset, string parentBundle = "")
@@ -422,6 +456,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     {
                         SetDuplicateWarning();
                     }
+                }
+                else
+                {
+                    m_bundleDependencies.Add(bundleName);
                 }
             }
         }
@@ -463,6 +501,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             m_warningMessage = "Assets being pulled into this bundle due to dependencies are also being pulled into another bundle.";
             m_warningMessage += " This will cause duplication in memory";
+            m_dirty = true;
         }
 
         public bool IsSceneBundle

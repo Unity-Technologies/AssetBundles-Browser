@@ -75,40 +75,15 @@ namespace UnityEngine.AssetBundles
                 var content = new GUIContent(message.message);
                 float height = m_style[index].CalcHeight(content, m_dimensions.x);
 
-
                 GUI.Box(new Rect(0, runningHeight, m_dimensions.x, height), content, m_style[index]);
                 GUI.DrawTexture(new Rect(0, runningHeight, 32f, 32f), message.icon);
+                //TODO - cleanup formatting issues and switch to HelpBox
+                //EditorGUI.HelpBox(new Rect(0, runningHeight, m_dimensions.x, height), message.message, (MessageType)message.severity);
+
                 counter++;
                 runningHeight += height;
             }
             GUI.EndScrollView();
-
-
-
-            //m_scrollPosition = GUI.BeginScrollView(pos, m_scrollPosition, new Rect(0, 0, pos.width-16, pos.height * 2));
-
-            //string message = "this is a really long message. I want it to be super super super super super super super super super super super super long.";
-            //message += "I mean really really really really really really really really super super super super super super super long message.";
-
-            //var width = pos.width - 16;
-            //var content = new GUIContent(message);
-            //float height1 = m_styleOdd.CalcHeight(content, width);
-            //GUI.Box(new Rect(0, 0, width, height1), content, m_styleEven);
-            //message += "cheese cheese cheese cheese cheese cheese cheese cheese cheese cheese cheese cheese cheese cheese ";
-            //content = new GUIContent(message);
-            //float height2 = m_styleEven.CalcHeight(content, width);
-            //GUI.Box(new Rect(0, height1, width, height2), new GUIContent(message), m_styleOdd);
-            //message += "comes from cows cows cows cows cows cows cows cows cows cows cows cows cows cows cows cows cows cows cows";
-            //content = new GUIContent(message);
-            //float height3 = m_styleOdd.CalcHeight(content, width);
-            //GUI.Box(new Rect(0, height2+height1, width, height3), new GUIContent(message), m_styleEven);
-
-            //GUI.EndScrollView();
-            //EditorGUI.DrawOutline(pos, 1f);
-            //if (m_selecteditems != null)
-            //{
-            //    //GUI.Button(pos, new GUIContent("Hi"));
-            //}
         }
 
         internal void SetItems(IEnumerable<AssetBundleModel.AssetInfo> items)

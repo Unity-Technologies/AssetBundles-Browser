@@ -334,7 +334,19 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static bool HandleBundleRename(BundleTreeItem item, string newName)
         {
+            var findDot = newName.LastIndexOf('.');
+            var findSlash = newName.LastIndexOf('/');
+            var findBSlash = newName.LastIndexOf('\\');
+            if (findDot == 0 || findSlash == 0 || findBSlash == 0)
+                return false; //can't start a bundle with a / or .
+
             bool result = item.bundle.HandleRename(newName, 0);
+
+            if (findDot > 0 || findSlash > 0 || findBSlash > 0)
+            {
+                item.bundle.Parent.HandleChildRename(newName, string.Empty);
+            }
+
             ExecuteAssetMove();
             return result;  
         }
@@ -673,33 +685,25 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
     public class ProblemMessage
     {
-        public enum Severity
+        public static Texture2D GetIcon(MessageType sev)
         {
-            None,
-            Info,
-            Warning,
-            Error
-        }
-
-        public static Texture2D GetIcon(Severity sev)
-        {
-            if (sev == Severity.Error)
+            if (sev == MessageType.Error)
                 return EditorGUIUtility.FindTexture("console.errorIcon");
-            else if (sev == Severity.Warning)
+            else if (sev == MessageType.Warning)
                 return EditorGUIUtility.FindTexture("console.warnicon");
-            else if (sev == Severity.Info)
+            else if (sev == MessageType.Info)
                 return EditorGUIUtility.FindTexture("console.infoIcon");
             else
                 return null;
         }
 
-        public ProblemMessage(string msg, Severity sev)
+        public ProblemMessage(string msg, MessageType sev)
         {
             message = msg;
             severity = sev;
         }
 
-        public Severity severity;
+        public MessageType severity;
         public string message;
         public Texture2D icon
         {
