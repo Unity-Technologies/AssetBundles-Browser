@@ -184,8 +184,6 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             RefreshDupeAssetWarning();
             var flag = m_bundleMessages.HighestMessageFlag();
             m_cachedHighMessage = MessageSystem.GetMessage(flag);
-
-            Debug.Log("refreshing");
         }
         public abstract bool RefreshEmptyStatus();
         public abstract bool RefreshDupeAssetWarning();
@@ -198,6 +196,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         public bool IsMessageSet(MessageSystem.MessageFlag flag)
         {
             return m_bundleMessages.IsSet(flag);
+        }
+        public void SetMessageFlag(MessageSystem.MessageFlag flag, bool on)
+        {
+            m_bundleMessages.SetFlag(flag, on);
         }
         public List<MessageSystem.Message> GetMessages()
         {
@@ -436,7 +438,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         SetDuplicateWarning();
                     }
                 }
-                else
+                else if(bundleName != m_name.FullNativeName)
                 {
                     m_bundleDependencies.Add(bundleName);
                 }
@@ -529,7 +531,11 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             get { return m_name.Variant; }
         }
-
+        public override void Update()
+        {
+            base.Update();
+            (m_parent as BundleVariantFolderInfo).ValidateVariants();
+        }
         public bool IsSceneVariant()
         {
             RefreshAssetList();
@@ -565,6 +571,35 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 m_parent.HandleChildRename(m_name.Variant, string.Empty);
             }
             Model.MoveAssetToBundle(m_concreteAssets, forcedNewName, forcedNewVariant);
+        }
+
+        public bool FindContentMismatch(BundleVariantDataInfo other)
+        {
+            bool result = false;
+
+            var myUniqueAssets = new HashSet<string>();
+            var otherUniqueAssets = new HashSet<string>(other.m_concreteAssets.Select(x => x.DisplayName));
+            
+            foreach(var asset in m_concreteAssets)
+            {
+                if(!otherUniqueAssets.Remove(asset.DisplayName))
+                {
+                    myUniqueAssets.Add(asset.DisplayName);
+                }
+            }
+
+            if (myUniqueAssets.Count > 0)
+            {
+                m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
+                result = true;
+            }
+            if (otherUniqueAssets.Count > 0)
+            {
+                other.m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
+                result = true;
+            }
+            
+            return result;
         }
     }
 
@@ -786,14 +821,35 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             m_children.Add(info.m_name.Variant, info);
         }
+        private bool m_validated;
         public override void Update()
         {
+            m_validated = false;
             base.Update();
-            ValidateVariants();
+            if(!m_validated)
+               ValidateVariants();
         }
-        protected void ValidateVariants()
+        public void ValidateVariants()
         {
-            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, (m_children.Count >= 2));
+            m_validated = true;
+            bool childMismatch = false;
+            if(m_children.Count > 1)
+            {
+                BundleVariantDataInfo goldChild = null;
+                foreach(var c in m_children)
+                {
+                    var child = c.Value as BundleVariantDataInfo;
+                    child.SetMessageFlag(MessageSystem.MessageFlag.VariantBundleMismatch, false);
+                    if (goldChild == null)
+                    {
+                        goldChild = child;
+                        continue;
+                    }
+                    childMismatch |= goldChild.FindContentMismatch(child);
+                }
+            }
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, childMismatch);
+
         }
 
         public override BundleTreeItem CreateTreeView(int depth)

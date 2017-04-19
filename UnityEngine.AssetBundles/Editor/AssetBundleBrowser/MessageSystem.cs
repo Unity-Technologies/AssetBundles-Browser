@@ -160,7 +160,7 @@ namespace UnityEngine.AssetBundles
             m_messageLookup.Add(MessageFlag.EmptyFolder, new Message("This folder is either empty or contains only empty children.  Empty bundles cannot get saved with the scene and will disappear from this list if Unity restarts or if various other bundle rename or move events occur.", MessageType.Info));
             m_messageLookup.Add(MessageFlag.WarningInChildren, new Message("Warning in child(ren)", MessageType.Warning));
             m_messageLookup.Add(MessageFlag.AssetsDuplicatedInMultBundles, new Message("Assets being pulled into this bundle due to dependencies are also being pulled into another bundle.  This will cause duplication in memory", MessageType.Warning));
-            m_messageLookup.Add(MessageFlag.VariantBundleMismatch, new Message("hi", MessageType.Warning));
+            m_messageLookup.Add(MessageFlag.VariantBundleMismatch, new Message("Variants of a given bundle must have exactly the same assets between them based on a Name.Extension (without Path) comparison. These bundle variants fail that check.", MessageType.Warning));
             m_messageLookup.Add(MessageFlag.ErrorInChildren, new Message("Error in child(ren)", MessageType.Error));
             m_messageLookup.Add(MessageFlag.SceneBundleConflict, new Message("A bundle with a scene must only contain that one scene.  This bundle has more than one explicitly added bundles.", MessageType.Error));
             m_messageLookup.Add(MessageFlag.DependencySceneConflict, new Message("The folder added to this bundle has pulled in more than one scene which is not allowed.", MessageType.Error));

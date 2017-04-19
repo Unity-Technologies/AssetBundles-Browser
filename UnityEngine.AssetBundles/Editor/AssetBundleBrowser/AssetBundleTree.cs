@@ -465,7 +465,7 @@ namespace UnityEngine.AssetBundles
                 foreach (var assetPath in paths)
                 {
                     var newBundle = AssetBundleModel.Model.CreateEmptyBundle(root, System.IO.Path.GetFileNameWithoutExtension(assetPath).ToLower());
-                    AssetBundleModel.Model.MoveAssetToBundle(assetPath, newBundle.m_name.BundleName, string.Empty);
+                    AssetBundleModel.Model.MoveAssetToBundle(assetPath, newBundle.m_name.BundleName, newBundle.m_name.Variant);
                     hashCodes.Add(newBundle.NameHashCode);
                 }
                 AssetBundleModel.Model.ExecuteAssetMove();

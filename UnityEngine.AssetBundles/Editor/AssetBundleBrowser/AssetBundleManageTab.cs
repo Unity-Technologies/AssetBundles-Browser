@@ -8,7 +8,6 @@ namespace UnityEngine.AssetBundles
     [System.Serializable]
 	public class AssetBundleManageTab 
 	{
-        //TODO - serialization is broken. 
         [SerializeField]
         TreeViewState m_bundleTreeState;
         [SerializeField]
