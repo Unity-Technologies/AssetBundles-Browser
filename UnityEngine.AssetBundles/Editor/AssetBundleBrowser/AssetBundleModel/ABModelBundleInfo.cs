@@ -21,27 +21,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             children = new List<TreeViewItem>();
         }
 
-
-        //TODO - clean up this method. it's repeated elsewhere
-        public Texture2D GetErrorIcon()
+        public MessageSystem.Message BundleMessage()
         {
-            if(m_bundle.HasError())
-            {
-                return ProblemMessage.GetIcon(MessageType.Error);
-            }
-            else if (m_bundle.HasWarning())
-            {
-                return ProblemMessage.GetIcon(MessageType.Warning);
-            }
-            else if (m_bundle.HasInfo())
-            {
-                return ProblemMessage.GetIcon(MessageType.Info);
-            }
-            return null;
-        }
-        public string ErrorMessage()
-        {
-            return m_bundle.ErrorMessage();
+            return m_bundle.HighestMessage();
         }
     }
 
@@ -183,6 +165,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         protected bool m_doneUpdating;
         protected bool m_dirty;
         public BundleNameData m_name;
+        protected MessageSystem.MessageState m_bundleMessages = new MessageSystem.MessageState();
+        protected MessageSystem.Message m_cachedHighMessage = null;
 
         public virtual string DisplayName
         {
@@ -192,45 +176,36 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             get { return m_name.GetHashCode(); }
         }
-        abstract public BundleTreeItem CreateTreeView(int depth);
+        public abstract BundleTreeItem CreateTreeView(int depth);
 
-        //protected bool m_error = false;
-        //protected bool m_warning = false;
-        protected string m_errorMessage = "";
-        protected string m_warningMessage = "";
-        protected virtual string InfoMessage { get { return ""; } }
-        public virtual bool HasError() { return m_errorMessage != string.Empty; }
-        public virtual bool HasWarning() { return m_warningMessage != string.Empty; }
-        public abstract bool HasInfo();
-        public abstract void RefreshWarning();
-        public virtual string ErrorMessage()
+        protected virtual void RefreshMessages()
         {
-            if(HasError())
-            {
-                return ErrorMessage(MessageType.Error);
-            }
-            if(HasWarning())
-            {
-                return ErrorMessage(MessageType.Warning);
-            }
-            if(HasInfo())
-            {
-                return ErrorMessage(MessageType.Info);
-            }
-            return ErrorMessage(MessageType.None);
+            RefreshEmptyStatus();
+            RefreshDupeAssetWarning();
+            var flag = m_bundleMessages.HighestMessageFlag();
+            m_cachedHighMessage = MessageSystem.GetMessage(flag);
+
+            Debug.Log("refreshing");
         }
-        public virtual string ErrorMessage(MessageType type)
+        public abstract bool RefreshEmptyStatus();
+        public abstract bool RefreshDupeAssetWarning();
+        public virtual MessageSystem.Message HighestMessage()
         {
-            switch(type)
-            {
-                case MessageType.Error:
-                    return m_errorMessage;
-                case MessageType.Warning:
-                    return m_warningMessage;
-                case MessageType.Info:
-                    return InfoMessage;
-            }
-            return string.Empty;
+            if (m_cachedHighMessage == null)
+                RefreshMessages();
+            return m_cachedHighMessage;
+        }
+        public bool IsMessageSet(MessageSystem.MessageFlag flag)
+        {
+            return m_bundleMessages.IsSet(flag);
+        }
+        public List<MessageSystem.Message> GetMessages()
+        {
+            return m_bundleMessages.GetMessages();
+        }
+        public bool HasMessages()
+        {
+            return m_bundleMessages.HasMessages();
         }
 
         public virtual bool HandleRename(string newName, int reverseDepth)
@@ -316,8 +291,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public override void RefreshAssetList()
         {
-            m_errorMessage = string.Empty;
-            m_warningMessage = string.Empty;
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles, false);
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.SceneBundleConflict, false);
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.DependencySceneConflict, false);
+
             m_concreteAssets.Clear();
             m_totalSize = 0;
             m_isSceneBundle = false;
@@ -364,7 +341,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                             if(sceneInDependency)
                             {
                                 //we've hit more than one.  
-                                m_errorMessage = "The folder added to this bundle has pulled in more than one scene which is not allowed.";
+                                m_bundleMessages.SetFlag(MessageSystem.MessageFlag.DependencySceneConflict, true);
                             }
                             sceneInDependency = true;
                         }
@@ -384,10 +361,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             
             if(IsSceneBundle && m_concreteAssets.Count > 1)
             {
-                m_errorMessage = "A bundle with a scene must only contain that one scene.  This bundle has " + m_concreteAssets.Count + " explicitly added assets.";
+                m_bundleMessages.SetFlag(MessageSystem.MessageFlag.SceneBundleConflict, true);
                 foreach (var asset in m_concreteAssets)
                 {
-                    asset.HasError(true);
+                    asset.SetMessageFlag(MessageSystem.MessageFlag.SceneBundleConflict, true);
                 }
             }
 
@@ -435,6 +412,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 m_doneUpdating = true;
             }
             m_dirty = (dependents != m_dependentAssets.Count) || (bundleDep != m_bundleDependencies.Count);
+            if (m_dirty || m_doneUpdating)
+                RefreshMessages();
         }
 
         private void GatherDependencies(AssetInfo asset, string parentBundle = "")
@@ -465,42 +444,34 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
 
 
-        public override void RefreshWarning()
+        public override bool RefreshDupeAssetWarning()
         {
             foreach(var asset in m_dependentAssets)
             {
-                //this works right now because the only possible warning is duplicate assets.  If that changes, this will be invalid.
-                if (asset.HasWarning()) 
+                if (asset.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles)) 
                 {
                     SetDuplicateWarning();
-                    break;
+                    return true;
                 }
             }
+            return false;
         }
 
         public bool IsEmpty()
         {
             return (m_concreteAssets.Count == 0);
         }
-        public override bool HasInfo()
-        {
-            return IsEmpty();
-        }
 
-        protected override string InfoMessage
+        public override bool RefreshEmptyStatus()
         {
-            get
-            {
-                if (HasInfo())
-                    return "This bundle is empty.  Empty bundles cannot get saved with the scene and will disappear from this list if Unity restarts or if various other bundle rename or move events occur.";
-                return "";
-            }
+            bool empty = IsEmpty();
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.EmptyBundle, empty);
+            return empty;
         }
 
         protected void SetDuplicateWarning()
         {
-            m_warningMessage = "Assets being pulled into this bundle due to dependencies are also being pulled into another bundle.";
-            m_warningMessage += " This will cause duplication in memory";
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles, true);
             m_dirty = true;
         }
 
@@ -510,6 +481,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         public override BundleTreeItem CreateTreeView(int depth)
         {
             RefreshAssetList();
+            RefreshMessages();
             if (IsSceneBundle)
                 return new BundleTreeItem(this, depth, Model.GetSceneIcon());
             else
@@ -551,7 +523,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
         ~BundleVariantDataInfo()
         {
-            //parent should be auto called?
+            //parent should be auto called
         }
         public override string DisplayName
         {
@@ -653,55 +625,30 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_children.Clear();
         }
 
+        protected override void RefreshMessages()
+        {
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.ErrorInChildren, false);
+            foreach(var child in m_children)
+            {
+                if (child.Value.IsMessageSet(MessageSystem.MessageFlag.Error))
+                {
+                    m_bundleMessages.SetFlag(MessageSystem.MessageFlag.ErrorInChildren, true);
+                    break;
+                }
+            }
+            base.RefreshMessages();
+        }
+        public override bool RefreshEmptyStatus()
+        {
+            bool empty = m_children.Count == 0;
+            foreach (var child in m_children)
+            {
+                empty |= child.Value.RefreshEmptyStatus();
+            }
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.EmptyFolder, empty);
+            return empty;
+        }
 
-        public override bool HasError()
-        {
-            bool error = false;
-            foreach (var child in m_children)
-            {
-                error |= child.Value.HasError();
-            }
-            return error;
-        }
-        public override bool HasWarning()
-        {
-            bool warning = false;
-            foreach (var child in m_children)
-            {
-                warning |= child.Value.HasWarning();
-            }
-            return warning;
-        }
-        public override bool HasInfo()
-        {
-            bool info = m_children.Count == 0;
-            foreach (var child in m_children)
-            {
-                info |= child.Value.HasInfo();
-            }
-            return info;
-        }
-        protected override string InfoMessage
-        {
-            get
-            {
-                if (HasInfo())
-                    return "This folder is either empty or contains only empty children.  Empty bundles cannot get saved with the scene and will disappear from this list if Unity restarts or if various other bundle rename or move events occur.";
-                return "";
-            }
-        }
-        public override string ErrorMessage()
-        {
-            if(HasError())
-            {
-                return "Error in child(ren)";
-            }
-            else if(HasWarning())
-            {
-                return "Warning in child(ren)";
-            }
-            return InfoMessage;
-        }
         public override void RefreshAssetList()
         {
             foreach (var child in m_children)
@@ -709,12 +656,15 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 child.Value.RefreshAssetList();
             }
         }
-        public override void RefreshWarning()
+        public override bool RefreshDupeAssetWarning()
         {
+            bool dupeWarning = false;
             foreach (var child in m_children)
             {
-                child.Value.RefreshWarning();
+                dupeWarning |= child.Value.RefreshDupeAssetWarning();
             }
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.WarningInChildren, dupeWarning);
+            return dupeWarning;
         }
         public override void AddAssetsToNode(AssetTreeItem node)
         {
@@ -753,6 +703,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 m_dirty |= child.Value.Dirty;
                 m_doneUpdating &= child.Value.DoneUpdating;
             }
+
+            if (m_dirty || m_doneUpdating)
+                RefreshMessages();
         }
         public override bool DoneUpdating
         {
@@ -794,6 +747,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
         public override BundleTreeItem CreateTreeView(int depth)
         {
+            RefreshMessages();
             var result = new BundleTreeItem(this, depth, Model.GetFolderIcon());
             foreach (var child in m_children)
             {
@@ -821,7 +775,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_name.SetBundleName(newName, m_name.Variant);
         }
     }
-        public class BundleVariantFolderInfo : BundleFolderInfo
+
+
+    public class BundleVariantFolderInfo : BundleFolderInfo
     {
         public BundleVariantFolderInfo(string name, BundleFolderInfo parent) : base(name, parent)
         {
@@ -830,8 +786,19 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             m_children.Add(info.m_name.Variant, info);
         }
+        public override void Update()
+        {
+            base.Update();
+            ValidateVariants();
+        }
+        protected void ValidateVariants()
+        {
+            m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, (m_children.Count >= 2));
+        }
+
         public override BundleTreeItem CreateTreeView(int depth)
         {
+            RefreshMessages();
             Texture2D icon = null;
             if ((m_children.Count > 0) &&
                 ((m_children.First().Value as BundleVariantDataInfo).IsSceneVariant()))

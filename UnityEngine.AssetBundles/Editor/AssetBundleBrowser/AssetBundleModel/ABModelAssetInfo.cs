@@ -34,18 +34,14 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
             set { m_color = value; }
         }
+        public Texture2D MessageIcon()
+        {
+            return MessageSystem.GetIcon(HighestMessageLevel());
+        }
 
         public MessageType HighestMessageLevel()
         {
-            if (m_asset.HasError())
-            { 
-                return MessageType.Error;
-            }
-            else if (m_asset.HasWarning())
-            {
-                return MessageType.Warning;
-            }
-            return MessageType.None;
+            return m_asset.HighestMessageLevel();
         }
 
         public bool ContainsChild(AssetInfo asset)
@@ -78,18 +74,13 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_parents = new HashSet<string>();
             IsScene = false;
         }
-        //public AssetInfo(string name, AssetInfo parent)
-        //{
-        //    Name = name;
-        //    m_bundleName = string.Empty;
-        //    m_parent = parent;
-        //}
 
         public bool IsScene { get; set; }
         private HashSet<string> m_parents;
         private string m_assetName;
         private string m_displayName;
         private string m_bundleName;
+        private MessageSystem.MessageState m_assetMessages = new MessageSystem.MessageState();
         public string Name
         {
             get { return m_assetName; }
@@ -121,25 +112,31 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 return Color.white;
         }
 
-        private bool m_error = false;
-        private bool m_warning = false;
-        public bool HasError() { return m_error; }
-        public void HasError(bool value) { m_error = value; }
-        public bool HasWarning() { return m_warning; }
-        public void IsInMultipleBundles(bool state) { m_warning = state; }
-        public IEnumerable<ProblemMessage> GetMessages()
+        public bool IsMessageSet(MessageSystem.MessageFlag flag)
         {
-            List<ProblemMessage> messages = new List<ProblemMessage>();
-            if(HasError())
+            return m_assetMessages.IsSet(flag);
+        }
+        public void SetMessageFlag(MessageSystem.MessageFlag flag, bool on)
+        {
+            m_assetMessages.SetFlag(flag, on);
+        }
+        public MessageType HighestMessageLevel()
+        {
+            return m_assetMessages.HighestMessageLevel();
+        }
+        public IEnumerable<MessageSystem.Message> GetMessages()
+        {
+            List<MessageSystem.Message> messages = new List<MessageSystem.Message>();
+            if(IsMessageSet(MessageSystem.MessageFlag.SceneBundleConflict))
             {
                 var message = DisplayName + "\n";
                 if (IsScene)
                     message += "Is a scene that is in a bundle with other assets. Scene bundles must have a single scene as the only asset.";
                 else
                     message += "Is included in a bundle with a scene. Scene bundles must have a single scene as the only asset.";
-                messages.Add(new ProblemMessage(message, MessageType.Error));
+                messages.Add(new MessageSystem.Message(message, MessageType.Error));
             }
-            if (HasWarning())
+            if (IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
             {
                 var bundleNames = AssetBundleModel.Model.CheckDependencyTracker(this);
                 string message = DisplayName + "\n" + "Is auto-included in multiple bundles:\n";
@@ -148,7 +145,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     message += bundleName + ", ";
                 }
                 message = message.Substring(0, message.Length - 2);//remove trailing comma.
-                messages.Add(new ProblemMessage(message, MessageType.Warning));
+                messages.Add(new MessageSystem.Message(message, MessageType.Warning));
             }
 
             if (m_bundleName == string.Empty && m_parents.Count > 0)
@@ -160,10 +157,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     message += parent + ", ";
                 }
                 message = message.Substring(0, message.Length - 2);//remove trailing comma.
-                messages.Add(new ProblemMessage(message, MessageType.Info));
+                messages.Add(new MessageSystem.Message(message, MessageType.Info));
             }
 
-            messages.Add(new ProblemMessage(DisplayName + "\n" + "Path: " + Name, MessageType.Info));
+            messages.Add(new MessageSystem.Message(DisplayName + "\n" + "Path: " + Name, MessageType.Info));
 
             return messages;
         }
@@ -194,7 +191,6 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 if (AssetDatabase.IsValidFolder(m_assetName))
                 {
                     //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
-
                     //GatherFoldersAndFiles();
                 }
                 else

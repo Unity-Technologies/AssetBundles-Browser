@@ -89,7 +89,7 @@ namespace UnityEngine.AssetBundles
             if( (item as BundleDetailItem) != null)
             {
                 float height = DefaultStyles.backgroundEven.CalcHeight(new GUIContent(item.displayName), m_TotalRect.width);
-                return height;
+                return height + 3f;
             }
             return base.GetCustomRowHeight(row, item);
         }
@@ -97,16 +97,11 @@ namespace UnityEngine.AssetBundles
 
         internal TreeViewItem AppendBundleToTree(AssetBundleModel.BundleDataInfo bundle)
         {
-            var itemName = bundle.m_name.ShortName;
-            if (bundle.m_name.Variant != string.Empty)
-                itemName += "." + bundle.m_name.Variant;
-
+            var itemName = bundle.m_name.FullNativeName;
             var bunRoot = new TreeViewItem(itemName.GetHashCode(), 0, itemName);
-
 
             var str = itemName + kSizeHeader;
             var sz = new TreeViewItem(str.GetHashCode(), 1, kSizeHeader + bundle.TotalSize());
-
 
             str = itemName + kDependencyHeader;
             var dependency = new TreeViewItem(str.GetHashCode(), 1, kDependencyEmpty);
@@ -123,23 +118,15 @@ namespace UnityEngine.AssetBundles
 
             str = itemName + kMessageHeader;
             var msg = new TreeViewItem(str.GetHashCode(), 1, kMessageEmpty);
-            if (bundle.ErrorMessage() != "")
+            if (bundle.HasMessages())
             {
                 msg.displayName = kMessageHeader;
-                if (bundle.HasError())
+                var currMessages = bundle.GetMessages();
+
+                foreach(var currMsg in currMessages)
                 {
-                    str = bundle.ErrorMessage(MessageType.Error);
-                    msg.AddChild(new BundleDetailItem(str.GetHashCode(), 2, str, MessageType.Error));
-                }
-                if (bundle.HasWarning())
-                {
-                    str = bundle.ErrorMessage(MessageType.Warning);
-                    msg.AddChild(new BundleDetailItem(str.GetHashCode(), 2, str, MessageType.Warning));
-                }
-                if (bundle.HasInfo())
-                {
-                    str = bundle.ErrorMessage(MessageType.Info);
-                    msg.AddChild(new BundleDetailItem(str.GetHashCode(), 2, str, MessageType.Info));
+                    str = itemName + currMsg.message;
+                    msg.AddChild(new BundleDetailItem(str.GetHashCode(), 2, currMsg.message, currMsg.severity));
                 }
             }
 

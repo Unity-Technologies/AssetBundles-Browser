@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.Assertions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
@@ -41,7 +42,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     shouldRepaint = true;
                     foreach(var bundle in m_rootLevelBundles.GetChildList())
                     {
-                        bundle.RefreshWarning();
+                        bundle.RefreshDupeAssetWarning();
                     }
                 }
             }
@@ -189,9 +190,13 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static BundleInfo CreateEmptyBundle(BundleFolderInfo folder = null, string newName = null)
         {
+            if ((folder as BundleVariantFolderInfo) != null)
+                return CreateEmptyVariant(folder as BundleVariantFolderInfo);
+
             folder = (folder == null) ? m_rootLevelBundles : folder;
             string name = GetUniqueName(folder, newName);
-            BundleNameData nameData = new BundleNameData(folder.m_name.BundleName, name);
+            BundleNameData nameData;
+            nameData = new BundleNameData(folder.m_name.BundleName, name);
             return AddBundleToFolder(folder, nameData);
         }
         public static BundleInfo CreateEmptyVariant(BundleVariantFolderInfo folder)
@@ -320,7 +325,6 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         }
         public static AssetTreeItem CreateAssetListTreeView(IEnumerable<AssetBundleModel.BundleInfo> selectedBundles)
         {
-            //m_bundlesToUpdate.AddRange(selectedBundles);
             var root = new AssetTreeItem();
             if (selectedBundles != null)
             {
@@ -359,7 +363,6 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 bundle.HandleReparent(parent.m_name.BundleName, parent);
             }
             ExecuteAssetMove();
-            //Rebuild();
         }
 
         public static void HandleBundleMerge(IEnumerable<BundleInfo> bundles, BundleDataInfo target)
@@ -402,7 +405,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     }
                     else
                     {
-                        if (asset.HasWarning())
+                        if (asset.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
                             dupeAssets.Add(asset.Name);
                     }
                 }
@@ -494,30 +497,11 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
         }
 
-        //public static AssetInfo GetAsset(string name)
-        //{
-        //    if (!name.StartsWith("Assets/"))
-        //        return null;
-        //    string ext = System.IO.Path.GetExtension(name);
-        //    if (ext == ".dll" || ext == ".cs" || ext == ".meta")
-        //        return null;
-
-
-        //    AssetInfo info = null;
-        //    if (!m_globalAssetList.TryGetValue(name, out info))
-        //    {
-        //        var bundleName = GetBundleName(name);
-        //        info = new AssetInfo(name, bundleName);
-        //        m_globalAssetList.Add(name, info);
-        //    }
-        //    return info;
-        //}
-        
         public static AssetInfo CreateAsset(string name, AssetInfo parent)
         {
             if (ValidateAsset(name))
             {
-                var bundleName = GetBundleName(name);  //TODO - I don't think I want to call this here because I can't get here without bundle being "".
+                var bundleName = GetBundleName(name);  //TODO - I don't think I want to call this here because I can't get here without bundle being ""???
                 return CreateAsset(name, bundleName, parent);
             }
             return null;
@@ -561,7 +545,6 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             return true;
         }
 
-
         internal static string GetBundleName(string asset)
         {
             var importer = AssetImporter.GetAtPath(asset);
@@ -580,7 +563,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 m_dependencyTracker[asset.Name].Add(bundle);
                 int count = m_dependencyTracker[asset.Name].Count;
                 if (count > 1)
-                    asset.IsInMultipleBundles(true);
+                    asset.SetMessageFlag(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles, true);
                 return count;
             }
 
@@ -601,7 +584,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         m_dependencyTracker.Remove(asset.Name);
                         break;
                     case 1:
-                        asset.IsInMultipleBundles(false);
+                        asset.SetMessageFlag(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles, false);
                         break;
                     default:
                         break;
@@ -621,7 +604,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_dependencyTracker.Remove(asset);
         }
 
-
+        
         static List<string> m_importedAssets = new List<string>();
         static List<string> m_deletedAssets = new List<string>();
         static List<KeyValuePair<string, string>> m_movedAssets = new List<KeyValuePair<string, string>>();
@@ -679,37 +662,6 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     m_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(name, typeof(Texture2D));
                 else if (name.Contains("ABundleBrowserIconY1756Scene.png"))
                     m_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(name, typeof(Texture2D));
-            }
-        }
-    }
-
-    public class ProblemMessage
-    {
-        public static Texture2D GetIcon(MessageType sev)
-        {
-            if (sev == MessageType.Error)
-                return EditorGUIUtility.FindTexture("console.errorIcon");
-            else if (sev == MessageType.Warning)
-                return EditorGUIUtility.FindTexture("console.warnicon");
-            else if (sev == MessageType.Info)
-                return EditorGUIUtility.FindTexture("console.infoIcon");
-            else
-                return null;
-        }
-
-        public ProblemMessage(string msg, MessageType sev)
-        {
-            message = msg;
-            severity = sev;
-        }
-
-        public MessageType severity;
-        public string message;
-        public Texture2D icon
-        {
-            get
-            {
-                return GetIcon(severity);
             }
         }
     }

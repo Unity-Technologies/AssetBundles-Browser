@@ -133,16 +133,17 @@ namespace UnityEngine.AssetBundles
 
         protected override void RowGUI(RowGUIArgs args)
         {
-            Color oldColor = GUI.color;
             for (int i = 0; i < args.GetNumVisibleColumns(); ++i)
                 CellGUI(args.GetCellRect(i), args.item as AssetBundleModel.AssetTreeItem, args.GetColumn(i), ref args);
-            GUI.color = oldColor;
         }
 
         private void CellGUI(Rect cellRect, AssetBundleModel.AssetTreeItem item, int column, ref RowGUIArgs args)
         {
+            Color oldColor = GUI.color;
             CenterRectUsingSingleLineHeight(ref cellRect);
-            GUI.color = item.ItemColor;
+            if(column != 3)
+               GUI.color = item.ItemColor;
+
             switch (column)
             {
                 case 0:
@@ -163,15 +164,15 @@ namespace UnityEngine.AssetBundles
                     DefaultGUI.Label(cellRect, item.asset.GetSizeString(), args.selected, args.focused);
                     break;
                 case 3:
-                    var icon = AssetBundleModel.ProblemMessage.GetIcon(item.HighestMessageLevel());
+                    var icon = item.MessageIcon();
                     if (icon != null)
                     {
-                        //var iconRect = new Rect(cellRect.x + 1, cellRect.y + 1, cellRect.height - 2, cellRect.height - 2);
                         var iconRect = new Rect(cellRect.x, cellRect.y, cellRect.height, cellRect.height);
                         GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
                     }
                     break;
             }
+            GUI.color = oldColor;
         }
 
         protected override void DoubleClickedItem(int id)

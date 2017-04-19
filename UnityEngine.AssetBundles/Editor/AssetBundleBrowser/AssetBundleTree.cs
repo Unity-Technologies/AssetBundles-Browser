@@ -43,13 +43,13 @@ namespace UnityEngine.AssetBundles
             base.RowGUI(args);
             GUI.color = old;
 
-            var errorIcon = bundleItem.GetErrorIcon();
-            if (errorIcon != null)
+            var message = bundleItem.BundleMessage();
+            if(message.severity != MessageType.None)
             {
                 var size = args.rowRect.height;
                 var right = args.rowRect.xMax;
                 Rect messageRect = new Rect(right - size, args.rowRect.yMin, size, size);
-                GUI.Label(messageRect, new GUIContent(errorIcon, bundleItem.ErrorMessage() ));
+                GUI.Label(messageRect, new GUIContent(message.icon, message.message ));
             }
         }
 
@@ -147,7 +147,7 @@ namespace UnityEngine.AssetBundles
                     if(variant == null)
                        menu.AddItem(new GUIContent("Convert to variant"), false, ConvertToVariant, selectedNodes);
                 }
-                if(selectedNodes[0].bundle.HasWarning())
+                if(selectedNodes[0].bundle.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
                     menu.AddItem(new GUIContent("Move duplicates to new bundle"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Rename"), false, RenameBundle, selectedNodes);
                 menu.AddItem(new GUIContent("Delete " + selectedNodes[0].displayName), false, DeleteBundles, selectedNodes);
@@ -402,10 +402,10 @@ namespace UnityEngine.AssetBundles
             }
             else
             {
-                var folder = data.targetNode.bundle as AssetBundleModel.BundleFolderConcreteInfo;
+                var folder = data.targetNode.bundle as AssetBundleModel.BundleFolderInfo;
                 if (folder != null)
                 {
-                    if(data.args.performDrop)
+                    if (data.args.performDrop)
                     {
                         if (data.draggedNodes != null)
                         {
@@ -420,6 +420,7 @@ namespace UnityEngine.AssetBundles
                 }
                 else
                     visualMode = DragAndDropVisualMode.Rejected; //must be a variantfolder
+                
             }
             return visualMode;
         }
@@ -473,7 +474,7 @@ namespace UnityEngine.AssetBundles
             else
             {
                 var newBundle = AssetBundleModel.Model.CreateEmptyBundle(root);
-                AssetBundleModel.Model.MoveAssetToBundle(paths, newBundle.m_name.BundleName, string.Empty);
+                AssetBundleModel.Model.MoveAssetToBundle(paths, newBundle.m_name.BundleName, newBundle.m_name.Variant);
                 AssetBundleModel.Model.ExecuteAssetMove();
                 ReloadAndSelect(newBundle.NameHashCode, true);
             }

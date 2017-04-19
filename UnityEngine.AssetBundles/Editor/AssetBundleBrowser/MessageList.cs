@@ -10,17 +10,12 @@ namespace UnityEngine.AssetBundles
 {
     internal class MessageList
     {
-        //internal static EditorGUIUtility.SkinnedColor borderColor = new EditorGUIUtility.SkinnedColor(new Color(0.6f, 0.6f, 0.6f, 1.333f), new Color(0.12f, 0.12f, 0.12f, 1.333f));
-
         private Vector2 m_scrollPosition = Vector2.zero;
 
         private GUIStyle[] m_style = new GUIStyle[2];
-        //private GUIStyle m_styleOdd;
-        //private GUIStyle m_styleEven;
-        //private GUIStyle m_style3;
 
         IEnumerable<AssetBundleModel.AssetInfo> m_selecteditems;
-        List<AssetBundleModel.ProblemMessage> m_messages;
+        List<MessageSystem.Message> m_messages;
 
         Vector2 m_dimensions = new Vector2(0, 0);
         const float kScrollbarPadding = 16f;
@@ -33,19 +28,13 @@ namespace UnityEngine.AssetBundles
         }
         private void Init()
         {
-            //m_style = new GUIStyle();
-            //m_style.border = new RectOffset(3, 3, 3, 3);
-            //m_style.margin = new RectOffset(3, 3, 3, 3);
-            //m_style.wordWrap = true;
-            //m_style = GUI.skin.box;
-            //m_style.normal.textColor = Color.white;
             m_style[0] = "OL EntryBackOdd";
             m_style[1] = "OL EntryBackEven";
             m_style[0].wordWrap = true;
             m_style[1].wordWrap = true;
             m_style[0].padding = new RectOffset(32, 0, 1, 4);
             m_style[1].padding = new RectOffset(32, 0, 1, 4);
-            m_messages = new List<AssetBundleModel.ProblemMessage>();
+            m_messages = new List<MessageSystem.Message>();
 
         }
         public void OnGUI(Rect fullPos)
