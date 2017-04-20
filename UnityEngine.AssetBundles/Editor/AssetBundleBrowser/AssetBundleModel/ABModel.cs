@@ -497,11 +497,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
         }
 
+        //this version of CreateAsset is only used for dependent assets that aren't actually on a bundle. 
         public static AssetInfo CreateAsset(string name, AssetInfo parent)
         {
             if (ValidateAsset(name))
             {
-                var bundleName = GetBundleName(name);  //TODO - I don't think I want to call this here because I can't get here without bundle being ""???
+                var bundleName = GetBundleName(name);  //this should always return "", but calling for safety.
                 return CreateAsset(name, bundleName, parent);
             }
             return null;

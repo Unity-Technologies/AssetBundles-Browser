@@ -520,6 +520,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
     public class BundleVariantDataInfo : BundleDataInfo
     {
+        protected List<AssetInfo> m_folderIncludeAssets = new List<AssetInfo>();
         public BundleVariantDataInfo(string name, BundleFolderInfo parent) : base(name, parent)
         {
         }
@@ -535,6 +536,13 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             base.Update();
             (m_parent as BundleVariantFolderInfo).ValidateVariants();
+        }
+        public override void RefreshAssetList()
+        {
+            m_folderIncludeAssets.Clear();
+            base.RefreshAssetList();
+            if(m_dependentAssets.Count > 0)
+                m_folderIncludeAssets = new List<AssetInfo>(m_dependentAssets);
         }
         public bool IsSceneVariant()
         {
@@ -577,28 +585,54 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             bool result = false;
 
-            var myUniqueAssets = new HashSet<string>();
-            var otherUniqueAssets = new HashSet<string>(other.m_concreteAssets.Select(x => x.DisplayName));
-            
-            foreach(var asset in m_concreteAssets)
+            if (m_folderIncludeAssets.Count != 0 || other.m_folderIncludeAssets.Count != 0)
             {
-                if(!otherUniqueAssets.Remove(asset.DisplayName))
+                var myUniqueAssets = new HashSet<string>();
+                var otherUniqueAssets = new HashSet<string>(other.m_folderIncludeAssets.Select(x => x.DisplayName));
+
+                foreach (var asset in m_folderIncludeAssets)
                 {
-                    myUniqueAssets.Add(asset.DisplayName);
+                    if (!otherUniqueAssets.Remove(asset.DisplayName))
+                    {
+                        myUniqueAssets.Add(asset.DisplayName);
+                    }
+                }
+
+                if (myUniqueAssets.Count > 0)
+                {
+                    m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
+                    result = true;
+                }
+                if (otherUniqueAssets.Count > 0)
+                {
+                    other.m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
+                    result = true;
                 }
             }
+            else //this doesn't cover the super weird case of including a folder and some explicit assets. TODO - fix that.
+            {
+                var myUniqueAssets = new HashSet<string>();
+                var otherUniqueAssets = new HashSet<string>(other.m_concreteAssets.Select(x => x.DisplayName));
 
-            if (myUniqueAssets.Count > 0)
-            {
-                m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
-                result = true;
+                foreach (var asset in m_concreteAssets)
+                {
+                    if (!otherUniqueAssets.Remove(asset.DisplayName))
+                    {
+                        myUniqueAssets.Add(asset.DisplayName);
+                    }
+                }
+
+                if (myUniqueAssets.Count > 0)
+                {
+                    m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
+                    result = true;
+                }
+                if (otherUniqueAssets.Count > 0)
+                {
+                    other.m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
+                    result = true;
+                }
             }
-            if (otherUniqueAssets.Count > 0)
-            {
-                other.m_bundleMessages.SetFlag(MessageSystem.MessageFlag.VariantBundleMismatch, true);
-                result = true;
-            }
-            
             return result;
         }
     }
