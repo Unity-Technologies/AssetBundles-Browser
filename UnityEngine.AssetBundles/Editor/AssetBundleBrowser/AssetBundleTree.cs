@@ -10,12 +10,13 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetBundleTree : TreeView
     { 
-        AssetBundleManageTab m_controller;
-       
+        AssetBundleManageTab m_Controller;
+        private bool m_ContextOnItem = false;
+
         public AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
         {
             AssetBundleModel.Model.Rebuild();
-            m_controller = ctrl;
+            m_Controller = ctrl;
             showBorder = true;
         }
 
@@ -39,7 +40,7 @@ namespace UnityEngine.AssetBundles
 
             Color old = GUI.color;
             if ((bundleItem.bundle as AssetBundleModel.BundleVariantFolderInfo) != null)
-                GUI.color = AssetBundleModel.Model.kLightGrey; //new Color(0.3f, 0.5f, 0.85f);
+                GUI.color = AssetBundleModel.Model.k_LightGrey; //new Color(0.3f, 0.5f, 0.85f);
             base.RowGUI(args);
             GUI.color = old;
 
@@ -63,7 +64,7 @@ namespace UnityEngine.AssetBundles
 
                 AssetBundleModel.BundleTreeItem renamedItem = FindItem(args.itemID, rootItem) as AssetBundleModel.BundleTreeItem;
                 args.acceptedRename = AssetBundleModel.Model.HandleBundleRename(renamedItem, args.newName);
-                ReloadAndSelect(renamedItem.bundle.NameHashCode, false);
+                ReloadAndSelect(renamedItem.bundle.nameHashCode, false);
             }
             else
             {
@@ -88,7 +89,7 @@ namespace UnityEngine.AssetBundles
                 selectedBundles.Add(item.bundle);
             }
 
-            m_controller.UpdateSelectedBundles(selectedBundles);
+            m_Controller.UpdateSelectedBundles(selectedBundles);
         }
 
         public override void OnGUI(Rect rect)
@@ -101,13 +102,11 @@ namespace UnityEngine.AssetBundles
         }
 
 
-        //if I could set base.m_TreeView.deselectOnUnhandledMouseDown then I wouldn't need m_contextOnItem...
-        private bool m_contextOnItem = false;
         protected override void ContextClicked()
         {
-            if (m_contextOnItem)
+            if (m_ContextOnItem)
             {
-                m_contextOnItem = false;
+                m_ContextOnItem = false;
                 return;
             }
 
@@ -121,7 +120,7 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
-            m_contextOnItem = true;
+            m_ContextOnItem = true;
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
             foreach (var nodeID in GetSelection())
             {
@@ -174,14 +173,14 @@ namespace UnityEngine.AssetBundles
                 folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo;
             }
             var newBundle = AssetBundleModel.Model.CreateEmptyBundleFolder(folder);
-            ReloadAndSelect(newBundle.NameHashCode, true);
+            ReloadAndSelect(newBundle.nameHashCode, true);
         }
         void RenameBundle(object context)
         {
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
             if (selectedNodes != null && selectedNodes.Count > 0)
             {
-                BeginRename(FindItem(selectedNodes[0].bundle.NameHashCode, rootItem), 0.1f);
+                BeginRename(FindItem(selectedNodes[0].bundle.nameHashCode, rootItem), 0.1f);
             }
         }
 
@@ -194,7 +193,7 @@ namespace UnityEngine.AssetBundles
                 folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo;
             }
             var newBundle = AssetBundleModel.Model.CreateEmptyBundle(folder);
-            ReloadAndSelect(newBundle.NameHashCode, true);
+            ReloadAndSelect(newBundle.nameHashCode, true);
         }
 
         void CreateNewVariant(object context)
@@ -207,7 +206,7 @@ namespace UnityEngine.AssetBundles
                 if (folder != null)
                 {
                     var newBundle = AssetBundleModel.Model.CreateEmptyVariant(folder);
-                    ReloadAndSelect(newBundle.NameHashCode, true);
+                    ReloadAndSelect(newBundle.nameHashCode, true);
                 }
             }
         }
@@ -218,10 +217,10 @@ namespace UnityEngine.AssetBundles
             if (selectedNodes.Count == 1)
             {
                 var bundle = selectedNodes[0].bundle as AssetBundleModel.BundleDataInfo;
-                var newBundle = AssetBundleModel.Model.ConvertToVariant(bundle);
+                var newBundle = AssetBundleModel.Model.HandleConvertToVariant(bundle);
                 int hash = 0;
                 if (newBundle != null)
-                    hash = newBundle.NameHashCode;
+                    hash = newBundle.nameHashCode;
                 ReloadAndSelect(hash, true);
             }
         }
@@ -241,7 +240,7 @@ namespace UnityEngine.AssetBundles
             if(newBundle != null)
             {
                 var selection = new List<int>();
-                selection.Add(newBundle.NameHashCode);
+                selection.Add(newBundle.nameHashCode);
                 ReloadAndSelect(selection);
             }
             else
@@ -303,7 +302,7 @@ namespace UnityEngine.AssetBundles
                             var dataBundle = bundle as AssetBundleModel.BundleDataInfo;
                             if (dataBundle != null)
                             {
-                                if (dataBundle.IsSceneBundle)
+                                if (dataBundle.isSceneBundle)
                                     hasScene = true;
                                 else
                                     hasNonScene = true;
@@ -373,7 +372,7 @@ namespace UnityEngine.AssetBundles
             var targetDataBundle = data.targetNode.bundle as AssetBundleModel.BundleDataInfo;
             if (targetDataBundle != null)
             {
-                if (targetDataBundle.IsSceneBundle)
+                if (targetDataBundle.isSceneBundle)
                     visualMode = DragAndDropVisualMode.Rejected;
                 else
                 {
@@ -388,13 +387,13 @@ namespace UnityEngine.AssetBundles
                             if (data.draggedNodes != null)
                             {
                                 AssetBundleModel.Model.HandleBundleMerge(data.draggedNodes, targetDataBundle);
-                                ReloadAndSelect(targetDataBundle.NameHashCode, false);
+                                ReloadAndSelect(targetDataBundle.nameHashCode, false);
                             }
                             else if (data.paths != null)
                             {
-                                AssetBundleModel.Model.MoveAssetToBundle(data.paths, targetDataBundle.m_name.BundleName, targetDataBundle.m_name.Variant);
+                                AssetBundleModel.Model.MoveAssetToBundle(data.paths, targetDataBundle.m_Name.bundleName, targetDataBundle.m_Name.variant);
                                 AssetBundleModel.Model.ExecuteAssetMove();
-                                ReloadAndSelect(targetDataBundle.NameHashCode, false);
+                                ReloadAndSelect(targetDataBundle.nameHashCode, false);
                             }
                         }
                     }
@@ -465,8 +464,8 @@ namespace UnityEngine.AssetBundles
                 foreach (var assetPath in paths)
                 {
                     var newBundle = AssetBundleModel.Model.CreateEmptyBundle(root, System.IO.Path.GetFileNameWithoutExtension(assetPath).ToLower());
-                    AssetBundleModel.Model.MoveAssetToBundle(assetPath, newBundle.m_name.BundleName, newBundle.m_name.Variant);
-                    hashCodes.Add(newBundle.NameHashCode);
+                    AssetBundleModel.Model.MoveAssetToBundle(assetPath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
+                    hashCodes.Add(newBundle.nameHashCode);
                 }
                 AssetBundleModel.Model.ExecuteAssetMove();
                 ReloadAndSelect(hashCodes);
@@ -474,9 +473,9 @@ namespace UnityEngine.AssetBundles
             else
             {
                 var newBundle = AssetBundleModel.Model.CreateEmptyBundle(root);
-                AssetBundleModel.Model.MoveAssetToBundle(paths, newBundle.m_name.BundleName, newBundle.m_name.Variant);
+                AssetBundleModel.Model.MoveAssetToBundle(paths, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
                 AssetBundleModel.Model.ExecuteAssetMove();
-                ReloadAndSelect(newBundle.NameHashCode, true);
+                ReloadAndSelect(newBundle.nameHashCode, true);
             }
         }
         protected override void SetupDragAndDrop(SetupDragAndDropArgs args)

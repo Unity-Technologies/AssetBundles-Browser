@@ -10,6 +10,11 @@ namespace UnityEngine.AssetBundles
 {
     public class MessageSystem
     {
+        private static Texture2D m_ErrorIcon = null;
+        private static Texture2D m_WarningIcon = null;
+        private static Texture2D m_InfoIcon = null;
+        private static Dictionary<MessageFlag, Message> m_MessageLookup = null;
+
         [Flags]
         public enum MessageFlag
         {
@@ -35,18 +40,20 @@ namespace UnityEngine.AssetBundles
             //I have an enum and a set of enums to make some logic cleaner.  
             // The enum has masks for Error/Warning/Info that won't ever be in the set
             // this allows for easy checking of IsSet for error rather than specific errors. 
-            private MessageFlag m_messageFlags;
-            private HashSet<MessageFlag> m_messageSet; 
+            private MessageFlag m_MessageFlags;
+            private HashSet<MessageFlag> m_MessageSet;
+
+
             public MessageState()
             {
-                m_messageFlags = MessageFlag.None;
-                m_messageSet = new HashSet<MessageFlag>();
+                m_MessageFlags = MessageFlag.None;
+                m_MessageSet = new HashSet<MessageFlag>();
             }
 
             public void Clear()
             {
-                m_messageFlags = MessageFlag.None;
-                m_messageSet.Clear();
+                m_MessageFlags = MessageFlag.None;
+                m_MessageSet.Clear();
             }
 
             public void SetFlag(MessageFlag flag, bool on)
@@ -56,22 +63,22 @@ namespace UnityEngine.AssetBundles
 
                 if (on)
                 {
-                    m_messageFlags |= flag;
-                    m_messageSet.Add(flag);
+                    m_MessageFlags |= flag;
+                    m_MessageSet.Add(flag);
                 }
                 else
                 {
-                    m_messageFlags &= ~flag;
-                    m_messageSet.Remove(flag);
+                    m_MessageFlags &= ~flag;
+                    m_MessageSet.Remove(flag);
                 }
             }
             public bool IsSet(MessageFlag flag)
             {
-                return (m_messageFlags & flag) == flag;
+                return (m_MessageFlags & flag) == flag;
             }
             public bool HasMessages()
             {
-                return (m_messageFlags != MessageFlag.None);
+                return (m_MessageFlags != MessageFlag.None);
             }
 
             public MessageType HighestMessageLevel()
@@ -87,7 +94,7 @@ namespace UnityEngine.AssetBundles
             public MessageFlag HighestMessageFlag()
             {
                 MessageFlag high = MessageFlag.None;
-                foreach(var f in m_messageSet)
+                foreach(var f in m_MessageSet)
                 {
                     if (f > high)
                         high = f;
@@ -98,7 +105,7 @@ namespace UnityEngine.AssetBundles
             public List<Message> GetMessages()
             {
                 var msgs = new List<Message>();
-                foreach(var f in m_messageSet)
+                foreach(var f in m_MessageSet)
                 {
                     msgs.Add(GetMessage(f));
                 }
@@ -108,15 +115,39 @@ namespace UnityEngine.AssetBundles
         public static Texture2D GetIcon(MessageType sev)
         {
             if (sev == MessageType.Error)
-                return EditorGUIUtility.FindTexture("console.errorIcon");
+                return GetErrorIcon();
             else if (sev == MessageType.Warning)
-                return EditorGUIUtility.FindTexture("console.warnicon");
+                return GetWarningIcon();
             else if (sev == MessageType.Info)
-                return EditorGUIUtility.FindTexture("console.infoIcon");
+                return GetInfoIcon();
             else
                 return null;
         }
+        private static Texture2D GetErrorIcon()
+        {
+            if (m_ErrorIcon == null)
+                FindMessageIcons();
+            return m_ErrorIcon;
+        }
+        private static Texture2D GetWarningIcon()
+        {
+            if (m_WarningIcon == null)
+                FindMessageIcons();
+            return m_WarningIcon;
+        }
+        private static Texture2D GetInfoIcon()
+        {
+            if (m_InfoIcon == null)
+                FindMessageIcons();
+            return m_InfoIcon;
+        }
 
+        private static void FindMessageIcons()
+        {
+            m_ErrorIcon = EditorGUIUtility.FindTexture("console.errorIcon");
+            m_WarningIcon = EditorGUIUtility.FindTexture("console.warnicon");
+            m_InfoIcon = EditorGUIUtility.FindTexture("console.infoIcon");
+        }
         public class Message
         {
             public Message(string msg, MessageType sev)
@@ -124,7 +155,6 @@ namespace UnityEngine.AssetBundles
                 message = msg;
                 severity = sev;
             }
-
 
             public MessageType severity;
             public string message;
@@ -137,33 +167,31 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-
-        private static Dictionary<MessageFlag, Message> m_messageLookup = null;
         public static Message GetMessage(MessageFlag lookup)
         {
-            if (m_messageLookup == null)
+            if (m_MessageLookup == null)
                 InitMessages();
 
             Message msg = null;
-            m_messageLookup.TryGetValue(lookup, out msg);
+            m_MessageLookup.TryGetValue(lookup, out msg);
             if (msg == null)
-                msg = m_messageLookup[MessageFlag.None];
+                msg = m_MessageLookup[MessageFlag.None];
             return msg;
         }
 
         private static void InitMessages()
         {
-            m_messageLookup = new Dictionary<MessageFlag, Message>();
+            m_MessageLookup = new Dictionary<MessageFlag, Message>();
 
-            m_messageLookup.Add(MessageFlag.None, new Message(string.Empty, MessageType.None));
-            m_messageLookup.Add(MessageFlag.EmptyBundle, new Message("This bundle is empty.  Empty bundles cannot get saved with the scene and will disappear from this list if Unity restarts or if various other bundle rename or move events occur.", MessageType.Info));
-            m_messageLookup.Add(MessageFlag.EmptyFolder, new Message("This folder is either empty or contains only empty children.  Empty bundles cannot get saved with the scene and will disappear from this list if Unity restarts or if various other bundle rename or move events occur.", MessageType.Info));
-            m_messageLookup.Add(MessageFlag.WarningInChildren, new Message("Warning in child(ren)", MessageType.Warning));
-            m_messageLookup.Add(MessageFlag.AssetsDuplicatedInMultBundles, new Message("Assets being pulled into this bundle due to dependencies are also being pulled into another bundle.  This will cause duplication in memory", MessageType.Warning));
-            m_messageLookup.Add(MessageFlag.VariantBundleMismatch, new Message("Variants of a given bundle must have exactly the same assets between them based on a Name.Extension (without Path) comparison. These bundle variants fail that check.", MessageType.Warning));
-            m_messageLookup.Add(MessageFlag.ErrorInChildren, new Message("Error in child(ren)", MessageType.Error));
-            m_messageLookup.Add(MessageFlag.SceneBundleConflict, new Message("A bundle with a scene must only contain that one scene.  This bundle has more than one explicitly added bundles.", MessageType.Error));
-            m_messageLookup.Add(MessageFlag.DependencySceneConflict, new Message("The folder added to this bundle has pulled in more than one scene which is not allowed.", MessageType.Error));
+            m_MessageLookup.Add(MessageFlag.None, new Message(string.Empty, MessageType.None));
+            m_MessageLookup.Add(MessageFlag.EmptyBundle, new Message("This bundle is empty.  Empty bundles cannot get saved with the scene and will disappear from this list if Unity restarts or if various other bundle rename or move events occur.", MessageType.Info));
+            m_MessageLookup.Add(MessageFlag.EmptyFolder, new Message("This folder is either empty or contains only empty children.  Empty bundles cannot get saved with the scene and will disappear from this list if Unity restarts or if various other bundle rename or move events occur.", MessageType.Info));
+            m_MessageLookup.Add(MessageFlag.WarningInChildren, new Message("Warning in child(ren)", MessageType.Warning));
+            m_MessageLookup.Add(MessageFlag.AssetsDuplicatedInMultBundles, new Message("Assets being pulled into this bundle due to dependencies are also being pulled into another bundle.  This will cause duplication in memory", MessageType.Warning));
+            m_MessageLookup.Add(MessageFlag.VariantBundleMismatch, new Message("Variants of a given bundle must have exactly the same assets between them based on a Name.Extension (without Path) comparison. These bundle variants fail that check.", MessageType.Warning));
+            m_MessageLookup.Add(MessageFlag.ErrorInChildren, new Message("Error in child(ren)", MessageType.Error));
+            m_MessageLookup.Add(MessageFlag.SceneBundleConflict, new Message("A bundle with a scene must only contain that one scene.  This bundle has more than one explicitly added bundles.", MessageType.Error));
+            m_MessageLookup.Add(MessageFlag.DependencySceneConflict, new Message("The folder added to this bundle has pulled in more than one scene which is not allowed.", MessageType.Error));
         }
     }
 

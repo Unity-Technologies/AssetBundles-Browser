@@ -23,12 +23,12 @@ namespace UnityEngine.AssetBundles
         HashSet<AssetBundleModel.BundleDataInfo> m_Selecteditems;
         Rect m_TotalRect;
 
-        const float kDoubleIndent = 32f;
-        const string kSizeHeader = "Size: ";
-        const string kDependencyHeader = "Dependent On:";
-        const string kDependencyEmpty = kDependencyHeader + " - None";
-        const string kMessageHeader = "Messages:";
-        const string kMessageEmpty = kMessageHeader + " - None";
+        const float k_DoubleIndent = 32f;
+        const string k_SizeHeader = "Size: ";
+        const string k_DependencyHeader = "Dependent On:";
+        const string k_DependencyEmpty = k_DependencyHeader + " - None";
+        const string k_MessageHeader = "Messages:";
+        const string k_MessageEmpty = k_MessageHeader + " - None";
 
 
         public BundleDetailList(TreeViewState state) : base(state)
@@ -41,7 +41,7 @@ namespace UnityEngine.AssetBundles
             bool dirty = false;
             foreach (var bundle in m_Selecteditems)
             {
-                dirty |= bundle.Dirty;
+                dirty |= bundle.dirty;
             }
             if (dirty)
                 Reload();
@@ -65,7 +65,7 @@ namespace UnityEngine.AssetBundles
             if ((args.item as BundleDetailItem) != null)
             {
                 EditorGUI.HelpBox(
-                    new Rect(args.rowRect.x + kDoubleIndent, args.rowRect.y, args.rowRect.width - kDoubleIndent, args.rowRect.height), 
+                    new Rect(args.rowRect.x + k_DoubleIndent, args.rowRect.y, args.rowRect.width - k_DoubleIndent, args.rowRect.height), 
                     args.item.displayName,
                     (args.item as BundleDetailItem).MessageLevel);
             }
@@ -73,8 +73,8 @@ namespace UnityEngine.AssetBundles
             {
                 Color old = GUI.color;
                 if (args.item.depth == 1 &&
-                    (args.item.displayName == kMessageEmpty || args.item.displayName == kDependencyEmpty))
-                    GUI.color = AssetBundleModel.Model.kLightGrey;
+                    (args.item.displayName == k_MessageEmpty || args.item.displayName == k_DependencyEmpty))
+                    GUI.color = AssetBundleModel.Model.k_LightGrey;
                 base.RowGUI(args);
                 GUI.color = old;
             }
@@ -97,18 +97,18 @@ namespace UnityEngine.AssetBundles
 
         internal TreeViewItem AppendBundleToTree(AssetBundleModel.BundleDataInfo bundle)
         {
-            var itemName = bundle.m_name.FullNativeName;
+            var itemName = bundle.m_Name.fullNativeName;
             var bunRoot = new TreeViewItem(itemName.GetHashCode(), 0, itemName);
 
-            var str = itemName + kSizeHeader;
-            var sz = new TreeViewItem(str.GetHashCode(), 1, kSizeHeader + bundle.TotalSize());
+            var str = itemName + k_SizeHeader;
+            var sz = new TreeViewItem(str.GetHashCode(), 1, k_SizeHeader + bundle.TotalSize());
 
-            str = itemName + kDependencyHeader;
-            var dependency = new TreeViewItem(str.GetHashCode(), 1, kDependencyEmpty);
+            str = itemName + k_DependencyHeader;
+            var dependency = new TreeViewItem(str.GetHashCode(), 1, k_DependencyEmpty);
             var depList = bundle.GetBundleDependencies();
             if(depList.Count > 0)
             {
-                dependency.displayName = kDependencyHeader;
+                dependency.displayName = k_DependencyHeader;
                 foreach (var dep in bundle.GetBundleDependencies())
                 {
                     str = itemName + dep;
@@ -116,11 +116,11 @@ namespace UnityEngine.AssetBundles
                 }
             }
 
-            str = itemName + kMessageHeader;
-            var msg = new TreeViewItem(str.GetHashCode(), 1, kMessageEmpty);
+            str = itemName + k_MessageHeader;
+            var msg = new TreeViewItem(str.GetHashCode(), 1, k_MessageEmpty);
             if (bundle.HasMessages())
             {
-                msg.displayName = kMessageHeader;
+                msg.displayName = k_MessageHeader;
                 var currMessages = bundle.GetMessages();
 
                 foreach(var currMsg in currMessages)

@@ -9,121 +9,121 @@ namespace UnityEngine.AssetBundles
 	public class AssetBundleManageTab 
 	{
         [SerializeField]
-        TreeViewState m_bundleTreeState;
+        TreeViewState m_BundleTreeState;
         [SerializeField]
-        TreeViewState m_assetListState;
+        TreeViewState m_AssetListState;
         [SerializeField]
-        MultiColumnHeaderState m_assetListMCHState;
+        MultiColumnHeaderState m_AssetListMCHState;
         [SerializeField]
-        TreeViewState m_bundleDetailState;
+        TreeViewState m_BundleDetailState;
 
-        Rect m_position;
+        Rect m_Position;
 
-        AssetBundleTree m_bundleTree;
-        AssetListTree m_assetList;
-        MessageList m_messageList;
-        BundleDetailList m_detailsList;
-        bool m_resizingHorizontalSplitter = false;
-        bool m_resizingVerticalSplitterRight = false;
-        bool m_resizingVerticalSplitterLeft = false;
-        Rect m_horizontalSplitterRect, m_verticalSplitterRectRight, m_verticalSplitterRectLeft;
+        AssetBundleTree m_BundleTree;
+        AssetListTree m_AssetList;
+        MessageList m_MessageList;
+        BundleDetailList m_DetailsList;
+        bool m_ResizingHorizontalSplitter = false;
+        bool m_ResizingVerticalSplitterRight = false;
+        bool m_ResizingVerticalSplitterLeft = false;
+        Rect m_HorizontalSplitterRect, m_VerticalSplitterRectRight, m_VerticalSplitterRectLeft;
         [SerializeField]
-        float m_horizontalSplitterPercent;
+        float m_HorizontalSplitterPercent;
         [SerializeField]
-        float m_verticalSplitterPercentRight;
+        float m_VerticalSplitterPercentRight;
         [SerializeField]
-        float m_verticalSplitterPercentLeft;
-        const float kSplitterWidth = 3;
-        
+        float m_VerticalSplitterPercentLeft;
+        const float k_SplitterWidth = 3;
+        private static float m_UpdateDelay = 0;
 
-        EditorWindow m_parent = null;
+
+        EditorWindow m_Parent = null;
 
         public AssetBundleManageTab()
         {
-            m_horizontalSplitterPercent = 0.4f;
-            m_verticalSplitterPercentRight = 0.7f;
-            m_verticalSplitterPercentLeft = 0.85f;
+            m_HorizontalSplitterPercent = 0.4f;
+            m_VerticalSplitterPercentRight = 0.7f;
+            m_VerticalSplitterPercentLeft = 0.85f;
         }
 
         public void OnEnable(Rect pos, EditorWindow parent)
         {
-            m_parent = parent;
-            m_position = pos;
-            m_horizontalSplitterRect = new Rect(
-                (int)(m_position.x + m_position.width * m_horizontalSplitterPercent),
-                m_position.y,
-                kSplitterWidth,
-                m_position.height);
-            m_verticalSplitterRectRight = new Rect(
-                m_horizontalSplitterRect.x,
-                (int)(m_position.y + m_horizontalSplitterRect.height * m_verticalSplitterPercentRight),
-                (m_position.width - m_horizontalSplitterRect.width) - kSplitterWidth,
-                kSplitterWidth);
-            m_verticalSplitterRectLeft = new Rect(
-                m_position.x,
-                (int)(m_position.y + m_horizontalSplitterRect.height * m_verticalSplitterPercentLeft),
-                (m_horizontalSplitterRect.width) - kSplitterWidth,
-                kSplitterWidth);
+            m_Parent = parent;
+            m_Position = pos;
+            m_HorizontalSplitterRect = new Rect(
+                (int)(m_Position.x + m_Position.width * m_HorizontalSplitterPercent),
+                m_Position.y,
+                k_SplitterWidth,
+                m_Position.height);
+            m_VerticalSplitterRectRight = new Rect(
+                m_HorizontalSplitterRect.x,
+                (int)(m_Position.y + m_HorizontalSplitterRect.height * m_VerticalSplitterPercentRight),
+                (m_Position.width - m_HorizontalSplitterRect.width) - k_SplitterWidth,
+                k_SplitterWidth);
+            m_VerticalSplitterRectLeft = new Rect(
+                m_Position.x,
+                (int)(m_Position.y + m_HorizontalSplitterRect.height * m_VerticalSplitterPercentLeft),
+                (m_HorizontalSplitterRect.width) - k_SplitterWidth,
+                k_SplitterWidth);
         }
 
 
-        private static float m_updateDelay = 0;
 
         public void Update()
         {
-            if(Time.realtimeSinceStartup - m_updateDelay > 0.1f)
+            if(Time.realtimeSinceStartup - m_UpdateDelay > 0.1f)
             {
-                m_updateDelay = Time.realtimeSinceStartup;
+                m_UpdateDelay = Time.realtimeSinceStartup;
 
                 if(AssetBundleModel.Model.Update())
                 {
-                    m_parent.Repaint();
+                    m_Parent.Repaint();
                 }
 
-                if (m_detailsList != null)
-                    m_detailsList.Update();
+                if (m_DetailsList != null)
+                    m_DetailsList.Update();
 
-                if (m_assetList != null)
-                    m_assetList.Update();
+                if (m_AssetList != null)
+                    m_AssetList.Update();
 
             }
         }
 
         public void ForceReloadData()
         {
-            AssetBundleModel.Model.ForceReloadData(m_bundleTree);
-            m_parent.Repaint();
+            AssetBundleModel.Model.ForceReloadData(m_BundleTree);
+            m_Parent.Repaint();
         }
 
         public void OnGUI(Rect pos)
         {
-            m_position = pos;
+            m_Position = pos;
 
-            if(m_bundleTree == null)
+            if(m_BundleTree == null)
             {
-                if (m_assetListState == null)
-                    m_assetListState = new TreeViewState();
+                if (m_AssetListState == null)
+                    m_AssetListState = new TreeViewState();
 
                 var headerState = AssetListTree.CreateDefaultMultiColumnHeaderState();// multiColumnTreeViewRect.width);
-                if (MultiColumnHeaderState.CanOverwriteSerializedFields(m_assetListMCHState, headerState))
-                    MultiColumnHeaderState.OverwriteSerializedFields(m_assetListMCHState, headerState);
-                m_assetListMCHState = headerState;
+                if (MultiColumnHeaderState.CanOverwriteSerializedFields(m_AssetListMCHState, headerState))
+                    MultiColumnHeaderState.OverwriteSerializedFields(m_AssetListMCHState, headerState);
+                m_AssetListMCHState = headerState;
 
 
-                m_assetList = new AssetListTree(m_assetListState, m_assetListMCHState, this);
-                m_assetList.Reload();
-                m_messageList = new MessageList();
+                m_AssetList = new AssetListTree(m_AssetListState, m_AssetListMCHState, this);
+                m_AssetList.Reload();
+                m_MessageList = new MessageList();
 
-                if (m_bundleDetailState == null)
-                    m_bundleDetailState = new TreeViewState();
-                m_detailsList = new BundleDetailList(m_bundleDetailState);
-                m_detailsList.Reload();
+                if (m_BundleDetailState == null)
+                    m_BundleDetailState = new TreeViewState();
+                m_DetailsList = new BundleDetailList(m_BundleDetailState);
+                m_DetailsList.Reload();
 
-                if (m_bundleTreeState == null)
-                    m_bundleTreeState = new TreeViewState();
-                m_bundleTree = new AssetBundleTree(m_bundleTreeState, this);
-                m_bundleTree.Refresh();
-                m_parent.Repaint();
+                if (m_BundleTreeState == null)
+                    m_BundleTreeState = new TreeViewState();
+                m_BundleTree = new AssetBundleTree(m_BundleTreeState, this);
+                m_BundleTree.Refresh();
+                m_Parent.Repaint();
             }
             
             HandleHorizontalResize();
@@ -132,12 +132,12 @@ namespace UnityEngine.AssetBundles
 
             if (AssetBundleModel.Model.BundleListIsEmpty())
             {
-                m_bundleTree.OnGUI(m_position);
+                m_BundleTree.OnGUI(m_Position);
                 var style = GUI.skin.label;
                 style.alignment = TextAnchor.MiddleCenter;
                 style.wordWrap = true;
                 GUI.Label(
-                    new Rect(m_position.x + 1f, m_position.y + 1f, m_position.width - 2f, m_position.height - 2f), 
+                    new Rect(m_Position.x + 1f, m_Position.y + 1f, m_Position.width - 2f, m_Position.height - 2f), 
                     new GUIContent(AssetBundleModel.Model.GetEmptyMessage()),
                     style);
             }
@@ -145,109 +145,107 @@ namespace UnityEngine.AssetBundles
             {
                 //Left half
                 var bundleTreeRect = new Rect(
-                   m_position.x,
-                   m_position.y,
-                   m_horizontalSplitterRect.x,
-                   m_verticalSplitterRectLeft.y - m_position.y);
-                m_bundleTree.OnGUI(bundleTreeRect);
-                m_detailsList.OnGUI(new Rect(
+                   m_Position.x,
+                   m_Position.y,
+                   m_HorizontalSplitterRect.x,
+                   m_VerticalSplitterRectLeft.y - m_Position.y);
+                m_BundleTree.OnGUI(bundleTreeRect);
+                m_DetailsList.OnGUI(new Rect(
                     bundleTreeRect.x,
-                    bundleTreeRect.y + bundleTreeRect.height + kSplitterWidth,
+                    bundleTreeRect.y + bundleTreeRect.height + k_SplitterWidth,
                     bundleTreeRect.width,
-                    m_position.height - bundleTreeRect.height - kSplitterWidth*2));
+                    m_Position.height - bundleTreeRect.height - k_SplitterWidth*2));
 
 
                 //Right half.
-                float panelLeft = m_horizontalSplitterRect.x + kSplitterWidth;
-                float panelWidth = m_verticalSplitterRectRight.width - kSplitterWidth * 2;
-                float panelHeight = m_verticalSplitterRectRight.y - m_position.y;
-                m_assetList.OnGUI(new Rect(
+                float panelLeft = m_HorizontalSplitterRect.x + k_SplitterWidth;
+                float panelWidth = m_VerticalSplitterRectRight.width - k_SplitterWidth * 2;
+                float panelHeight = m_VerticalSplitterRectRight.y - m_Position.y;
+                m_AssetList.OnGUI(new Rect(
                     panelLeft,
-                    m_position.y,
+                    m_Position.y,
                     panelWidth,
                     panelHeight));
-                m_messageList.OnGUI(new Rect(
+                m_MessageList.OnGUI(new Rect(
                     panelLeft,
-                    m_position.y + panelHeight + kSplitterWidth,
+                    m_Position.y + panelHeight + k_SplitterWidth,
                     panelWidth,
-                    (m_position.height - panelHeight) - kSplitterWidth * 2));
+                    (m_Position.height - panelHeight) - k_SplitterWidth * 2));
 
-                if (m_resizingHorizontalSplitter || m_resizingVerticalSplitterRight || m_resizingVerticalSplitterLeft)
-                    m_parent.Repaint();
+                if (m_ResizingHorizontalSplitter || m_ResizingVerticalSplitterRight || m_ResizingVerticalSplitterLeft)
+                    m_Parent.Repaint();
             }
-
-
         }
 
         private void HandleHorizontalResize()
         {
             //m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
-            m_horizontalSplitterRect.x = (int)(m_position.width * m_horizontalSplitterPercent);
-            m_horizontalSplitterRect.height = m_position.height;
+            m_HorizontalSplitterRect.x = (int)(m_Position.width * m_HorizontalSplitterPercent);
+            m_HorizontalSplitterRect.height = m_Position.height;
 
-            EditorGUIUtility.AddCursorRect(m_horizontalSplitterRect, MouseCursor.ResizeHorizontal);
-            if (Event.current.type == EventType.mouseDown && m_horizontalSplitterRect.Contains(Event.current.mousePosition))
-                m_resizingHorizontalSplitter = true;
+            EditorGUIUtility.AddCursorRect(m_HorizontalSplitterRect, MouseCursor.ResizeHorizontal);
+            if (Event.current.type == EventType.mouseDown && m_HorizontalSplitterRect.Contains(Event.current.mousePosition))
+                m_ResizingHorizontalSplitter = true;
 
-            if (m_resizingHorizontalSplitter)
+            if (m_ResizingHorizontalSplitter)
             {
                 //m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
-                m_horizontalSplitterPercent = Mathf.Clamp(Event.current.mousePosition.x / m_position.width, 0.1f, 0.9f);
-                m_horizontalSplitterRect.x = (int)(m_position.width * m_horizontalSplitterPercent);
+                m_HorizontalSplitterPercent = Mathf.Clamp(Event.current.mousePosition.x / m_Position.width, 0.1f, 0.9f);
+                m_HorizontalSplitterRect.x = (int)(m_Position.width * m_HorizontalSplitterPercent);
             }
 
             if (Event.current.type == EventType.MouseUp)
-                m_resizingHorizontalSplitter = false;
+                m_ResizingHorizontalSplitter = false;
         }
 
         private void HandleVerticalResize()
         {
-            m_verticalSplitterRectRight.x = m_horizontalSplitterRect.x;
-            m_verticalSplitterRectRight.y = (int)(m_horizontalSplitterRect.height * m_verticalSplitterPercentRight);
-            m_verticalSplitterRectRight.width = m_position.width - m_horizontalSplitterRect.x;
-            m_verticalSplitterRectLeft.y = (int)(m_horizontalSplitterRect.height * m_verticalSplitterPercentLeft);
-            m_verticalSplitterRectLeft.width = m_verticalSplitterRectRight.width;
+            m_VerticalSplitterRectRight.x = m_HorizontalSplitterRect.x;
+            m_VerticalSplitterRectRight.y = (int)(m_HorizontalSplitterRect.height * m_VerticalSplitterPercentRight);
+            m_VerticalSplitterRectRight.width = m_Position.width - m_HorizontalSplitterRect.x;
+            m_VerticalSplitterRectLeft.y = (int)(m_HorizontalSplitterRect.height * m_VerticalSplitterPercentLeft);
+            m_VerticalSplitterRectLeft.width = m_VerticalSplitterRectRight.width;
 
 
-            EditorGUIUtility.AddCursorRect(m_verticalSplitterRectRight, MouseCursor.ResizeVertical);
-            if (Event.current.type == EventType.mouseDown && m_verticalSplitterRectRight.Contains(Event.current.mousePosition))
-                m_resizingVerticalSplitterRight = true;
+            EditorGUIUtility.AddCursorRect(m_VerticalSplitterRectRight, MouseCursor.ResizeVertical);
+            if (Event.current.type == EventType.mouseDown && m_VerticalSplitterRectRight.Contains(Event.current.mousePosition))
+                m_ResizingVerticalSplitterRight = true;
 
-            EditorGUIUtility.AddCursorRect(m_verticalSplitterRectLeft, MouseCursor.ResizeVertical);
-            if (Event.current.type == EventType.mouseDown && m_verticalSplitterRectLeft.Contains(Event.current.mousePosition))
-                m_resizingVerticalSplitterLeft = true;
+            EditorGUIUtility.AddCursorRect(m_VerticalSplitterRectLeft, MouseCursor.ResizeVertical);
+            if (Event.current.type == EventType.mouseDown && m_VerticalSplitterRectLeft.Contains(Event.current.mousePosition))
+                m_ResizingVerticalSplitterLeft = true;
 
 
-            if (m_resizingVerticalSplitterRight)
+            if (m_ResizingVerticalSplitterRight)
             {
-                m_verticalSplitterPercentRight = Mathf.Clamp(Event.current.mousePosition.y / m_horizontalSplitterRect.height, 0.2f, 0.98f);
-                m_verticalSplitterRectRight.y = (int)(m_horizontalSplitterRect.height * m_verticalSplitterPercentRight);
+                m_VerticalSplitterPercentRight = Mathf.Clamp(Event.current.mousePosition.y / m_HorizontalSplitterRect.height, 0.2f, 0.98f);
+                m_VerticalSplitterRectRight.y = (int)(m_HorizontalSplitterRect.height * m_VerticalSplitterPercentRight);
             }
-            else if (m_resizingVerticalSplitterLeft)
+            else if (m_ResizingVerticalSplitterLeft)
             {
-                m_verticalSplitterPercentLeft = Mathf.Clamp(Event.current.mousePosition.y / m_horizontalSplitterRect.height, 0.25f, 0.98f);
-                m_verticalSplitterRectLeft.y = (int)(m_horizontalSplitterRect.height * m_verticalSplitterPercentLeft);
+                m_VerticalSplitterPercentLeft = Mathf.Clamp(Event.current.mousePosition.y / m_HorizontalSplitterRect.height, 0.25f, 0.98f);
+                m_VerticalSplitterRectLeft.y = (int)(m_HorizontalSplitterRect.height * m_VerticalSplitterPercentLeft);
             }
 
 
             if (Event.current.type == EventType.MouseUp)
             {
-                m_resizingVerticalSplitterRight = false;
-                m_resizingVerticalSplitterLeft = false;
+                m_ResizingVerticalSplitterRight = false;
+                m_ResizingVerticalSplitterLeft = false;
             }
         }
 
         public void UpdateSelectedBundles(IEnumerable<AssetBundleModel.BundleInfo> bundles)
         {
             AssetBundleModel.Model.AddBundlesToUpdate(bundles);
-            m_assetList.SetSelectedBundles(bundles);
-            m_detailsList.SetItems(bundles);
-            m_messageList.SetItems(null);
+            m_AssetList.SetSelectedBundles(bundles);
+            m_DetailsList.SetItems(bundles);
+            m_MessageList.SetItems(null);
         }
 
         public void SetSelectedItems(IEnumerable<AssetBundleModel.AssetInfo> items)
         {
-            m_messageList.SetItems(items);
+            m_MessageList.SetItems(items);
         }
     }
 }

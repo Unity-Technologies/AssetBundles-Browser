@@ -15,14 +15,14 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             get { return m_asset; }
         }
         public AssetTreeItem() : base(-1, -1) { }
-        public AssetTreeItem(AssetInfo a) : base(a.Name.GetHashCode(), 0, a.DisplayName)
+        public AssetTreeItem(AssetInfo a) : base(a.fullAssetName.GetHashCode(), 0, a.displayName)
         {
             m_asset = a;
-            icon = AssetDatabase.GetCachedIcon(a.Name) as Texture2D;
+            icon = AssetDatabase.GetCachedIcon(a.fullAssetName) as Texture2D;
         }
 
         private Color m_color = new Color(0, 0, 0, 0);
-        public Color ItemColor
+        public Color itemColor
         {
             get
             {
@@ -38,7 +38,6 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             return MessageSystem.GetIcon(HighestMessageLevel());
         }
-
         public MessageType HighestMessageLevel()
         {
             return m_asset.HighestMessageLevel();
@@ -52,7 +51,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
             foreach(var child in children)
             {
-                if( (child as AssetTreeItem).asset.Name == asset.Name )
+                if( (child as AssetTreeItem).asset.fullAssetName == asset.fullAssetName )
                 {
                     contains = true;
                     break;
@@ -67,70 +66,73 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
     public class AssetInfo
     {
-        public AssetInfo(string name, string bundleName="")
+        public bool isScene { get; set; }
+        public long fileSize;
+
+        private HashSet<string> m_Parents;
+        private string m_AssetName;
+        private string m_DisplayName;
+        private string m_BundleName;
+        private MessageSystem.MessageState m_AssetMessages = new MessageSystem.MessageState();
+
+        public AssetInfo(string inName, string bundleName="")
         {
-            Name = name;
-            m_bundleName = bundleName;
-            m_parents = new HashSet<string>();
-            IsScene = false;
+            fullAssetName = inName;
+            m_BundleName = bundleName;
+            m_Parents = new HashSet<string>();
+            isScene = false;
         }
 
-        public bool IsScene { get; set; }
-        private HashSet<string> m_parents;
-        private string m_assetName;
-        private string m_displayName;
-        private string m_bundleName;
-        private MessageSystem.MessageState m_assetMessages = new MessageSystem.MessageState();
-        public string Name
+        public string fullAssetName
         {
-            get { return m_assetName; }
+            get { return m_AssetName; }
             set
             {
-                m_assetName = value;
-                m_displayName = System.IO.Path.GetFileNameWithoutExtension(m_assetName);
+                m_AssetName = value;
+                m_DisplayName = System.IO.Path.GetFileNameWithoutExtension(m_AssetName);
 
                 //TODO - maybe there's a way to ask the AssetDatabase for this size info.
-                System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_assetName);
+                System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_AssetName);
                 if (fileInfo.Exists)
                     fileSize = fileInfo.Length;
                 else
                     fileSize = 0;
             }
         }
-        public string DisplayName
+        public string displayName
         {
-            get { return m_displayName; }
+            get { return m_DisplayName; }
         }
-        public string BundleName
-        { get { return m_bundleName == "" ? "auto" : m_bundleName; } }
+        public string bundleName
+        { get { return m_BundleName == "" ? "auto" : m_BundleName; } }
         
         public Color GetColor()
         {
-            if (m_bundleName == "")
-                return Model.kLightGrey;
+            if (m_BundleName == "")
+                return Model.k_LightGrey;
             else
                 return Color.white;
         }
 
         public bool IsMessageSet(MessageSystem.MessageFlag flag)
         {
-            return m_assetMessages.IsSet(flag);
+            return m_AssetMessages.IsSet(flag);
         }
         public void SetMessageFlag(MessageSystem.MessageFlag flag, bool on)
         {
-            m_assetMessages.SetFlag(flag, on);
+            m_AssetMessages.SetFlag(flag, on);
         }
         public MessageType HighestMessageLevel()
         {
-            return m_assetMessages.HighestMessageLevel();
+            return m_AssetMessages.HighestMessageLevel();
         }
         public IEnumerable<MessageSystem.Message> GetMessages()
         {
             List<MessageSystem.Message> messages = new List<MessageSystem.Message>();
             if(IsMessageSet(MessageSystem.MessageFlag.SceneBundleConflict))
             {
-                var message = DisplayName + "\n";
-                if (IsScene)
+                var message = displayName + "\n";
+                if (isScene)
                     message += "Is a scene that is in a bundle with other assets. Scene bundles must have a single scene as the only asset.";
                 else
                     message += "Is included in a bundle with a scene. Scene bundles must have a single scene as the only asset.";
@@ -139,7 +141,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             if (IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
             {
                 var bundleNames = AssetBundleModel.Model.CheckDependencyTracker(this);
-                string message = DisplayName + "\n" + "Is auto-included in multiple bundles:\n";
+                string message = displayName + "\n" + "Is auto-included in multiple bundles:\n";
                 foreach(var bundleName in bundleNames)
                 {
                     message += bundleName + ", ";
@@ -148,11 +150,11 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 messages.Add(new MessageSystem.Message(message, MessageType.Warning));
             }
 
-            if (m_bundleName == string.Empty && m_parents.Count > 0)
+            if (m_BundleName == string.Empty && m_Parents.Count > 0)
             {
                 //TODO - refine the parent list to only include those in the current asset list
-                var message = DisplayName + "\n" + "Is auto included in bundle(s) due to parent(s): \n";
-                foreach (var parent in m_parents)
+                var message = displayName + "\n" + "Is auto included in bundle(s) due to parent(s): \n";
+                foreach (var parent in m_Parents)
                 {
                     message += parent + ", ";
                 }
@@ -160,20 +162,19 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 messages.Add(new MessageSystem.Message(message, MessageType.Info));
             }
 
-            messages.Add(new MessageSystem.Message(DisplayName + "\n" + "Path: " + Name, MessageType.Info));
+            messages.Add(new MessageSystem.Message(displayName + "\n" + "Path: " + fullAssetName, MessageType.Info));
 
             return messages;
         }
         public void AddParent(string name)
         {
-            m_parents.Add(name);
+            m_Parents.Add(name);
         }
         public void RemoveParent(string name)
         {
-            m_parents.Remove(name);
+            m_Parents.Remove(name);
         }
 
-        public long fileSize;
         public string GetSizeString()
         {
             if (fileSize == 0)
@@ -188,16 +189,16 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             if (m_dependencies == null)
             {
                 m_dependencies = new List<AssetInfo>();
-                if (AssetDatabase.IsValidFolder(m_assetName))
+                if (AssetDatabase.IsValidFolder(m_AssetName))
                 {
                     //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
                     //GatherFoldersAndFiles();
                 }
                 else
                 {
-                    foreach (var dep in AssetDatabase.GetDependencies(m_assetName, true))
+                    foreach (var dep in AssetDatabase.GetDependencies(m_AssetName, true))
                     {
-                        if (dep != m_assetName)
+                        if (dep != m_AssetName)
                         {
                             var asset = Model.CreateAsset(dep, this);
                             if (asset != null)
@@ -207,7 +208,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 }
             }
             return m_dependencies;
-            
         }
+
     }
+
 }

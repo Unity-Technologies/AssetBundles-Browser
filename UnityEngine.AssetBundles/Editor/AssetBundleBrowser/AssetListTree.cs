@@ -10,8 +10,8 @@ namespace UnityEngine.AssetBundles
 {
 	internal class AssetListTree : TreeView
 	{
-        List<AssetBundleModel.BundleInfo> m_sourceBundles = new List<AssetBundleModel.BundleInfo>();
-        AssetBundleManageTab m_controller;
+        List<AssetBundleModel.BundleInfo> m_SourceBundles = new List<AssetBundleModel.BundleInfo>();
+        AssetBundleManageTab m_Controller;
 
         public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
         {
@@ -83,7 +83,7 @@ namespace UnityEngine.AssetBundles
 
         public AssetListTree(TreeViewState state, MultiColumnHeaderState mchs, AssetBundleManageTab ctrl ) : base(state, new MultiColumnHeader(mchs))
         {
-            m_controller = ctrl;
+            m_Controller = ctrl;
             showBorder = true;
             showAlternatingRowBackgrounds = true;
             DefaultStyles.label.richText = true;
@@ -94,9 +94,9 @@ namespace UnityEngine.AssetBundles
         public void Update()
         {
             bool dirty = false;
-            foreach (var bundle in m_sourceBundles)
+            foreach (var bundle in m_SourceBundles)
             {
-                dirty |= bundle.Dirty;
+                dirty |= bundle.dirty;
             }
             if (dirty)
                 Reload();
@@ -120,14 +120,14 @@ namespace UnityEngine.AssetBundles
 
         internal void SetSelectedBundles(IEnumerable<AssetBundleModel.BundleInfo> bundles)
         {
-            m_controller.SetSelectedItems(null);
-            m_sourceBundles = bundles.ToList();
+            m_Controller.SetSelectedItems(null);
+            m_SourceBundles = bundles.ToList();
             SetSelection(new List<int>());
             Reload();
         }
         protected override TreeViewItem BuildRoot()
         {
-            var root = AssetBundleModel.Model.CreateAssetListTreeView(m_sourceBundles);
+            var root = AssetBundleModel.Model.CreateAssetListTreeView(m_SourceBundles);
             return root;
         }
 
@@ -142,7 +142,7 @@ namespace UnityEngine.AssetBundles
             Color oldColor = GUI.color;
             CenterRectUsingSingleLineHeight(ref cellRect);
             if(column != 3)
-               GUI.color = item.ItemColor;
+               GUI.color = item.itemColor;
 
             switch (column)
             {
@@ -158,7 +158,7 @@ namespace UnityEngine.AssetBundles
                     }
                     break;
                 case 1:
-                    DefaultGUI.Label(cellRect, item.asset.BundleName, args.selected, args.focused);
+                    DefaultGUI.Label(cellRect, item.asset.bundleName, args.selected, args.focused);
                     break;
                 case 2:
                     DefaultGUI.Label(cellRect, item.asset.GetSizeString(), args.selected, args.focused);
@@ -180,7 +180,7 @@ namespace UnityEngine.AssetBundles
             var assetItem = FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem;
 			if (assetItem != null)
 			{
-				Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.Name);
+				Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
 				EditorGUIUtility.PingObject(o);
 				Selection.activeObject = o;
 			}
@@ -194,12 +194,12 @@ namespace UnityEngine.AssetBundles
                 var assetItem = FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem;
                 if (assetItem != null)
                 {
-                    Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.Name);
+                    Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
                     Selection.activeObject = o;
                     selectedAssets.Add(assetItem.asset);
                 }
             }
-            m_controller.SetSelectedItems(selectedAssets);
+            m_Controller.SetSelectedItems(selectedAssets);
         }
         
         protected override bool CanStartDrag(CanStartDragArgs args)
@@ -213,7 +213,7 @@ namespace UnityEngine.AssetBundles
             DragAndDrop.PrepareStartDrag();
             List<AssetBundleModel.AssetTreeItem> items = 
                 new List<AssetBundleModel.AssetTreeItem>(args.draggedItemIDs.Select(id => FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem));
-            DragAndDrop.paths = items.Select(a => a.asset.Name).ToArray();
+            DragAndDrop.paths = items.Select(a => a.asset.fullAssetName).ToArray();
             DragAndDrop.objectReferences = new UnityEngine.Object[] { };
             DragAndDrop.SetGenericData("AssetListTreeSource", this);
             DragAndDrop.StartDrag("AssetListTree");
@@ -225,13 +225,13 @@ namespace UnityEngine.AssetBundles
             {
                 if (args.performDrop)
                 {
-                    AssetBundleModel.Model.MoveAssetToBundle(DragAndDrop.paths, m_sourceBundles[0].m_name.BundleName, m_sourceBundles[0].m_name.Variant);
+                    AssetBundleModel.Model.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].m_Name.bundleName, m_SourceBundles[0].m_Name.variant);
                     AssetBundleModel.Model.ExecuteAssetMove();
-                    foreach (var bundle in m_sourceBundles)
+                    foreach (var bundle in m_SourceBundles)
                     {
                         bundle.RefreshAssetList();
                     }
-                    m_controller.UpdateSelectedBundles(m_sourceBundles);
+                    m_Controller.UpdateSelectedBundles(m_SourceBundles);
                 }
                 return DragAndDropVisualMode.Copy;//Move;
             }
@@ -241,7 +241,7 @@ namespace UnityEngine.AssetBundles
         protected bool IsValidDragDrop(DragAndDropArgs args)
         {
             //can't drag onto none or >1 bundles
-            if (m_sourceBundles.Count == 0 || m_sourceBundles.Count > 1)
+            if (m_SourceBundles.Count == 0 || m_SourceBundles.Count > 1)
                 return false;
             
             //can't drag nothing
@@ -249,11 +249,11 @@ namespace UnityEngine.AssetBundles
                 return false;
 
             //can't drag into a folder
-            var folder = m_sourceBundles[0] as AssetBundleModel.BundleFolderInfo;
+            var folder = m_SourceBundles[0] as AssetBundleModel.BundleFolderInfo;
             if (folder != null)
                 return false;
 
-            var data = m_sourceBundles[0] as AssetBundleModel.BundleDataInfo;
+            var data = m_SourceBundles[0] as AssetBundleModel.BundleDataInfo;
             if(data == null)
                 return false; // this should never happen.
 
@@ -264,7 +264,7 @@ namespace UnityEngine.AssetBundles
             if(data.IsEmpty())
                 return true;
 
-            if (data.IsSceneBundle)
+            if (data.isSceneBundle)
                 return false;
 
 
@@ -301,22 +301,22 @@ namespace UnityEngine.AssetBundles
             //var bundles = new List<AssetBundleModel.BundleInfo>();
             foreach (var node in selectedNodes)
             {
-                if (node.asset.BundleName != string.Empty)
+                if (node.asset.bundleName != string.Empty)
                     assets.Add(node.asset);
             }
             AssetBundleModel.Model.MoveAssetToBundle(assets, string.Empty, string.Empty);
             AssetBundleModel.Model.ExecuteAssetMove();
-            foreach (var bundle in m_sourceBundles)
+            foreach (var bundle in m_SourceBundles)
             {
                 bundle.RefreshAssetList();
             }
-            m_controller.UpdateSelectedBundles(m_sourceBundles);
+            m_Controller.UpdateSelectedBundles(m_SourceBundles);
             //ReloadAndSelect(new List<int>());
         }
 
         protected override void KeyEvent()
         {
-            if (m_sourceBundles.Count > 0 && Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
+            if (m_SourceBundles.Count > 0 && Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
             {
                 List<AssetBundleModel.AssetTreeItem> selectedNodes = new List<AssetBundleModel.AssetTreeItem>();
                 foreach (var nodeID in GetSelection())
@@ -378,7 +378,7 @@ namespace UnityEngine.AssetBundles
                     return myTypes.Order(l => l.HighestMessageLevel(), ascending);
                 case SortOption.Bundle:
                 default:
-                    return myTypes.Order(l => l.asset.BundleName, ascending);
+                    return myTypes.Order(l => l.asset.bundleName, ascending);
             }
             
         }

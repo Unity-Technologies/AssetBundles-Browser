@@ -10,16 +10,16 @@ namespace UnityEngine.AssetBundles
 {
     internal class MessageList
     {
-        private Vector2 m_scrollPosition = Vector2.zero;
+        private Vector2 m_ScrollPosition = Vector2.zero;
 
-        private GUIStyle[] m_style = new GUIStyle[2];
+        private GUIStyle[] m_Style = new GUIStyle[2];
 
-        IEnumerable<AssetBundleModel.AssetInfo> m_selecteditems;
-        List<MessageSystem.Message> m_messages;
+        IEnumerable<AssetBundleModel.AssetInfo> m_Selecteditems;
+        List<MessageSystem.Message> m_Messages;
 
-        Vector2 m_dimensions = new Vector2(0, 0);
-        const float kScrollbarPadding = 16f;
-        const float kBorderSize = 1f;
+        Vector2 m_Dimensions = new Vector2(0, 0);
+        const float k_ScrollbarPadding = 16f;
+        const float k_BorderSize = 1f;
 
 
         public MessageList()
@@ -28,43 +28,43 @@ namespace UnityEngine.AssetBundles
         }
         private void Init()
         {
-            m_style[0] = "OL EntryBackOdd";
-            m_style[1] = "OL EntryBackEven";
-            m_style[0].wordWrap = true;
-            m_style[1].wordWrap = true;
-            m_style[0].padding = new RectOffset(32, 0, 1, 4);
-            m_style[1].padding = new RectOffset(32, 0, 1, 4);
-            m_messages = new List<MessageSystem.Message>();
+            m_Style[0] = "OL EntryBackOdd";
+            m_Style[1] = "OL EntryBackEven";
+            m_Style[0].wordWrap = true;
+            m_Style[1].wordWrap = true;
+            m_Style[0].padding = new RectOffset(32, 0, 1, 4);
+            m_Style[1].padding = new RectOffset(32, 0, 1, 4);
+            m_Messages = new List<MessageSystem.Message>();
 
         }
         public void OnGUI(Rect fullPos)
         {
             DrawOutline(fullPos, 1f);
 
-            Rect pos = new Rect(fullPos.x + kBorderSize, fullPos.y + kBorderSize, fullPos.width - 2 * kBorderSize, fullPos.height - 2 * kBorderSize);
+            Rect pos = new Rect(fullPos.x + k_BorderSize, fullPos.y + k_BorderSize, fullPos.width - 2 * k_BorderSize, fullPos.height - 2 * k_BorderSize);
             
 
-            if (m_dimensions.y == 0 || m_dimensions.x != pos.width - kScrollbarPadding)
+            if (m_Dimensions.y == 0 || m_Dimensions.x != pos.width - k_ScrollbarPadding)
             {
                 //recalculate height.
-                m_dimensions.x = pos.width - kScrollbarPadding;
-                m_dimensions.y = 0;
-                foreach (var message in m_messages)
+                m_Dimensions.x = pos.width - k_ScrollbarPadding;
+                m_Dimensions.y = 0;
+                foreach (var message in m_Messages)
                 {
-                    m_dimensions.y += m_style[0].CalcHeight(new GUIContent(message.message), m_dimensions.x);
+                    m_Dimensions.y += m_Style[0].CalcHeight(new GUIContent(message.message), m_Dimensions.x);
                 }
             }
 
-            m_scrollPosition = GUI.BeginScrollView(pos, m_scrollPosition, new Rect(0, 0, m_dimensions.x, m_dimensions.y));
+            m_ScrollPosition = GUI.BeginScrollView(pos, m_ScrollPosition, new Rect(0, 0, m_Dimensions.x, m_Dimensions.y));
             int counter = 0;
             float runningHeight = 0.0f;
-            foreach (var message in m_messages) 
+            foreach (var message in m_Messages) 
             {
                 int index = counter % 2;
                 var content = new GUIContent(message.message);
-                float height = m_style[index].CalcHeight(content, m_dimensions.x);
+                float height = m_Style[index].CalcHeight(content, m_Dimensions.x);
 
-                GUI.Box(new Rect(0, runningHeight, m_dimensions.x, height), content, m_style[index]);
+                GUI.Box(new Rect(0, runningHeight, m_Dimensions.x, height), content, m_Style[index]);
                 GUI.DrawTexture(new Rect(0, runningHeight, 32f, 32f), message.icon);
                 //TODO - cleanup formatting issues and switch to HelpBox
                 //EditorGUI.HelpBox(new Rect(0, runningHeight, m_dimensions.x, height), message.message, (MessageType)message.severity);
@@ -77,19 +77,19 @@ namespace UnityEngine.AssetBundles
 
         internal void SetItems(IEnumerable<AssetBundleModel.AssetInfo> items)
         {
-            m_selecteditems = items;
+            m_Selecteditems = items;
             CollectMessages();
         }
 
         internal void CollectMessages()
         {
-            m_messages.Clear();
-            m_dimensions.y = 0f;
-            if(m_selecteditems != null)
+            m_Messages.Clear();
+            m_Dimensions.y = 0f;
+            if(m_Selecteditems != null)
             {
-                foreach (var asset in m_selecteditems)
+                foreach (var asset in m_Selecteditems)
                 {
-                    m_messages.AddRange(asset.GetMessages());
+                    m_Messages.AddRange(asset.GetMessages());
                 }
             }
         }
