@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Assets.AssetBundles_Browser.UnityEngine.AssetBundles.Editor.Tests.Util;
 using Assets.Editor.Tests.Util;
 using Boo.Lang.Runtime;
 using UnityEngine.AssetBundles.AssetBundleModel;
@@ -20,48 +21,7 @@ public class ABModelTests
     //TODO: Find stable way to remove instansiated objects in edit mode.  DestroyImmediate isn't working in this case
 
 
-    /// <summary>
-    /// Empty texutre for testing purposes
-    /// </summary>
-    Texture2D FakeTexture2D
-    {
-        get {return new Texture2D(16, 16);}
-    }
-
-    /// <summary>
-    /// This is the Models root folder object.
-    /// </summary>
-    private BundleFolderConcreteInfo Root
-    {
-        get
-        {
-            FieldInfo rootFieldInfo = typeof(Model).GetField("m_RootLevelBundles",
-            BindingFlags.NonPublic | BindingFlags.Static);
-            BundleFolderConcreteInfo concreteFolder = rootFieldInfo.GetValue(null) as BundleFolderConcreteInfo;
-            return concreteFolder;
-        }
-    }
-
-    private List<BundleInfo> BundlesToUpdate
-    {
-        get
-        {
-            FieldInfo info = typeof(Model).GetField("m_BundlesToUpdate", BindingFlags.NonPublic | BindingFlags.Static);
-            List<BundleInfo> bundleInfo = info.GetValue(null) as List<BundleInfo>;
-            return bundleInfo;
-
-        }
-    }
-
-    private IList MoveData
-    {
-        get
-        {
-            FieldInfo info = typeof(Model).GetField("m_MoveData", BindingFlags.NonPublic | BindingFlags.Static);
-            var moveData = info.GetValue(null) as IList;
-            return moveData;
-        }
-    }
+    
 
     [SetUp]
     public void Setup()
@@ -80,7 +40,7 @@ public class ABModelTests
     public void AddBundlesToUpdate_AddsCorrectBundles_ToUpdateQueue()
     {
         Model.AddBundlesToUpdate(m_BundleInfo);
-        Assert.AreEqual(3, BundlesToUpdate.Count);
+        Assert.AreEqual(3, ABModelUtil.BundlesToUpdate.Count);
     }
 
     [Test]
@@ -97,7 +57,7 @@ public class ABModelTests
     {
         Model.AddBundlesToUpdate(m_BundleInfo);
         Model.Rebuild();
-        Assert.AreEqual(0, BundlesToUpdate.Count);
+        Assert.AreEqual(0, ABModelUtil.BundlesToUpdate.Count);
     }
 
     [Test]
@@ -165,7 +125,7 @@ public class ABModelTests
         {
             Model.Rebuild();
 
-            var rootChildList = Root.GetChildList();
+            var rootChildList = ABModelUtil.Root.GetChildList();
 
             //Checks that the root has 1 bundle variant folder object as a child
             Assert.AreEqual(1, rootChildList.Count);
@@ -191,7 +151,7 @@ public class ABModelTests
         {
             Model.Refresh();
 
-            var rootChildList = Root.GetChildList();
+            var rootChildList = ABModelUtil.Root.GetChildList();
             Assert.AreEqual(1, rootChildList.Count);
             Assert.AreEqual(typeof(BundleVariantFolderInfo), rootChildList.FirstOrDefault().GetType());
 
@@ -258,9 +218,9 @@ public class ABModelTests
         {
             
 
-            Assert.AreEqual(0, MoveData.Count);
+            Assert.AreEqual(0, ABModelUtil.MoveData.Count);
             Model.MoveAssetToBundle(assetName, "bundle2", String.Empty);
-            Assert.AreEqual(1, MoveData.Count);
+            Assert.AreEqual(1, ABModelUtil.MoveData.Count);
 
         }, listOfPrefabs);
     }
@@ -314,8 +274,8 @@ public class ABModelTests
     [Test]
     public void HandleBundleRename_RenamesTo_CorrectAssetBundleName()
     {
-        BundleDataInfo dataInfo = new BundleDataInfo("bundledatainfo", Root);
-        BundleTreeItem treeItem = new BundleTreeItem(dataInfo, 0, FakeTexture2D);
+        BundleDataInfo dataInfo = new BundleDataInfo("bundledatainfo", ABModelUtil.Root);
+        BundleTreeItem treeItem = new BundleTreeItem(dataInfo, 0, ABModelUtil.FakeTexture2D);
         
         bool handleBundle = Model.HandleBundleRename(treeItem, "newbundledatainfo");
 
@@ -331,8 +291,8 @@ public class ABModelTests
 
         TestUtil.ExecuteCodeAndCleanupAssets(() =>
         {
-            BundleInfo b = new BundleDataInfo("bundle1", Root);
-            BundleTreeItem treeItem = new BundleTreeItem(b, 0, FakeTexture2D);
+            BundleInfo b = new BundleDataInfo("bundle1", ABModelUtil.Root);
+            BundleTreeItem treeItem = new BundleTreeItem(b, 0, ABModelUtil.FakeTexture2D);
 
             Model.HandleBundleRename(treeItem, "bundle2");
 
@@ -349,14 +309,14 @@ public class ABModelTests
 
         TestUtil.ExecuteCodeAndCleanupAssets(() =>
         {
-            BundleInfo b = new BundleDataInfo("bundle1", Root);
-            BundleTreeItem treeItem = new BundleTreeItem(b, 0, FakeTexture2D);
+            BundleInfo b = new BundleDataInfo("bundle1", ABModelUtil.Root);
+            BundleTreeItem treeItem = new BundleTreeItem(b, 0, ABModelUtil.FakeTexture2D);
             Model.ExecuteAssetMove();
 
-            Assert.AreEqual("bundle1", Root.GetChildList().ElementAt(0).m_Name.bundleName);
+            Assert.AreEqual("bundle1", ABModelUtil.Root.GetChildList().ElementAt(0).m_Name.bundleName);
             Model.HandleBundleRename(treeItem, "bundle2");
             AssetDatabase.RemoveUnusedAssetBundleNames();
-            Assert.AreEqual("bundle2", Root.GetChildList().ElementAt(0).m_Name.bundleName);
+            Assert.AreEqual("bundle2", ABModelUtil.Root.GetChildList().ElementAt(0).m_Name.bundleName);
 
         }, listOfPrefabs);
     }
@@ -364,8 +324,8 @@ public class ABModelTests
     [Test]
     public void BundleTreeItem_ChangesBundleName_AfterRename()
     {
-        BundleInfo b = new BundleDataInfo("bundle1", Root);
-        BundleTreeItem treeItem = new BundleTreeItem(b, 0, FakeTexture2D);
+        BundleInfo b = new BundleDataInfo("bundle1", ABModelUtil.Root);
+        BundleTreeItem treeItem = new BundleTreeItem(b, 0, ABModelUtil.FakeTexture2D);
         Model.HandleBundleRename(treeItem, "bundle2");
         Assert.AreEqual("bundle2", treeItem.bundle.m_Name.bundleName);
     }
@@ -373,8 +333,8 @@ public class ABModelTests
     [Test]
     public void HandleBundleReparent_MovesBundleDataInfoBundles_ToTheCorrectParent()
     {
-        BundleDataInfo dataInfo = new BundleDataInfo("bundle1", Root);
-        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", Root);
+        BundleDataInfo dataInfo = new BundleDataInfo("bundle1", ABModelUtil.Root);
+        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", ABModelUtil.Root);
 
         Model.HandleBundleReparent(new BundleInfo[] {dataInfo}, concreteFolder);
 
@@ -384,7 +344,7 @@ public class ABModelTests
     [Test]
     public void HandleBundleReparent_MoveBundleFolderInfo_ToTheCorrectParent()
     {
-        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", Root);
+        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", ABModelUtil.Root);
         BundleFolderConcreteInfo subConcreteFolder = new BundleFolderConcreteInfo("subFolder1", concreteFolder);
         BundleFolderConcreteInfo folderToBeMoved = new BundleFolderConcreteInfo("folder2", subConcreteFolder);
 
@@ -396,7 +356,7 @@ public class ABModelTests
     [Test]
     public void HandleBundleReparent_MovesBundleVariant_ToCorrectParent()
     {
-        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", Root);
+        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", ABModelUtil.Root);
         BundleFolderConcreteInfo subConcreteFolder = new BundleFolderConcreteInfo("subFolder1", concreteFolder);
         BundleFolderConcreteInfo startParent = new BundleFolderConcreteInfo("folder2", subConcreteFolder);
 
@@ -409,7 +369,7 @@ public class ABModelTests
 
     int GetBundleRootFolderChildCount()
     {
-        Dictionary<string, BundleInfo>.ValueCollection childList = Root.GetChildList();
+        Dictionary<string, BundleInfo>.ValueCollection childList = ABModelUtil.Root.GetChildList();
         return childList.Count;
     }
 }
