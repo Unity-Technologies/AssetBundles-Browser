@@ -370,6 +370,43 @@ public class ABModelTests
         Assert.AreEqual("bundle2", treeItem.bundle.m_Name.bundleName);
     }
 
+    [Test]
+    public void HandleBundleReparent_MovesBundleDataInfoBundles_ToTheCorrectParent()
+    {
+        BundleDataInfo dataInfo = new BundleDataInfo("bundle1", Root);
+        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", Root);
+
+        Model.HandleBundleReparent(new BundleInfo[] {dataInfo}, concreteFolder);
+
+        Assert.AreEqual(dataInfo.parent.m_Name.bundleName, concreteFolder.m_Name.bundleName);
+    }
+
+    [Test]
+    public void HandleBundleReparent_MoveBundleFolderInfo_ToTheCorrectParent()
+    {
+        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", Root);
+        BundleFolderConcreteInfo subConcreteFolder = new BundleFolderConcreteInfo("subFolder1", concreteFolder);
+        BundleFolderConcreteInfo folderToBeMoved = new BundleFolderConcreteInfo("folder2", subConcreteFolder);
+
+        Model.HandleBundleReparent(new BundleInfo[] {folderToBeMoved}, concreteFolder);
+
+        Assert.AreEqual(concreteFolder.m_Name.bundleName, folderToBeMoved.parent.m_Name.bundleName);
+    }
+
+    [Test]
+    public void HandleBundleReparent_MovesBundleVariant_ToCorrectParent()
+    {
+        BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", Root);
+        BundleFolderConcreteInfo subConcreteFolder = new BundleFolderConcreteInfo("subFolder1", concreteFolder);
+        BundleFolderConcreteInfo startParent = new BundleFolderConcreteInfo("folder2", subConcreteFolder);
+
+        BundleVariantDataInfo bundleVariantDataInfo = new BundleVariantDataInfo("v1", startParent);
+
+        Model.HandleBundleReparent(new BundleInfo[] {bundleVariantDataInfo}, concreteFolder);
+        Assert.AreEqual(concreteFolder.m_Name.bundleName, bundleVariantDataInfo.parent.m_Name.bundleName);
+    }
+
+
     int GetBundleRootFolderChildCount()
     {
         Dictionary<string, BundleInfo>.ValueCollection childList = Root.GetChildList();
