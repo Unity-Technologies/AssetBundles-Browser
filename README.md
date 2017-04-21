@@ -13,7 +13,7 @@ This tool is intended to replace the current workflow of selecting assets and se
 
 This window provides an explorer like interface to managing and modifying asset bundles in your project.  When first opened, the tool will parse all bundle data in the background, slowly marking warnings or errors it detects.  It does what it can to stay in sync with the project, but cannot always be aware of activity outside the tool.  To force a quick pass at error detection, or to update the tool with changes made externally, hit the Refresh button in the upper left.  
 The window is broken into three sections: Bundle List, Asset List, and Asset Details.
-![BroserConfigure](http://i.imgur.com/pMeylnk.png)
+![BroserConfigure](http://i.imgur.com/GTX2WCu.png)
 
 ### Bundle List
 Left hand pane showing a list of all bundles in the project.  Available functionality:
@@ -40,6 +40,11 @@ Left hand pane showing a list of all bundles in the project.  Available function
   * All assets currently in selected bundle will be moved into the new variant
   * ComingSoon: Mismatch detection between variants.
 
+### Bundle Details
+Lower left hand pane showing details of the bundles(s) selected in the Bundle List pane.  This pane will show the following information if it is available:
+* Total bundle size. This is a sum of the on-disk size of all assets. 
+* Bundles that the current bundle depends on
+* Any messages (error/warning/info) associated with the current bundle.
 
 ### Asset List
 Upper right hand pane providing a list of assets contained in whichever bundles are selected in the Bundle List.  Available functionality:
