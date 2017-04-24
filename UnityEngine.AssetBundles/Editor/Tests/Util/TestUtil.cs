@@ -39,10 +39,12 @@ namespace Assets.Editor.Tests.Util
         public static string CreatePrefabWithBundleAndVariantName(string bundleName, string variantName, string name = "Cube")
         {
             string path = "Assets/" + UnityEngine.Random.Range(0, 10000) + ".prefab";
-            GameObject go = PrefabUtility.CreatePrefab(path, GameObject.CreatePrimitive(PrimitiveType.Cube));
-            go.name = name;
-            AssetImporter.GetAtPath(path).SetAssetBundleNameAndVariant(bundleName, variantName);
+            GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
+            GameObject go = PrefabUtility.CreatePrefab(path, instance);
+            instance.name = name;
+            AssetImporter.GetAtPath(path).SetAssetBundleNameAndVariant(bundleName, variantName);
+            PrefabUtility.MergeAllPrefabInstances(go);
             return path;
         }
 
