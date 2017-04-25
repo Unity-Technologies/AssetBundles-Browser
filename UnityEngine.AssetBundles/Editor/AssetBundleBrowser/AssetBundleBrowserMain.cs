@@ -13,6 +13,7 @@ namespace UnityEngine.AssetBundles
         {
             Browser,
             Builder,
+            //Inspect,
         }
         [SerializeField]
         Mode m_Mode;
@@ -23,9 +24,13 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         public AssetBundleBuildTab m_BuildTab;
 
+        //[SerializeField]
+        //public AssetBundleInspectTab m_InspectTab;
+
         private Texture2D m_RefreshTexture;
 
-        const float kToolbarPadding = 15;
+        const float k_ToolbarPadding = 15;
+        const float k_MenubarPadding = 32;
 
         [MenuItem("Window/AssetBundle Browser", priority = 2050)]
         static void ShowWindow()
@@ -48,10 +53,9 @@ namespace UnityEngine.AssetBundles
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
         }
 
-        private float toolbarPadding = 32;
         private Rect GetSubWindowArea()
         {
-            Rect subPos = new Rect(0, toolbarPadding, position.width, position.height - toolbarPadding);
+            Rect subPos = new Rect(0, k_MenubarPadding, position.width, position.height - k_MenubarPadding);
             return subPos;
         }
 
@@ -88,7 +92,7 @@ namespace UnityEngine.AssetBundles
         void ModeToggle()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Space(kToolbarPadding);
+            GUILayout.Space(k_ToolbarPadding);
             if (m_Mode == Mode.Browser)
             {
                 bool clicked = GUILayout.Button(m_RefreshTexture);
@@ -97,9 +101,9 @@ namespace UnityEngine.AssetBundles
             }
             else
             {
-                GUILayout.Space(m_RefreshTexture.width + kToolbarPadding);
+                GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
             }
-            float toolbarWidth = position.width - kToolbarPadding * 4 - m_RefreshTexture.width;
+            float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
             string[] labels = new string[2] { "Configure", "Build" };
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
