@@ -189,6 +189,7 @@ namespace UnityEngine.AssetBundles
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
+            List<Object> selectedObjects = new List<Object>();
             List<AssetBundleModel.AssetInfo> selectedAssets = new List<AssetBundleModel.AssetInfo>();
             foreach (var id in selectedIds)
             {
@@ -196,11 +197,13 @@ namespace UnityEngine.AssetBundles
                 if (assetItem != null)
                 {
                     Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
+                    selectedObjects.Add(o);
                     Selection.activeObject = o;
                     selectedAssets.Add(assetItem.asset);
                 }
             }
             m_Controller.SetSelectedItems(selectedAssets);
+            Selection.objects = selectedObjects.ToArray();
         }
         protected override bool CanBeParent(TreeViewItem item)
         {
