@@ -12,6 +12,7 @@ namespace UnityEngine.AssetBundles
     { 
         AssetBundleManageTab m_Controller;
         private bool m_ContextOnItem = false;
+        List<UnityEngine.Object> m_EmptyObjectList = new List<Object>();
 
         public AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
         {
@@ -489,7 +490,7 @@ namespace UnityEngine.AssetBundles
                 selectedBundles.Add(item.bundle);
             }
             DragAndDrop.paths = null;
-            DragAndDrop.objectReferences = new UnityEngine.Object[] { };
+            DragAndDrop.objectReferences = m_EmptyObjectList.ToArray();
             DragAndDrop.SetGenericData("AssetBundleModel.BundleInfo", selectedBundles);
             DragAndDrop.visualMode = DragAndDropVisualMode.Copy;//Move;
             DragAndDrop.StartDrag("AssetBundleTree");
