@@ -44,7 +44,10 @@ namespace UnityEngine.AssetBundles
                 dirty |= bundle.dirty;
             }
             if (dirty)
+            {
                 Reload();
+                ExpandAll();
+            }
         }
         protected override TreeViewItem BuildRoot()
         {
@@ -149,6 +152,7 @@ namespace UnityEngine.AssetBundles
             }
             SetSelection(new List<int>());
             Reload();
+            ExpandAll();
         }
         internal void CollectBundles(AssetBundleModel.BundleInfo bundle)
         {

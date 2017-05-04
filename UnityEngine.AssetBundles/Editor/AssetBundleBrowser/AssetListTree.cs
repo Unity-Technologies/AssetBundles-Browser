@@ -12,6 +12,7 @@ namespace UnityEngine.AssetBundles
 	{
         List<AssetBundleModel.BundleInfo> m_SourceBundles = new List<AssetBundleModel.BundleInfo>();
         AssetBundleManageTab m_Controller;
+        List<UnityEngine.Object> m_EmptyObjectList = new List<Object>();
 
         public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
         {
@@ -201,7 +202,11 @@ namespace UnityEngine.AssetBundles
             }
             m_Controller.SetSelectedItems(selectedAssets);
         }
-        
+        protected override bool CanBeParent(TreeViewItem item)
+        {
+            return false;
+        }
+
         protected override bool CanStartDrag(CanStartDragArgs args)
         {
             args.draggedItemIDs = GetSelection();
@@ -211,10 +216,10 @@ namespace UnityEngine.AssetBundles
         protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
         {
             DragAndDrop.PrepareStartDrag();
+            DragAndDrop.objectReferences = m_EmptyObjectList.ToArray();
             List<AssetBundleModel.AssetTreeItem> items = 
                 new List<AssetBundleModel.AssetTreeItem>(args.draggedItemIDs.Select(id => FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem));
             DragAndDrop.paths = items.Select(a => a.asset.fullAssetName).ToArray();
-            DragAndDrop.objectReferences = new UnityEngine.Object[] { };
             DragAndDrop.SetGenericData("AssetListTreeSource", this);
             DragAndDrop.StartDrag("AssetListTree");
         }
