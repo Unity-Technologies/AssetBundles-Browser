@@ -8,7 +8,7 @@ using System;
 
 namespace UnityEngine.AssetBundles
 {
-	internal class AssetBundleTree : TreeView
+    internal class AssetBundleTree : TreeView
     { 
         AssetBundleManageTab m_Controller;
         private bool m_ContextOnItem = false;
@@ -16,7 +16,7 @@ namespace UnityEngine.AssetBundles
 
         public AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
         {
-			AssetBundleModel.Model.Rebuild(ctrl.Operation);
+            AssetBundleModel.Model.Rebuild(ctrl.Operation);
             m_Controller = ctrl;
             showBorder = true;
         }
@@ -114,10 +114,10 @@ namespace UnityEngine.AssetBundles
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
             GenericMenu menu = new GenericMenu();
 
-			if (!AssetBundleModel.Model.Operation.IsReadOnly ()) {
-				menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
-				menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
-			}
+            if (!AssetBundleModel.Model.Operation.IsReadOnly ()) {
+                menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
+                menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
+            }
 
             menu.AddItem(new GUIContent("Reload all data"), false, ForceReloadData, selectedNodes);
             menu.ShowAsContext();
@@ -125,9 +125,9 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
-			if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
-				return;
-			}
+            if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+                return;
+            }
 
             m_ContextOnItem = true;
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
@@ -171,7 +171,7 @@ namespace UnityEngine.AssetBundles
         }
         void ForceReloadData(object context)
         {
-			AssetBundleModel.Model.ForceReloadData(this, m_Controller.Operation);
+            AssetBundleModel.Model.ForceReloadData(this, m_Controller.Operation);
         }
         void CreateFolder(object context)
         {
@@ -340,9 +340,9 @@ namespace UnityEngine.AssetBundles
             DragAndDropVisualMode visualMode = DragAndDropVisualMode.None;
             DragAndDropData data = new DragAndDropData(args);
             
-			if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
-				return DragAndDropVisualMode.Rejected;
-			}
+            if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+                return DragAndDropVisualMode.Rejected;
+            }
 
             if ( (data.hasScene && data.hasNonScene) ||
                 (data.hasVariantChild) )

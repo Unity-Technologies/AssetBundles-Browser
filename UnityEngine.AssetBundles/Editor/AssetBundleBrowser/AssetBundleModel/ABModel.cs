@@ -16,7 +16,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         const string k_NewVariantBaseName = "newvariant";
         public static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
 
-		private static ABOperation m_Operation;
+        private static ABOperation m_Operation;
         private static BundleFolderConcreteInfo m_RootLevelBundles = new BundleFolderConcreteInfo("", null);
         private static List<ABMoveData> m_MoveData = new List<ABMoveData>();
         private static List<BundleInfo> m_BundlesToUpdate = new List<BundleInfo>();
@@ -32,14 +32,14 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         static private Texture2D m_bundleIcon = null;
         static private Texture2D m_sceneIcon = null;
 
-		public static ABOperation Operation {
-			get {
-				if (m_Operation == null) {
-					m_Operation = new AssetDatabaseABOperation ();
-				}
-				return m_Operation;
-			}
-		}
+        public static ABOperation Operation {
+            get {
+                if (m_Operation == null) {
+                    m_Operation = new AssetDatabaseABOperation ();
+                }
+                return m_Operation;
+            }
+        }
 
         public static bool Update()
         {
@@ -65,10 +65,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             return shouldRepaint;
         }
 
-		public static void ForceReloadData(TreeView tree, ABOperation operation)
+        public static void ForceReloadData(TreeView tree, ABOperation operation)
         {
             m_InErrorState = false;
-			Rebuild(operation);
+            Rebuild(operation);
             tree.Reload();
             bool doneUpdating = m_BundlesToUpdate.Count == 0;
 
@@ -83,13 +83,13 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             EditorUtility.ClearProgressBar();
         }
 
-		public static void Rebuild(ABOperation operation)
+        public static void Rebuild(ABOperation operation)
         {
-			if (operation == null) {
-				m_Operation = new AssetDatabaseABOperation ();
-			} else {
-				m_Operation = operation;
-			}
+            if (operation == null) {
+                m_Operation = new AssetDatabaseABOperation ();
+            } else {
+                m_Operation = operation;
+            }
 
             m_RootLevelBundles = new BundleFolderConcreteInfo("", null);
             m_MoveData = new List<ABMoveData>();
@@ -133,7 +133,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static string[] ValidateBundleList()
         {
-			var bundleList = m_Operation.GetAllAssetBundleNames();
+            var bundleList = m_Operation.GetAllAssetBundleNames();
             bool valid = true;
             HashSet<string> bundleSet = new HashSet<string>();
             int index = 0;
@@ -164,12 +164,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-							if (!m_Operation.IsReadOnly ()) {
-								m_Operation.RemoveUnusedAssetBundleNames();
-							}
+                            if (!m_Operation.IsReadOnly ()) {
+                                m_Operation.RemoveUnusedAssetBundleNames();
+                            }
                             index = 0;
                             bundleSet.Clear();
-							bundleList = m_Operation.GetAllAssetBundleNames();
+                            bundleList = m_Operation.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -188,12 +188,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-							if (!m_Operation.IsReadOnly ()) {
-								m_Operation.RemoveUnusedAssetBundleNames();
-							}
+                            if (!m_Operation.IsReadOnly ()) {
+                                m_Operation.RemoveUnusedAssetBundleNames();
+                            }
                             index = 0;
                             bundleSet.Clear();
-							bundleList = m_Operation.GetAllAssetBundleNames();
+                            bundleList = m_Operation.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -487,9 +487,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
             public void Apply()
             {
-				if (!Operation.IsReadOnly ()) {
-					Operation.SetAssetBundleNameAndVariant(assetName, bundleName, variantName);
-				}
+                if (!Operation.IsReadOnly ()) {
+                    Operation.SetAssetBundleNameAndVariant(assetName, bundleName, variantName);
+                }
             }
         }
         public static void MoveAssetToBundle(AssetInfo asset, string bundleName, string variant)
@@ -530,9 +530,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     EditorPrefs.SetBool("kAutoRefresh", autoRefresh);
                     m_MoveData.Clear();
                 }
-				if (!m_Operation.IsReadOnly ()) {
-					m_Operation.RemoveUnusedAssetBundleNames();
-				}
+                if (!m_Operation.IsReadOnly ()) {
+                    m_Operation.RemoveUnusedAssetBundleNames();
+                }
                 Refresh();
             }
         }
@@ -590,7 +590,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         internal static string GetBundleName(string asset)
         {
-			return m_Operation.GetAssetBundleName (asset);
+            return m_Operation.GetAssetBundleName (asset);
         }
 
         public static int RegisterAsset(AssetInfo asset, string bundle)

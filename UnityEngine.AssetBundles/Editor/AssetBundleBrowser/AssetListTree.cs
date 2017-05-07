@@ -8,8 +8,8 @@ using System;
 
 namespace UnityEngine.AssetBundles
 {
-	internal class AssetListTree : TreeView
-	{
+    internal class AssetListTree : TreeView
+    {
         List<AssetBundleModel.BundleInfo> m_SourceBundles = new List<AssetBundleModel.BundleInfo>();
         AssetBundleManageTab m_Controller;
         List<UnityEngine.Object> m_EmptyObjectList = new List<Object>();
@@ -179,12 +179,12 @@ namespace UnityEngine.AssetBundles
         protected override void DoubleClickedItem(int id)
         {
             var assetItem = FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem;
-			if (assetItem != null)
-			{
-				Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
-				EditorGUIUtility.PingObject(o);
-				Selection.activeObject = o;
-			}
+            if (assetItem != null)
+            {
+                Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
+                EditorGUIUtility.PingObject(o);
+                Selection.activeObject = o;
+            }
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
@@ -248,9 +248,9 @@ namespace UnityEngine.AssetBundles
         }
         protected bool IsValidDragDrop(DragAndDropArgs args)
         {
-			//can't do drag & drop if operation is read only
-			if (AssetBundles.AssetBundleModel.Model.Operation.IsReadOnly ())
-				return false;
+            //can't do drag & drop if operation is read only
+            if (AssetBundles.AssetBundleModel.Model.Operation.IsReadOnly ())
+                return false;
 
             //can't drag onto none or >1 bundles
             if (m_SourceBundles.Count == 0 || m_SourceBundles.Count > 1)
@@ -292,9 +292,9 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
-			if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
-				return;
-			}
+            if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+                return;
+            }
 
             List<AssetBundleModel.AssetTreeItem> selectedNodes = new List<AssetBundleModel.AssetTreeItem>();
             foreach(var nodeID in GetSelection())

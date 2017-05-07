@@ -6,8 +6,8 @@ using System.Collections.Generic;
 namespace UnityEngine.AssetBundles
 {
     [System.Serializable]
-	public class AssetBundleManageTab 
-	{
+    public class AssetBundleManageTab 
+    {
         [SerializeField]
         TreeViewState m_BundleTreeState;
         [SerializeField]
@@ -23,7 +23,7 @@ namespace UnityEngine.AssetBundles
         AssetListTree m_AssetList;
         MessageList m_MessageList;
         BundleDetailList m_DetailsList;
-		AssetBundleOperation.ABOperation m_Operation;
+        AssetBundleOperation.ABOperation m_Operation;
         bool m_ResizingHorizontalSplitter = false;
         bool m_ResizingVerticalSplitterRight = false;
         bool m_ResizingVerticalSplitterLeft = false;
@@ -35,12 +35,12 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         float m_VerticalSplitterPercentLeft;
         const float k_SplitterWidth = 3f;
-		const float k_BundleTreeMenu = 20f;
+        const float k_BundleTreeMenu = 20f;
         private static float m_UpdateDelay = 0f;
 
-		public AssetBundleOperation.ABOperation Operation {
-			get { return m_Operation; }
-		}
+        public AssetBundleOperation.ABOperation Operation {
+            get { return m_Operation; }
+        }
 
         EditorWindow m_Parent = null;
 
@@ -49,7 +49,7 @@ namespace UnityEngine.AssetBundles
             m_HorizontalSplitterPercent = 0.4f;
             m_VerticalSplitterPercentRight = 0.7f;
             m_VerticalSplitterPercentLeft = 0.85f;
-			m_Operation = new AssetBundleOperation.AssetDatabaseABOperation ();
+            m_Operation = new AssetBundleOperation.AssetDatabaseABOperation ();
         }
 
         public void OnEnable(Rect pos, EditorWindow parent)
@@ -97,7 +97,7 @@ namespace UnityEngine.AssetBundles
 
         public void ForceReloadData()
         {
-			AssetBundleModel.Model.ForceReloadData(m_BundleTree, m_Operation);
+            AssetBundleModel.Model.ForceReloadData(m_BundleTree, m_Operation);
             m_Parent.Repaint();
         }
 
@@ -149,20 +149,20 @@ namespace UnityEngine.AssetBundles
             }
             else
             {
-				var bundleTreeMenu = new Rect(
-					m_Position.x, 
-					m_Position.y, 
-					m_HorizontalSplitterRect.x, 
-					k_BundleTreeMenu);
+                var bundleTreeMenu = new Rect(
+                    m_Position.x, 
+                    m_Position.y, 
+                    m_HorizontalSplitterRect.x, 
+                    k_BundleTreeMenu);
 
                 //Left half
                 var bundleTreeRect = new Rect(
-					bundleTreeMenu.x,
-					bundleTreeMenu.y + bundleTreeMenu.height,
-					bundleTreeMenu.width,
-					m_VerticalSplitterRectLeft.y - bundleTreeMenu.y);
-				
-				DrawBundleTreeToolBarGUI (bundleTreeMenu);
+                    bundleTreeMenu.x,
+                    bundleTreeMenu.y + bundleTreeMenu.height,
+                    bundleTreeMenu.width,
+                    m_VerticalSplitterRectLeft.y - bundleTreeMenu.y);
+                
+                DrawBundleTreeToolBarGUI (bundleTreeMenu);
                 m_BundleTree.OnGUI(bundleTreeRect);
                 m_DetailsList.OnGUI(new Rect(
                     bundleTreeRect.x,
@@ -191,54 +191,54 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-		private void DrawBundleTreeToolBarGUI(Rect r) {
+        private void DrawBundleTreeToolBarGUI(Rect r) {
 
-			GUILayout.BeginArea (r);
+            GUILayout.BeginArea (r);
 
-			using (new EditorGUILayout.HorizontalScope (EditorStyles.toolbar)) {
+            using (new EditorGUILayout.HorizontalScope (EditorStyles.toolbar)) {
 
-				if (GUILayout.Button (new GUIContent (string.Format("{0} ({1})", m_Operation.Name, m_Operation.ProviderName), "Select Asset Bundle Set"), 
-					EditorStyles.toolbarPopup, GUILayout.Width (200f), GUILayout.Height (r.height))) 
-				{
-					GenericMenu menu = new GenericMenu ();
-					bool firstItem = true;
+                if (GUILayout.Button (new GUIContent (string.Format("{0} ({1})", m_Operation.Name, m_Operation.ProviderName), "Select Asset Bundle Set"), 
+                    EditorStyles.toolbarPopup, GUILayout.Width (200f), GUILayout.Height (r.height))) 
+                {
+                    GenericMenu menu = new GenericMenu ();
+                    bool firstItem = true;
 
-					foreach (var info in AssetBundleOperation.ABOperationProviderUtility.CustomABOperationProviderTypes) {
-						var newProvider = info.CreateInstance();
+                    foreach (var info in AssetBundleOperation.ABOperationProviderUtility.CustomABOperationProviderTypes) {
+                        var newProvider = info.CreateInstance();
 
-						if (!firstItem) {
-							menu.AddSeparator ("");
-						}
+                        if (!firstItem) {
+                            menu.AddSeparator ("");
+                        }
 
-						for (int i = 0; i < newProvider.GetABOperationCount (); ++i) {
-							var op = newProvider.CreateOperation (i);
+                        for (int i = 0; i < newProvider.GetABOperationCount (); ++i) {
+                            var op = newProvider.CreateOperation (i);
 
-							menu.AddItem (new GUIContent (string.Format("{0} ({1})", op.Name, op.ProviderName)), false, 
-								() => {
-									var thisOperation = op;
-									m_Operation = thisOperation;
-									ForceReloadData();
-								}
-							);
-						}
+                            menu.AddItem (new GUIContent (string.Format("{0} ({1})", op.Name, op.ProviderName)), false, 
+                                () => {
+                                    var thisOperation = op;
+                                    m_Operation = thisOperation;
+                                    ForceReloadData();
+                                }
+                            );
+                        }
 
-						firstItem = false;
-					}
+                        firstItem = false;
+                    }
 
-					menu.DropDown(new Rect(4f, 8f, 0f, 0f));
-				}
+                    menu.DropDown(new Rect(4f, 8f, 0f, 0f));
+                }
 
-				GUILayout.FlexibleSpace ();
-				if (m_Operation.IsReadOnly ()) {
-					GUIStyle tbLabel = new GUIStyle(EditorStyles.toolbar);
-					tbLabel.alignment = TextAnchor.MiddleRight;
+                GUILayout.FlexibleSpace ();
+                if (m_Operation.IsReadOnly ()) {
+                    GUIStyle tbLabel = new GUIStyle(EditorStyles.toolbar);
+                    tbLabel.alignment = TextAnchor.MiddleRight;
 
-					GUILayout.Label ("Read Only", tbLabel, GUILayout.Width(60f), GUILayout.Height (r.height));
-				}
-			}
+                    GUILayout.Label ("Read Only", tbLabel, GUILayout.Width(60f), GUILayout.Height (r.height));
+                }
+            }
 
-			GUILayout.EndArea ();
-		}
+            GUILayout.EndArea ();
+        }
 
         private void HandleHorizontalResize()
         {
