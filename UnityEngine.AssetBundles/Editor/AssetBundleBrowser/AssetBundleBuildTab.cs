@@ -3,6 +3,7 @@ using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
 
+using UnityEngine.AssetBundles.AssetBundleOperation;
 
 namespace UnityEngine.AssetBundles
 {
@@ -121,94 +122,101 @@ namespace UnityEngine.AssetBundles
             //basic options
             EditorGUILayout.Space();
             GUILayout.BeginVertical();
-            ValidBuildTarget tgt = (ValidBuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_BuildTarget);
-            if (tgt != m_BuildTarget)
-            {
-                m_BuildTarget = tgt;
-                EditorPrefs.SetInt(k_BuildPrefPrefix + "BuildTarget", (int)m_BuildTarget);
-                if(m_UseDefaultPath)
-                {
-                    m_OutputPath = "AssetBundles/";
-                    m_OutputPath += m_BuildTarget.ToString();
-                    EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_OutputPath);
-                }
-            }
+
+			// build target
+			using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.Operation.CanSpecifyBuildTarget)) {
+				ValidBuildTarget tgt = (ValidBuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_BuildTarget);
+				if (tgt != m_BuildTarget)
+				{
+					m_BuildTarget = tgt;
+					EditorPrefs.SetInt(k_BuildPrefPrefix + "BuildTarget", (int)m_BuildTarget);
+					if(m_UseDefaultPath)
+					{
+						m_OutputPath = "AssetBundles/";
+						m_OutputPath += m_BuildTarget.ToString();
+						EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_OutputPath);
+					}
+				}
+			}
 
 
-            ////output path
-            EditorGUILayout.Space();
-            GUILayout.BeginHorizontal();
-            var newPath = EditorGUILayout.TextField("Output Path", m_OutputPath);
-            if (newPath != m_OutputPath)
-            {
-                m_UseDefaultPath = false;
-                m_OutputPath = newPath;
-                EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_OutputPath);
-            }
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Browse", GUILayout.MaxWidth(75f)))
-                BrowseForFolder();
-            if (GUILayout.Button("Reset", GUILayout.MaxWidth(75f)))
-                ResetPathToDefault();
-            if (string.IsNullOrEmpty(m_OutputPath))
-                m_OutputPath = EditorUserBuildSettings.GetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath");
-            GUILayout.EndHorizontal();
-            EditorGUILayout.Space();
+			////output path
+			using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.Operation.CanSpecifyBuildOutputDirectory)) {
+				EditorGUILayout.Space();
+				GUILayout.BeginHorizontal();
+				var newPath = EditorGUILayout.TextField("Output Path", m_OutputPath);
+				if (newPath != m_OutputPath)
+				{
+					m_UseDefaultPath = false;
+					m_OutputPath = newPath;
+					EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_OutputPath);
+				}
+				GUILayout.EndHorizontal();
+				GUILayout.BeginHorizontal();
+				GUILayout.FlexibleSpace();
+				if (GUILayout.Button("Browse", GUILayout.MaxWidth(75f)))
+					BrowseForFolder();
+				if (GUILayout.Button("Reset", GUILayout.MaxWidth(75f)))
+					ResetPathToDefault();
+				if (string.IsNullOrEmpty(m_OutputPath))
+					m_OutputPath = EditorUserBuildSettings.GetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath");
+				GUILayout.EndHorizontal();
+				EditorGUILayout.Space();
 
-            newState = GUILayout.Toggle(
-            m_ForceRebuild.state,
-            m_ForceRebuild.content);
-            if (newState != m_ForceRebuild.state)
-            {
-                EditorPrefs.SetBool(m_ForceRebuild.prefsKey, newState);
-                m_ForceRebuild.state = newState;
-            }
-            newState = GUILayout.Toggle(
-                m_CopyToStreaming.state,
-                m_CopyToStreaming.content);
-            if (newState != m_CopyToStreaming.state)
-            {
-                EditorPrefs.SetBool(m_CopyToStreaming.prefsKey, newState);
-                m_CopyToStreaming.state = newState;
-            }
+				newState = GUILayout.Toggle(
+					m_ForceRebuild.state,
+					m_ForceRebuild.content);
+				if (newState != m_ForceRebuild.state)
+				{
+					EditorPrefs.SetBool(m_ForceRebuild.prefsKey, newState);
+					m_ForceRebuild.state = newState;
+				}
+				newState = GUILayout.Toggle(
+					m_CopyToStreaming.state,
+					m_CopyToStreaming.content);
+				if (newState != m_CopyToStreaming.state)
+				{
+					EditorPrefs.SetBool(m_CopyToStreaming.prefsKey, newState);
+					m_CopyToStreaming.state = newState;
+				}
+			}
 
+			// advanced options
+			using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.Operation.CanSpecifyBuildOptions)) {
+				EditorGUILayout.Space();
+				m_AdvancedSettings = EditorGUILayout.Foldout(m_AdvancedSettings, "Advanced Settings");
+				if(m_AdvancedSettings)
+				{
+					var indent = EditorGUI.indentLevel;
+					EditorGUI.indentLevel = 1;
+					CompressOptions cmp = (CompressOptions)EditorGUILayout.IntPopup(
+						m_CompressionContent, 
+						(int)m_Compression,
+						m_CompressionOptions,
+						m_CompressionValues);
 
-            // advanced options
-            EditorGUILayout.Space();
-            m_AdvancedSettings = EditorGUILayout.Foldout(m_AdvancedSettings, "Advanced Settings");
-            if(m_AdvancedSettings)
-            {
-                var indent = EditorGUI.indentLevel;
-                EditorGUI.indentLevel = 1;
-                CompressOptions cmp = (CompressOptions)EditorGUILayout.IntPopup(
-                    m_CompressionContent, 
-                    (int)m_Compression,
-                    m_CompressionOptions,
-                    m_CompressionValues);
+					if (cmp != m_Compression)
+					{
+						m_Compression = cmp;
+						EditorPrefs.SetInt(k_BuildPrefPrefix + "Compression", (int)m_Compression);
+					}
+					foreach (var tog in m_ToggleData)
+					{
+						newState = EditorGUILayout.ToggleLeft(
+							tog.content,
+							tog.state);
+						if (newState != tog.state)
+						{
+							EditorPrefs.SetBool(tog.prefsKey, newState);
+							tog.state = newState;
+						}
+					}
+					EditorGUILayout.Space();
+					EditorGUI.indentLevel = indent;
+				}
+			}
 
-                if (cmp != m_Compression)
-                {
-                    m_Compression = cmp;
-                    EditorPrefs.SetInt(k_BuildPrefPrefix + "Compression", (int)m_Compression);
-                }
-                foreach (var tog in m_ToggleData)
-                {
-                    newState = EditorGUILayout.ToggleLeft(
-                        tog.content,
-                        tog.state);
-                    if (newState != tog.state)
-                    {
-                        EditorPrefs.SetBool(tog.prefsKey, newState);
-                        tog.state = newState;
-                    }
-                }
-                EditorGUILayout.Space();
-                EditorGUI.indentLevel = indent;
-            }
-            
-            // build.
+			// build.
             EditorGUILayout.Space();
             if (GUILayout.Button("Build") )
             {
@@ -220,51 +228,65 @@ namespace UnityEngine.AssetBundles
 
         private void ExecuteBuild()
         {
-            if (string.IsNullOrEmpty(m_OutputPath))
-                BrowseForFolder();
+			if (AssetBundleModel.Model.Operation.CanSpecifyBuildOutputDirectory) {
+				if (string.IsNullOrEmpty(m_OutputPath))
+					BrowseForFolder();
 
-            if (string.IsNullOrEmpty(m_OutputPath)) //in case they hit "cancel" on the open browser
-            {
-                Debug.LogError("AssetBundle Build: No valid output path for build.");
-                return;
-            }
+				if (string.IsNullOrEmpty(m_OutputPath)) //in case they hit "cancel" on the open browser
+				{
+					Debug.LogError("AssetBundle Build: No valid output path for build.");
+					return;
+				}
 
-            if (m_ForceRebuild.state)
-            {
-                string message = "Do you want to delete all files in the directory " + m_OutputPath;
-                if (m_CopyToStreaming.state)
-                    message += " and " + m_streamingPath;
-                message += "?";
-                if (EditorUtility.DisplayDialog("File delete confirmation", message, "Yes", "No"))
-                {
-                    try
-                    {
-                        if (Directory.Exists(m_OutputPath))
-                            Directory.Delete(m_OutputPath, true);
+				if (m_ForceRebuild.state)
+				{
+					string message = "Do you want to delete all files in the directory " + m_OutputPath;
+					if (m_CopyToStreaming.state)
+						message += " and " + m_streamingPath;
+					message += "?";
+					if (EditorUtility.DisplayDialog("File delete confirmation", message, "Yes", "No"))
+					{
+						try
+						{
+							if (Directory.Exists(m_OutputPath))
+								Directory.Delete(m_OutputPath, true);
 
-                        if (m_CopyToStreaming.state)
-                            if (Directory.Exists(m_streamingPath))
-                                Directory.Delete(m_streamingPath, true);
-                    }
-                    catch (System.Exception e)
-                    {
-                        Debug.LogException(e);
-                    }
-                }
-            }
-            if (!Directory.Exists(m_OutputPath))
-                Directory.CreateDirectory(m_OutputPath);
-            BuildAssetBundleOptions opt = BuildAssetBundleOptions.None;
-            if (m_Compression == CompressOptions.Uncompressed)
-                opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
-            else if (m_Compression == CompressOptions.ChunkBasedCompression)
-                opt |= BuildAssetBundleOptions.ChunkBasedCompression;
-            foreach (var tog in m_ToggleData)
-            {
-                if (tog.state)
-                    opt |= tog.option;
-            }
-            BuildPipeline.BuildAssetBundles(m_OutputPath, opt, (BuildTarget)m_BuildTarget);
+							if (m_CopyToStreaming.state)
+							if (Directory.Exists(m_streamingPath))
+								Directory.Delete(m_streamingPath, true);
+						}
+						catch (System.Exception e)
+						{
+							Debug.LogException(e);
+						}
+					}
+				}
+				if (!Directory.Exists(m_OutputPath))
+					Directory.CreateDirectory(m_OutputPath);
+			}
+
+			BuildAssetBundleOptions opt = BuildAssetBundleOptions.None;
+
+			if (AssetBundleModel.Model.Operation.CanSpecifyBuildOptions) {
+				if (m_Compression == CompressOptions.Uncompressed)
+					opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
+				else if (m_Compression == CompressOptions.ChunkBasedCompression)
+					opt |= BuildAssetBundleOptions.ChunkBasedCompression;
+				foreach (var tog in m_ToggleData)
+				{
+					if (tog.state)
+						opt |= tog.option;
+				}
+			}
+
+			ABBuildInfo buildInfo = new ABBuildInfo();
+
+			buildInfo.outputDirectory = m_OutputPath;
+			buildInfo.options = opt;
+			buildInfo.buildTarget = (BuildTarget)m_BuildTarget;
+
+			AssetBundleModel.Model.Operation.BuildAssetBundles (buildInfo);
+
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 
             if(m_CopyToStreaming.state)

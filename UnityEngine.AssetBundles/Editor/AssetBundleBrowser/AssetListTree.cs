@@ -248,6 +248,10 @@ namespace UnityEngine.AssetBundles
         }
         protected bool IsValidDragDrop(DragAndDropArgs args)
         {
+			//can't do drag & drop if operation is read only
+			if (AssetBundles.AssetBundleModel.Model.Operation.IsReadOnly ())
+				return false;
+
             //can't drag onto none or >1 bundles
             if (m_SourceBundles.Count == 0 || m_SourceBundles.Count > 1)
                 return false;
@@ -288,6 +292,10 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
+			if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+				return;
+			}
+
             List<AssetBundleModel.AssetTreeItem> selectedNodes = new List<AssetBundleModel.AssetTreeItem>();
             foreach(var nodeID in GetSelection())
             {

@@ -16,7 +16,7 @@ namespace UnityEngine.AssetBundles
 
         public AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
         {
-            AssetBundleModel.Model.Rebuild();
+			AssetBundleModel.Model.Rebuild(ctrl.Operation);
             m_Controller = ctrl;
             showBorder = true;
         }
@@ -113,14 +113,22 @@ namespace UnityEngine.AssetBundles
 
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
             GenericMenu menu = new GenericMenu();
-            menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
-            menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
+
+			if (!AssetBundleModel.Model.Operation.IsReadOnly ()) {
+				menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
+				menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
+			}
+
             menu.AddItem(new GUIContent("Reload all data"), false, ForceReloadData, selectedNodes);
             menu.ShowAsContext();
         }
 
         protected override void ContextClickedItem(int id)
         {
+			if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+				return;
+			}
+
             m_ContextOnItem = true;
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
             foreach (var nodeID in GetSelection())
@@ -163,7 +171,7 @@ namespace UnityEngine.AssetBundles
         }
         void ForceReloadData(object context)
         {
-            AssetBundleModel.Model.ForceReloadData(this);
+			AssetBundleModel.Model.ForceReloadData(this, m_Controller.Operation);
         }
         void CreateFolder(object context)
         {
@@ -332,6 +340,10 @@ namespace UnityEngine.AssetBundles
             DragAndDropVisualMode visualMode = DragAndDropVisualMode.None;
             DragAndDropData data = new DragAndDropData(args);
             
+			if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+				return DragAndDropVisualMode.Rejected;
+			}
+
             if ( (data.hasScene && data.hasNonScene) ||
                 (data.hasVariantChild) )
                 return DragAndDropVisualMode.Rejected;
