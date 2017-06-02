@@ -39,6 +39,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 }
                 return m_Operation;
             }
+            set { m_Operation = value; }
         }
 
         public static bool Update()
@@ -65,10 +66,10 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             return shouldRepaint;
         }
 
-        public static void ForceReloadData(TreeView tree, ABOperation operation)
+        public static void ForceReloadData(TreeView tree)
         {
             m_InErrorState = false;
-            Rebuild(operation);
+            Rebuild();
             tree.Reload();
             bool doneUpdating = m_BundlesToUpdate.Count == 0;
 
@@ -83,14 +84,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             EditorUtility.ClearProgressBar();
         }
 
-        public static void Rebuild(ABOperation operation)
+        public static void Rebuild()
         {
-            if (operation == null) {
-                m_Operation = new AssetDatabaseABOperation ();
-            } else {
-                m_Operation = operation;
-            }
-
             m_RootLevelBundles = new BundleFolderConcreteInfo("", null);
             m_MoveData = new List<ABMoveData>();
             m_BundlesToUpdate = new List<BundleInfo>();
@@ -133,7 +128,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static string[] ValidateBundleList()
         {
-            var bundleList = m_Operation.GetAllAssetBundleNames();
+            var bundleList = Operation.GetAllAssetBundleNames();
             bool valid = true;
             HashSet<string> bundleSet = new HashSet<string>();
             int index = 0;
@@ -164,12 +159,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            if (!m_Operation.IsReadOnly ()) {
-                                m_Operation.RemoveUnusedAssetBundleNames();
+                            if (!Operation.IsReadOnly ()) {
+                                Operation.RemoveUnusedAssetBundleNames();
                             }
                             index = 0;
                             bundleSet.Clear();
-                            bundleList = m_Operation.GetAllAssetBundleNames();
+                            bundleList = Operation.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -188,12 +183,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            if (!m_Operation.IsReadOnly ()) {
-                                m_Operation.RemoveUnusedAssetBundleNames();
+                            if (!Operation.IsReadOnly ()) {
+                                Operation.RemoveUnusedAssetBundleNames();
                             }
                             index = 0;
                             bundleSet.Clear();
-                            bundleList = m_Operation.GetAllAssetBundleNames();
+                            bundleList = Operation.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -374,6 +369,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static bool HandleBundleRename(BundleTreeItem item, string newName)
         {
+            var originalName = new BundleNameData(item.bundle.m_Name.fullNativeName);
+
             var findDot = newName.LastIndexOf('.');
             var findSlash = newName.LastIndexOf('/');
             var findBSlash = newName.LastIndexOf('\\');
@@ -388,6 +385,16 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
 
             ExecuteAssetMove();
+
+            var node = FindBundle(originalName);
+            if (node != null)
+            {
+                var message = "Failed to rename bundle named: ";
+                message += originalName.fullNativeName;
+                message += ".  Most likely this is due to this bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
+                Debug.LogError(message);
+            }
+
             return result;  
         }
 
@@ -412,11 +419,58 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static void HandleBundleDelete(IEnumerable<BundleInfo> bundles)
         {
+            var nameList = new List<BundleNameData>();
             foreach (var bundle in bundles)
             {
+                nameList.Add(bundle.m_Name);
                 bundle.HandleDelete(true);
             }
             ExecuteAssetMove();
+
+            //check to see if any bundles are still there...
+            foreach(var name in nameList)
+            {
+                var node = FindBundle(name);
+                if(node != null)
+                {
+                    var message = "Failed to delete bundle named: ";
+                    message += name.fullNativeName;
+                    message += ".  Most likely this is due to this bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
+                    Debug.LogError(message);
+                }
+            }
+        }
+
+        public static BundleInfo FindBundle(BundleNameData name)
+        {
+            BundleInfo currNode = m_RootLevelBundles;
+            foreach (var token in name.pathTokens)
+            {
+                if(currNode is BundleFolderInfo)
+                {
+                    currNode = (currNode as BundleFolderInfo).GetChild(token);
+                    if (currNode == null)
+                        return null;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            if(currNode is BundleFolderInfo)
+            {
+                currNode = (currNode as BundleFolderInfo).GetChild(name.shortName);
+                if(currNode is BundleVariantFolderInfo)
+                {
+                    currNode = (currNode as BundleVariantFolderInfo).GetChild(name.variant);
+                }
+                return currNode;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public static BundleInfo HandleDedupeBundles(IEnumerable<BundleInfo> bundles, bool onlyOverlappedAssets)
@@ -530,8 +584,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     EditorPrefs.SetBool("kAutoRefresh", autoRefresh);
                     m_MoveData.Clear();
                 }
-                if (!m_Operation.IsReadOnly ()) {
-                    m_Operation.RemoveUnusedAssetBundleNames();
+                if (!Operation.IsReadOnly ()) {
+                    Operation.RemoveUnusedAssetBundleNames();
                 }
                 Refresh();
             }
@@ -590,7 +644,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         internal static string GetBundleName(string asset)
         {
-            return m_Operation.GetAssetBundleName (asset);
+            return Operation.GetAssetBundleName (asset);
         }
 
         public static int RegisterAsset(AssetInfo asset, string bundle)

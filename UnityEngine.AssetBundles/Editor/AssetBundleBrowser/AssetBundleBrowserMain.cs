@@ -4,7 +4,7 @@ using UnityEditor.IMGUI.Controls;
 namespace UnityEngine.AssetBundles
 {
 
-    public class AssetBundleBrowserMain : EditorWindow
+    public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu
     {
 
         public const float kButtonWidth = 150;
@@ -39,6 +39,17 @@ namespace UnityEngine.AssetBundles
             window.titleContent = new GUIContent("AssetBundles");
             window.Show();
         }
+        public bool multiOperation = true;
+        public virtual void AddItemsToMenu(GenericMenu menu)
+        {
+            //menu.AddSeparator(string.Empty);
+            menu.AddItem(new GUIContent("Custom Sources"), multiOperation, FlipOperation);
+        }
+        public void FlipOperation()
+        {
+            multiOperation = !multiOperation;
+        }
+
         private void OnEnable()
         {
 
@@ -55,7 +66,10 @@ namespace UnityEngine.AssetBundles
 
         private Rect GetSubWindowArea()
         {
-            Rect subPos = new Rect(0, k_MenubarPadding, position.width, position.height - k_MenubarPadding);
+            float padding = k_MenubarPadding;
+            if (multiOperation)
+                padding += k_MenubarPadding * 0.5f;
+            Rect subPos = new Rect(0, padding, position.width, position.height - padding);
             return subPos;
         }
 
@@ -107,7 +121,64 @@ namespace UnityEngine.AssetBundles
             string[] labels = new string[2] { "Configure", "Build" };
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal(); 
+            GUILayout.EndHorizontal();
+            if(multiOperation)
+            {
+                //GUILayout.BeginArea(r);
+                GUILayout.BeginHorizontal();
+
+                using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+                {
+                    GUILayout.Label("Bundle Data Source:");
+                    GUILayout.FlexibleSpace();
+                    var c = new GUIContent(string.Format("{0} ({1})", AssetBundleModel.Model.Operation.Name, AssetBundleModel.Model.Operation.ProviderName), "Select Asset Bundle Set");
+                    if (GUILayout.Button(c , EditorStyles.toolbarPopup) )
+                    {
+                        GenericMenu menu = new GenericMenu();
+                        bool firstItem = true;
+
+                        foreach (var info in AssetBundleOperation.ABOperationProviderUtility.CustomABOperationProviderTypes)
+                        {
+                            var newProvider = info.CreateInstance();
+
+                            if (!firstItem)
+                            {
+                                menu.AddSeparator("");
+                            }
+
+                            for (int i = 0; i < newProvider.GetABOperationCount(); ++i)
+                            {
+                                var op = newProvider.CreateOperation(i);
+
+                                menu.AddItem(new GUIContent(string.Format("{0} ({1})", op.Name, op.ProviderName)), false,
+                                    () =>
+                                    {
+                                        var thisOperation = op;
+                                        AssetBundleModel.Model.Operation = thisOperation;
+                                        m_ManageTab.ForceReloadData();
+                                    }
+                                );
+                            }
+
+                            firstItem = false;
+                        }
+
+                        menu.DropDown(new Rect(4f, 8f, 0f, 0f));
+                    }
+
+                    GUILayout.FlexibleSpace();
+                    if (AssetBundleModel.Model.Operation.IsReadOnly())
+                    {
+                        GUIStyle tbLabel = new GUIStyle(EditorStyles.toolbar);
+                        tbLabel.alignment = TextAnchor.MiddleRight;
+
+                        GUILayout.Label("Read Only", tbLabel);
+                    }
+                }
+
+                GUILayout.EndHorizontal();
+                //GUILayout.EndArea();
+            }
         }
 
 
