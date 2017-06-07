@@ -23,7 +23,6 @@ namespace UnityEngine.AssetBundles
         AssetListTree m_AssetList;
         MessageList m_MessageList;
         BundleDetailList m_DetailsList;
-        //AssetBundleOperation.ABOperation m_Operation;
         bool m_ResizingHorizontalSplitter = false;
         bool m_ResizingVerticalSplitterRight = false;
         bool m_ResizingVerticalSplitterLeft = false;
@@ -37,9 +36,6 @@ namespace UnityEngine.AssetBundles
         const float k_SplitterWidth = 3f;
         private static float m_UpdateDelay = 0f;
 
-        //public AssetBundleOperation.ABOperation Operation {
-        //    get { return m_Operation; }
-        //}
 
         EditorWindow m_Parent = null;
 
@@ -48,7 +44,6 @@ namespace UnityEngine.AssetBundles
             m_HorizontalSplitterPercent = 0.4f;
             m_VerticalSplitterPercentRight = 0.7f;
             m_VerticalSplitterPercentLeft = 0.85f;
-            //m_Operation = new AssetBundleOperation.AssetDatabaseABOperation ();
         }
 
         public void OnEnable(Rect pos, EditorWindow parent)
@@ -96,6 +91,8 @@ namespace UnityEngine.AssetBundles
 
         public void ForceReloadData()
         {
+            UpdateSelectedBundles(new List<AssetBundleModel.BundleInfo>());
+            SetSelectedItems(new List<AssetBundleModel.AssetInfo>());
             AssetBundleModel.Model.ForceReloadData(m_BundleTree);
             m_Parent.Repaint();
         }
@@ -184,64 +181,9 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-        //private void DrawBundleTreeToolBarGUI(Rect r) {
-
-        //    //GUILayout.BeginArea(r);
-
-        //    //using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
-        //    //{
-        //    //    GUILayout.Label("Bundle Data Source:");
-        //    //    if (GUILayout.Button(new GUIContent(string.Format("{0} ({1})", AssetBundleModel.Model.Operation.Name, AssetBundleModel.Model.Operation.ProviderName), "Select Asset Bundle Set"),
-        //    //        EditorStyles.toolbarPopup, GUILayout.Width(200f), GUILayout.Height(r.height)))
-        //    //    {
-        //    //        GenericMenu menu = new GenericMenu();
-        //    //        bool firstItem = true;
-
-        //    //        foreach (var info in AssetBundleOperation.ABOperationProviderUtility.CustomABOperationProviderTypes)
-        //    //        {
-        //    //            var newProvider = info.CreateInstance();
-
-        //    //            if (!firstItem)
-        //    //            {
-        //    //                menu.AddSeparator("");
-        //    //            }
-
-        //    //            for (int i = 0; i < newProvider.GetABOperationCount(); ++i)
-        //    //            {
-        //    //                var op = newProvider.CreateOperation(i);
-
-        //    //                menu.AddItem(new GUIContent(string.Format("{0} ({1})", op.Name, op.ProviderName)), false,
-        //    //                    () =>
-        //    //                    {
-        //    //                        var thisOperation = op;
-        //    //                        AssetBundleModel.Model.Operation = thisOperation;
-        //    //                        ForceReloadData();
-        //    //                    }
-        //    //                );
-        //    //            }
-
-        //    //            firstItem = false;
-        //    //        }
-
-        //    //        menu.DropDown(new Rect(4f, 8f, 0f, 0f));
-        //    //    }
-
-        //    //    GUILayout.FlexibleSpace();
-        //    //    if (AssetBundleModel.Model.Operation.IsReadOnly())
-        //    //    {
-        //    //        GUIStyle tbLabel = new GUIStyle(EditorStyles.toolbar);
-        //    //        tbLabel.alignment = TextAnchor.MiddleRight;
-
-        //    //        GUILayout.Label("Read Only", tbLabel, GUILayout.Width(60f), GUILayout.Height(r.height));
-        //    //    }
-        //    //}
-
-        //    //GUILayout.EndArea();
-        //}
 
         private void HandleHorizontalResize()
         {
-            //m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
             m_HorizontalSplitterRect.x = (int)(m_Position.width * m_HorizontalSplitterPercent);
             m_HorizontalSplitterRect.height = m_Position.height;
 
@@ -251,7 +193,6 @@ namespace UnityEngine.AssetBundles
 
             if (m_ResizingHorizontalSplitter)
             {
-                //m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
                 m_HorizontalSplitterPercent = Mathf.Clamp(Event.current.mousePosition.x / m_Position.width, 0.1f, 0.9f);
                 m_HorizontalSplitterRect.x = (int)(m_Position.width * m_HorizontalSplitterPercent);
             }
