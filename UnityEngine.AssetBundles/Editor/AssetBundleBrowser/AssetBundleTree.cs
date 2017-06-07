@@ -142,18 +142,30 @@ namespace UnityEngine.AssetBundles
             {
                 if ((selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo) != null)
                 {
-                    menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes);
-                    menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
+                    menu.AddItem(new GUIContent("Add Child/New Bundle"), false, CreateNewBundle, selectedNodes);
+                    menu.AddItem(new GUIContent("Add Child/New Folder"), false, CreateFolder, selectedNodes);
+                    menu.AddItem(new GUIContent("Add Sibling/New Bundle"), false, CreateNewSiblingBundle, selectedNodes);
+                    menu.AddItem(new GUIContent("Add Sibling/New Folder"), false, CreateNewSiblingFolder, selectedNodes);
                 }
                 else if( (selectedNodes[0].bundle as AssetBundleModel.BundleVariantFolderInfo) != null)
                 {
-                    menu.AddItem(new GUIContent("Add new variant"), false, CreateNewVariant, selectedNodes);
+                    menu.AddItem(new GUIContent("Add Child/New Variant"), false, CreateNewVariant, selectedNodes);
+                    menu.AddItem(new GUIContent("Add Sibling/New Bundle"), false, CreateNewSiblingBundle, selectedNodes);
+                    menu.AddItem(new GUIContent("Add Sibling/New Folder"), false, CreateNewSiblingFolder, selectedNodes);
                 }
                 else
                 {
                     var variant = selectedNodes[0].bundle as AssetBundleModel.BundleVariantDataInfo;
-                    if(variant == null)
-                       menu.AddItem(new GUIContent("Convert to variant"), false, ConvertToVariant, selectedNodes);
+                    if (variant == null)
+                    {
+                        menu.AddItem(new GUIContent("Add Sibling/New Bundle"), false, CreateNewSiblingBundle, selectedNodes);
+                        menu.AddItem(new GUIContent("Add Sibling/New Folder"), false, CreateNewSiblingFolder, selectedNodes);
+                        menu.AddItem(new GUIContent("Convert to variant"), false, ConvertToVariant, selectedNodes);
+                    }
+                    else
+                    {
+                        menu.AddItem(new GUIContent("Add Sibling/New Variant"), false, CreateNewSiblingVariant, selectedNodes);
+                    }
                 }
                 if(selectedNodes[0].bundle.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
                     menu.AddItem(new GUIContent("Move duplicates to new bundle"), false, DedupeAllBundles, selectedNodes);
@@ -162,7 +174,7 @@ namespace UnityEngine.AssetBundles
                 
             }
             else if (selectedNodes.Count > 1)
-            {
+            { 
                 menu.AddItem(new GUIContent("Move duplicates shared by selected"), false, DedupeOverlappedBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Move duplicates existing in any selected"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Delete multiple bundles"), false, DeleteBundles, selectedNodes);
@@ -173,6 +185,19 @@ namespace UnityEngine.AssetBundles
         {
             AssetBundleModel.Model.ForceReloadData(this);
         }
+
+        void CreateNewSiblingFolder(object context)
+        {
+            var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
+            if (selectedNodes != null && selectedNodes.Count > 0)
+            {
+                AssetBundleModel.BundleFolderConcreteInfo folder = null;
+                folder = selectedNodes[0].bundle.parent as AssetBundleModel.BundleFolderConcreteInfo;
+                CreateFolderUnderParent(folder);
+            }
+            else
+                Debug.LogError("could not add 'sibling' with no bundles selected");
+        }
         void CreateFolder(object context)
         {
             AssetBundleModel.BundleFolderConcreteInfo folder = null;
@@ -181,6 +206,10 @@ namespace UnityEngine.AssetBundles
             {
                 folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo;
             }
+            CreateFolderUnderParent(folder);
+        }
+        void CreateFolderUnderParent(AssetBundleModel.BundleFolderConcreteInfo folder)
+        {
             var newBundle = AssetBundleModel.Model.CreateEmptyBundleFolder(folder);
             ReloadAndSelect(newBundle.nameHashCode, true);
         }
@@ -193,6 +222,18 @@ namespace UnityEngine.AssetBundles
             }
         }
 
+        void CreateNewSiblingBundle(object context)
+        {
+            var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
+            if (selectedNodes != null && selectedNodes.Count > 0)
+            {
+                AssetBundleModel.BundleFolderConcreteInfo folder = null;
+                folder = selectedNodes[0].bundle.parent as AssetBundleModel.BundleFolderConcreteInfo;
+                CreateBundleUnderParent(folder);
+            }
+            else
+                Debug.LogError("could not add 'sibling' with no bundles selected");
+        }
         void CreateNewBundle(object context)
         {
             AssetBundleModel.BundleFolderConcreteInfo folder = null;
@@ -201,10 +242,28 @@ namespace UnityEngine.AssetBundles
             {
                 folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo;
             }
+            CreateBundleUnderParent(folder);
+        }
+
+        void CreateBundleUnderParent(AssetBundleModel.BundleFolderInfo folder)
+        {
             var newBundle = AssetBundleModel.Model.CreateEmptyBundle(folder);
             ReloadAndSelect(newBundle.nameHashCode, true);
         }
 
+
+        void CreateNewSiblingVariant(object context)
+        {
+            var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
+            if (selectedNodes != null && selectedNodes.Count > 0)
+            {
+                AssetBundleModel.BundleVariantFolderInfo folder = null;
+                folder = selectedNodes[0].bundle.parent as AssetBundleModel.BundleVariantFolderInfo;
+                CreateVariantUnderParent(folder);
+            }
+            else
+                Debug.LogError("could not add 'sibling' with no bundles selected");
+        }
         void CreateNewVariant(object context)
         {
             AssetBundleModel.BundleVariantFolderInfo folder = null;
@@ -212,11 +271,15 @@ namespace UnityEngine.AssetBundles
             if (selectedNodes != null && selectedNodes.Count == 1)
             {
                 folder = selectedNodes[0].bundle as AssetBundleModel.BundleVariantFolderInfo;
-                if (folder != null)
-                {
-                    var newBundle = AssetBundleModel.Model.CreateEmptyVariant(folder);
-                    ReloadAndSelect(newBundle.nameHashCode, true);
-                }
+                CreateVariantUnderParent(folder);
+            }
+        }
+        void CreateVariantUnderParent(AssetBundleModel.BundleVariantFolderInfo folder)
+        {
+            if (folder != null)
+            {
+                var newBundle = AssetBundleModel.Model.CreateEmptyVariant(folder);
+                ReloadAndSelect(newBundle.nameHashCode, true);
             }
         }
 

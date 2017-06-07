@@ -39,7 +39,9 @@ namespace UnityEngine.AssetBundles
             window.titleContent = new GUIContent("AssetBundles");
             window.Show();
         }
-        public bool multiOperation = true;
+
+        [SerializeField]
+        public bool multiOperation = false;
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
             //menu.AddSeparator(string.Empty);

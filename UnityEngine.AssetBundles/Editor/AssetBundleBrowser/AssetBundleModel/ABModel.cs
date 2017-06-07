@@ -391,7 +391,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             {
                 var message = "Failed to rename bundle named: ";
                 message += originalName.fullNativeName;
-                message += ".  Most likely this is due to this bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
+                message += ".  Most likely this is due to the bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
                 Debug.LogError(message);
             }
 
@@ -435,7 +435,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 {
                     var message = "Failed to delete bundle named: ";
                     message += name.fullNativeName;
-                    message += ".  Most likely this is due to this bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
+                    message += ".  Most likely this is due to the bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
                     Debug.LogError(message);
                 }
             }
