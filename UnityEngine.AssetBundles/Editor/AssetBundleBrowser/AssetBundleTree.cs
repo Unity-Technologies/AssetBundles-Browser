@@ -218,7 +218,7 @@ namespace UnityEngine.AssetBundles
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
             if (selectedNodes != null && selectedNodes.Count > 0)
             {
-                BeginRename(FindItem(selectedNodes[0].bundle.nameHashCode, rootItem), 0.1f);
+                BeginRename(FindItem(selectedNodes[0].bundle.nameHashCode, rootItem));
             }
         }
 
