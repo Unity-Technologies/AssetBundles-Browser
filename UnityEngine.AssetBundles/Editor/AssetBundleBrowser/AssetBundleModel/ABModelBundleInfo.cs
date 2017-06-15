@@ -309,7 +309,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_BundleDependencies.Clear();
 
             bool sceneInDependency = false;
-            var assets = AssetBundleModel.Model.Operation.GetAssetPathsFromAssetBundle(m_Name.fullNativeName);
+            var assets = AssetBundleModel.Model.DataSource.GetAssetPathsFromAssetBundle(m_Name.fullNativeName);
             foreach(var assetName in assets)
             {
                 var bundleName = Model.GetBundleName(assetName);
@@ -431,7 +431,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 if (ai == asset || m_ConcreteAssets.Contains(ai) || m_DependentAssets.Contains(ai))
                     continue;
 
-                var bundleName = AssetBundleModel.Model.Operation.GetImplicitAssetBundleName(ai.fullAssetName);
+                var bundleName = AssetBundleModel.Model.DataSource.GetImplicitAssetBundleName(ai.fullAssetName);
                 if (string.IsNullOrEmpty(bundleName))
                 {
                     m_DependentAssets.Add(ai);

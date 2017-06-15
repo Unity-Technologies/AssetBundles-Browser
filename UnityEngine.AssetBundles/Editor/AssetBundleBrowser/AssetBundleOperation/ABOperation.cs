@@ -1,21 +1,17 @@
-﻿using System;
-using UnityEngine;
-using UnityEditor;
-using UnityEngine.Assertions;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor.IMGUI.Controls;
+﻿using UnityEditor;
 
-namespace UnityEngine.AssetBundles.AssetBundleOperation
+namespace UnityEngine.AssetBundles.AssetBundleDataSource
 {
-    public struct ABBuildInfo {
+    public partial struct ABBuildInfo
+    {
         public string outputDirectory;
         public BuildAssetBundleOptions options;
         public BuildTarget buildTarget;
     }
 
-    public interface ABOperation
+    public partial interface ABDataSource
     {
+        //public static List<ABDataSource> CreateDataSources();
         string Name { get; }
         string ProviderName { get; }
 

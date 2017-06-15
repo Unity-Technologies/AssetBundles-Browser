@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 
@@ -13,7 +14,7 @@ namespace UnityEngine.AssetBundles
         {
             Browser,
             Builder,
-            //Inspect,
+            Inspect,
         }
         [SerializeField]
         Mode m_Mode;
@@ -41,15 +42,15 @@ namespace UnityEngine.AssetBundles
         }
 
         [SerializeField]
-        public bool multiOperation = false;
+        public bool multiDataSource = false;
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
             //menu.AddSeparator(string.Empty);
-            menu.AddItem(new GUIContent("Custom Sources"), multiOperation, FlipOperation);
+            menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
         }
-        public void FlipOperation()
+        public void FlipDataSource()
         {
-            multiOperation = !multiOperation;
+            multiDataSource = !multiDataSource;
         }
 
         private void OnEnable()
@@ -62,14 +63,24 @@ namespace UnityEngine.AssetBundles
             if(m_BuildTab == null)
                 m_BuildTab = new AssetBundleBuildTab();
             m_BuildTab.OnEnable(subPos, this);
+            //if (m_InspectTab == null)
+            //    m_InspectTab = new AssetBundleInspectTab();
+            //m_InspectTab.OnEnable(subPos, this);
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
+
+
+            //determine if we are "multi source" or not...
+            multiDataSource = false;
+            List<System.Type> types = AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes;
+            if (types.Count > 1)
+                multiDataSource = true;
         }
 
         private Rect GetSubWindowArea()
         {
             float padding = k_MenubarPadding;
-            if (multiOperation)
+            if (multiDataSource)
                 padding += k_MenubarPadding * 0.5f;
             Rect subPos = new Rect(0, padding, position.width, position.height - padding);
             return subPos;
@@ -81,6 +92,9 @@ namespace UnityEngine.AssetBundles
             {
                 case Mode.Builder:
                     //m_BuildTab.Update();
+                    break;
+                case Mode.Inspect:
+                    //m_InspectTab.Update();
                     break;
                 case Mode.Browser:
                 default:
@@ -97,6 +111,9 @@ namespace UnityEngine.AssetBundles
             {
                 case Mode.Builder:
                     m_BuildTab.OnGUI(GetSubWindowArea());
+                    break;
+                case Mode.Inspect:
+                    //m_InspectTab.OnGUI(GetSubWindowArea());
                     break;
                 case Mode.Browser:
                 default:
@@ -120,11 +137,11 @@ namespace UnityEngine.AssetBundles
                 GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
             }
             float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
-            string[] labels = new string[2] { "Configure", "Build" };
+            string[] labels = new string[2] { "Configure", "Build" };//, "Inspect" }; 
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
-            if(multiOperation)
+            if(multiDataSource)
             {
                 //GUILayout.BeginArea(r);
                 GUILayout.BeginHorizontal();
@@ -133,30 +150,33 @@ namespace UnityEngine.AssetBundles
                 {
                     GUILayout.Label("Bundle Data Source:");
                     GUILayout.FlexibleSpace();
-                    var c = new GUIContent(string.Format("{0} ({1})", AssetBundleModel.Model.Operation.Name, AssetBundleModel.Model.Operation.ProviderName), "Select Asset Bundle Set");
+                    var c = new GUIContent(string.Format("{0} ({1})", AssetBundleModel.Model.DataSource.Name, AssetBundleModel.Model.DataSource.ProviderName), "Select Asset Bundle Set");
                     if (GUILayout.Button(c , EditorStyles.toolbarPopup) )
                     {
                         GenericMenu menu = new GenericMenu();
                         bool firstItem = true;
 
-                        foreach (var info in AssetBundleOperation.ABOperationProviderUtility.CustomABOperationProviderTypes)
+                        foreach (var info in AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes)
                         {
-                            var newProvider = info.CreateInstance();
+                            List<AssetBundleDataSource.ABDataSource> dataSourceList = null;
+                            dataSourceList = info.GetMethod("CreateDataSources").Invoke(null, null) as List<AssetBundleDataSource.ABDataSource>;
+                        
+
+                            if (dataSourceList == null)
+                                continue;
 
                             if (!firstItem)
                             {
                                 menu.AddSeparator("");
                             }
 
-                            for (int i = 0; i < newProvider.GetABOperationCount(); ++i)
+                            foreach (var ds in dataSourceList)
                             {
-                                var op = newProvider.CreateOperation(i);
-
-                                menu.AddItem(new GUIContent(string.Format("{0} ({1})", op.Name, op.ProviderName)), false,
+                                menu.AddItem(new GUIContent(string.Format("{0} ({1})", ds.Name, ds.ProviderName)), false,
                                     () =>
                                     {
-                                        var thisOperation = op;
-                                        AssetBundleModel.Model.Operation = thisOperation;
+                                        var thisDataSource = ds;
+                                        AssetBundleModel.Model.DataSource = thisDataSource;
                                         m_ManageTab.ForceReloadData();
                                     }
                                 );
@@ -165,11 +185,11 @@ namespace UnityEngine.AssetBundles
                             firstItem = false;
                         }
 
-                        menu.DropDown(new Rect(4f, 8f, 0f, 0f));
+                        menu.ShowAsContext();
                     }
 
                     GUILayout.FlexibleSpace();
-                    if (AssetBundleModel.Model.Operation.IsReadOnly())
+                    if (AssetBundleModel.Model.DataSource.IsReadOnly())
                     {
                         GUIStyle tbLabel = new GUIStyle(EditorStyles.toolbar);
                         tbLabel.alignment = TextAnchor.MiddleRight;

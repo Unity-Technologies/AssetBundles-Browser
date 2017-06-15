@@ -3,7 +3,7 @@ using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
 
-using UnityEngine.AssetBundles.AssetBundleOperation;
+using UnityEngine.AssetBundles.AssetBundleDataSource;
 
 namespace UnityEngine.AssetBundles
 {
@@ -124,7 +124,7 @@ namespace UnityEngine.AssetBundles
             GUILayout.BeginVertical();
 
             // build target
-            using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.Operation.CanSpecifyBuildTarget)) {
+            using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.DataSource.CanSpecifyBuildTarget)) {
                 ValidBuildTarget tgt = (ValidBuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_BuildTarget);
                 if (tgt != m_BuildTarget)
                 {
@@ -141,7 +141,7 @@ namespace UnityEngine.AssetBundles
 
 
             ////output path
-            using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.Operation.CanSpecifyBuildOutputDirectory)) {
+            using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.DataSource.CanSpecifyBuildOutputDirectory)) {
                 EditorGUILayout.Space();
                 GUILayout.BeginHorizontal();
                 var newPath = EditorGUILayout.TextField("Output Path", m_OutputPath);
@@ -182,7 +182,7 @@ namespace UnityEngine.AssetBundles
             }
 
             // advanced options
-            using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.Operation.CanSpecifyBuildOptions)) {
+            using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.DataSource.CanSpecifyBuildOptions)) {
                 EditorGUILayout.Space();
                 m_AdvancedSettings = EditorGUILayout.Foldout(m_AdvancedSettings, "Advanced Settings");
                 if(m_AdvancedSettings)
@@ -228,7 +228,7 @@ namespace UnityEngine.AssetBundles
 
         private void ExecuteBuild()
         {
-            if (AssetBundleModel.Model.Operation.CanSpecifyBuildOutputDirectory) {
+            if (AssetBundleModel.Model.DataSource.CanSpecifyBuildOutputDirectory) {
                 if (string.IsNullOrEmpty(m_OutputPath))
                     BrowseForFolder();
 
@@ -267,7 +267,7 @@ namespace UnityEngine.AssetBundles
 
             BuildAssetBundleOptions opt = BuildAssetBundleOptions.None;
 
-            if (AssetBundleModel.Model.Operation.CanSpecifyBuildOptions) {
+            if (AssetBundleModel.Model.DataSource.CanSpecifyBuildOptions) {
                 if (m_Compression == CompressOptions.Uncompressed)
                     opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
                 else if (m_Compression == CompressOptions.ChunkBasedCompression)
@@ -285,7 +285,7 @@ namespace UnityEngine.AssetBundles
             buildInfo.options = opt;
             buildInfo.buildTarget = (BuildTarget)m_BuildTarget;
 
-            AssetBundleModel.Model.Operation.BuildAssetBundles (buildInfo);
+            AssetBundleModel.Model.DataSource.BuildAssetBundles (buildInfo);
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 

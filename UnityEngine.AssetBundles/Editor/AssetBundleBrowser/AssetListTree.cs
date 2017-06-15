@@ -248,8 +248,8 @@ namespace UnityEngine.AssetBundles
         }
         protected bool IsValidDragDrop(DragAndDropArgs args)
         {
-            //can't do drag & drop if operation is read only
-            if (AssetBundles.AssetBundleModel.Model.Operation.IsReadOnly ())
+            //can't do drag & drop if data source is read only
+            if (AssetBundles.AssetBundleModel.Model.DataSource.IsReadOnly ())
                 return false;
 
             //can't drag onto none or >1 bundles
@@ -292,7 +292,7 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
-            if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+            if (AssetBundleModel.Model.DataSource.IsReadOnly ()) {
                 return;
             }
 

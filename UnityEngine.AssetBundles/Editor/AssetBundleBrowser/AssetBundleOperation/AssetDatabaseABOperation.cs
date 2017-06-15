@@ -6,10 +6,18 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-namespace UnityEngine.AssetBundles.AssetBundleOperation
+namespace UnityEngine.AssetBundles.AssetBundleDataSource
 {
-    public class AssetDatabaseABOperation : ABOperation
+    public class AssetDatabaseABDataSource : ABDataSource
     {
+        public static List<ABDataSource> CreateDataSources()
+        {
+            var op = new AssetDatabaseABDataSource();
+            var retList = new List<ABDataSource>();
+            retList.Add(op);
+            return retList;
+        }
+
         public string Name {
             get {
                 return "Default";
@@ -73,17 +81,6 @@ namespace UnityEngine.AssetBundles.AssetBundleOperation
             BuildPipeline.BuildAssetBundles(info.outputDirectory, info.options, info.buildTarget);
 
             return true;
-        }
-    }
-
-    [CustomABOperationProvider("Default", 0)]
-    public class AssetDatabaseABOperationProvider : ABOperationProvider
-    {
-        public int GetABOperationCount () {
-            return 1;
-        }
-        public ABOperation CreateOperation(int index) {
-            return new AssetDatabaseABOperation ();
         }
     }
 }

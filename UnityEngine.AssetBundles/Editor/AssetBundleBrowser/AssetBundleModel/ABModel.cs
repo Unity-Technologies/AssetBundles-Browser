@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-using UnityEngine.AssetBundles.AssetBundleOperation;
+using UnityEngine.AssetBundles.AssetBundleDataSource;
 
 namespace UnityEngine.AssetBundles.AssetBundleModel
 {
@@ -16,7 +16,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         const string k_NewVariantBaseName = "newvariant";
         public static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
 
-        private static ABOperation m_Operation;
+        private static ABDataSource m_DataSource;
         private static BundleFolderConcreteInfo m_RootLevelBundles = new BundleFolderConcreteInfo("", null);
         private static List<ABMoveData> m_MoveData = new List<ABMoveData>();
         private static List<BundleInfo> m_BundlesToUpdate = new List<BundleInfo>();
@@ -32,14 +32,14 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         static private Texture2D m_bundleIcon = null;
         static private Texture2D m_sceneIcon = null;
 
-        public static ABOperation Operation {
+        public static ABDataSource DataSource {
             get {
-                if (m_Operation == null) {
-                    m_Operation = new AssetDatabaseABOperation ();
+                if (m_DataSource == null) {
+                    m_DataSource = new AssetDatabaseABDataSource ();
                 }
-                return m_Operation;
+                return m_DataSource;
             }
-            set { m_Operation = value; }
+            set { m_DataSource = value; }
         }
 
         public static bool Update()
@@ -128,7 +128,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static string[] ValidateBundleList()
         {
-            var bundleList = Operation.GetAllAssetBundleNames();
+            var bundleList = DataSource.GetAllAssetBundleNames();
             bool valid = true;
             HashSet<string> bundleSet = new HashSet<string>();
             int index = 0;
@@ -159,12 +159,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            if (!Operation.IsReadOnly ()) {
-                                Operation.RemoveUnusedAssetBundleNames();
+                            if (!DataSource.IsReadOnly ()) {
+                                DataSource.RemoveUnusedAssetBundleNames();
                             }
                             index = 0;
                             bundleSet.Clear();
-                            bundleList = Operation.GetAllAssetBundleNames();
+                            bundleList = DataSource.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -183,12 +183,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            if (!Operation.IsReadOnly ()) {
-                                Operation.RemoveUnusedAssetBundleNames();
+                            if (!DataSource.IsReadOnly ()) {
+                                DataSource.RemoveUnusedAssetBundleNames();
                             }
                             index = 0;
                             bundleSet.Clear();
-                            bundleList = Operation.GetAllAssetBundleNames();
+                            bundleList = DataSource.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -541,8 +541,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
             public void Apply()
             {
-                if (!Operation.IsReadOnly ()) {
-                    Operation.SetAssetBundleNameAndVariant(assetName, bundleName, variantName);
+                if (!DataSource.IsReadOnly ()) {
+                    DataSource.SetAssetBundleNameAndVariant(assetName, bundleName, variantName);
                 }
             }
         }
@@ -584,8 +584,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     EditorPrefs.SetBool("kAutoRefresh", autoRefresh);
                     m_MoveData.Clear();
                 }
-                if (!Operation.IsReadOnly ()) {
-                    Operation.RemoveUnusedAssetBundleNames();
+                if (!DataSource.IsReadOnly ()) {
+                    DataSource.RemoveUnusedAssetBundleNames();
                 }
                 Refresh();
             }
@@ -644,7 +644,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         internal static string GetBundleName(string asset)
         {
-            return Operation.GetAssetBundleName (asset);
+            return DataSource.GetAssetBundleName (asset);
         }
 
         public static int RegisterAsset(AssetInfo asset, string bundle)

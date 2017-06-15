@@ -114,7 +114,7 @@ namespace UnityEngine.AssetBundles
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
             GenericMenu menu = new GenericMenu();
 
-            if (!AssetBundleModel.Model.Operation.IsReadOnly ()) {
+            if (!AssetBundleModel.Model.DataSource.IsReadOnly ()) {
                 menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
                 menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
             }
@@ -125,7 +125,7 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
-            if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+            if (AssetBundleModel.Model.DataSource.IsReadOnly ()) {
                 return;
             }
 
@@ -405,7 +405,7 @@ namespace UnityEngine.AssetBundles
             DragAndDropVisualMode visualMode = DragAndDropVisualMode.None;
             DragAndDropData data = new DragAndDropData(args);
             
-            if (AssetBundleModel.Model.Operation.IsReadOnly ()) {
+            if (AssetBundleModel.Model.DataSource.IsReadOnly ()) {
                 return DragAndDropVisualMode.Rejected;
             }
 

@@ -1,161 +1,42 @@
 ﻿using System;
-using UnityEngine;
-using UnityEditor;
-using UnityEngine.Assertions;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.IMGUI.Controls;
 using System.Reflection;
 
-namespace UnityEngine.AssetBundles.AssetBundleOperation
+namespace UnityEngine.AssetBundles.AssetBundleDataSource
 {
-    public interface ABOperationProvider
-    {
-        int GetABOperationCount ();
-        ABOperation CreateOperation(int index);
-    }
+    public class ABDataSourceProviderUtility {
 
-    /**
-     * Used to declare the class is used as an ABOperation. 
-     * Classes with CustomABOperation attribute must implement ABOperation interface.
-     */ 
-    [AttributeUsage(AttributeTargets.Class)] 
-    public class CustomABOperationProvider : Attribute {
+        private static List<Type> s_customNodes;
 
-        private string m_name;
-        private int m_orderPriority;
-
-        public static readonly int kDEFAULT_PRIORITY = 1000;
-
-        public string Name {
-            get {
-                return m_name;
-            }
-        }
-
-        public int OrderPriority {
-            get {
-                return m_orderPriority;
-            }
-        }
-
-        public CustomABOperationProvider (string name) {
-            m_name = name;
-            m_orderPriority = kDEFAULT_PRIORITY;
-        }
-
-        public CustomABOperationProvider (string name, int orderPriority) {
-            m_name = name;
-            m_orderPriority = orderPriority;
-        }
-    }
-
-    public struct CustomABOperationProviderInfo : IComparable {
-        public CustomABOperationProvider provider;
-        public Type type;
-
-        public CustomABOperationProviderInfo(Type t, CustomABOperationProvider p) {
-            provider = p;
-            type = t;
-        }
-
-        public ABOperationProvider CreateInstance() {
-            string typeName = type.FullName;
-
-            object o = Assembly.GetExecutingAssembly().CreateInstance(typeName);
-            return (ABOperationProvider) o;
-        }
-
-        public int CompareTo(object obj) {
-            if (obj == null) {
-                return 1;
-            }
-
-            CustomABOperationProviderInfo rhs = (CustomABOperationProviderInfo)obj;
-            return provider.OrderPriority - rhs.provider.OrderPriority;
-        }
-    }
-
-    public class ABOperationProviderUtility {
-
-        private static List<CustomABOperationProviderInfo> s_customNodes;
-
-        public static List<CustomABOperationProviderInfo> CustomABOperationProviderTypes {
+        public static List<Type> CustomABDataSourceTypes {
             get {
                 if(s_customNodes == null) {
-                    s_customNodes = BuildCustomABOperationProviderList();
+                    s_customNodes = BuildCustomABDataSourceList();
                 }
                 return s_customNodes;
             }
         }
 
-        private static List<CustomABOperationProviderInfo> BuildCustomABOperationProviderList() {
-            var list = new List<CustomABOperationProviderInfo>();
-
-            var nodes = Assembly
+        private static List<Type> BuildCustomABDataSourceList() {
+            var list = new List<Type>(Assembly
                 .GetExecutingAssembly()
                 .GetTypes()
-                .Where(t => t != typeof(ABOperationProvider))
-                .Where(t => typeof(ABOperationProvider).IsAssignableFrom(t));
+                .Where(t => t != typeof(ABDataSource))
+                .Where(t => typeof(ABDataSource).IsAssignableFrom(t)) );
 
-            foreach (var type in nodes) {
-                CustomABOperationProvider attr = 
-                    type.GetCustomAttributes(typeof(CustomABOperationProvider), false).FirstOrDefault() as CustomABOperationProvider;
 
-                if (attr != null) {
-                    list.Add(new CustomABOperationProviderInfo(type, attr));
-                }
+            var properList = new List<Type>();
+            properList.Add(null); //empty spot for "default" 
+            for(int count = 0; count < list.Count; count++)
+            {
+                if(list[count].Name == "AssetDatabaseABDataSource")
+                    properList[0] = list[count];
+                else
+                    properList.Add(list[count]);
             }
 
-            list.Sort();
-
-            return list;
-        }
-
-        public static bool HasValidCustomABOperationProviderAttribute(Type t) {
-            CustomABOperationProvider attr = 
-                t.GetCustomAttributes(typeof(CustomABOperationProvider), false).FirstOrDefault() as CustomABOperationProvider;
-            return attr != null && !string.IsNullOrEmpty(attr.Name);
-        }
-
-        public static string GetABOperationProviderName(ABOperationProvider provider) {
-            CustomABOperationProvider attr = 
-                provider.GetType().GetCustomAttributes(typeof(CustomABOperationProvider), false).FirstOrDefault() as CustomABOperationProvider;
-            if(attr != null) {
-                return attr.Name;
-            }
-            return string.Empty;
-        }
-
-        public static string GetABOperationProviderName(string className) {
-            var type = Type.GetType(className);
-            if(type != null) {
-                CustomABOperationProvider attr = 
-                    Type.GetType(className).GetCustomAttributes(typeof(CustomABOperationProvider), false).FirstOrDefault() as CustomABOperationProvider;
-                if(attr != null) {
-                    return attr.Name;
-                }
-            }
-            return string.Empty;
-        }
-
-        public static int GetABOperationProviderOrderPriority(string className) {
-            var type = Type.GetType(className);
-            if(type != null) {
-                CustomABOperationProvider attr = 
-                    Type.GetType(className).GetCustomAttributes(typeof(CustomABOperationProvider), false).FirstOrDefault() as CustomABOperationProvider;
-                if(attr != null) {
-                    return attr.OrderPriority;
-                }
-            }
-            return CustomABOperationProvider.kDEFAULT_PRIORITY;
-        }
-
-        public static ABOperationProvider CreateABOperationProviderInstance(string className) {
-            if(className != null) {
-                return (ABOperationProvider) Assembly.GetExecutingAssembly().CreateInstance(className);
-            }
-            return null;
+            return properList;
         }
     }
 }
