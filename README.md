@@ -72,6 +72,9 @@ Lower right hand pane showing details of the asset(s) selected in the Asset List
 ### Troubleshooting
 * *Can't rename or delet a specific bundle.*  This is occasionally caused when first adding this tool to an existing project.  Please force a reimport of your assets through the Unity menu system to refresh the data. 
 
+### External Tool Integration
+Other tools that generate asset bundle data can choose to integrate with the browser. Currently the primary example is the [Asset Bundle Graph Tool](https://bitbucket.org/Unity-Technologies/assetbundlegraphtool).  If integrations are detected, then a selection bar will appear near the top of the browser.  It will allow you to select the Default data source (Unity's AssetDatabase) or an integrated tool. If none are detected, the selector is not present, though you can add it by right-clicking on the tab header and selecting "Custom Sources".  
+
 # Usage - Build
 The Build tab provides basic build functionality to get you started using asset bundles.  In most profressional scenarios, users will end up needing a more advanced build setup.  All are welcome to use the build code in this tool as a starting point for writing their own once this no longer meets their needs.  Interface:
 * *Build Target* - Platform the bundles will be built for
