@@ -67,6 +67,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
     public class AssetInfo
     {
         public bool isScene { get; set; }
+        public bool isFolder { get; set; }
         public long fileSize;
 
         private HashSet<string> m_Parents;
@@ -81,6 +82,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             m_BundleName = bundleName;
             m_Parents = new HashSet<string>();
             isScene = false;
+            isFolder = false;
         }
 
         public string fullAssetName
@@ -133,9 +135,15 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             {
                 var message = displayName + "\n";
                 if (isScene)
-                    message += "Is a scene that is in a bundle with other assets. Scene bundles must have a single scene as the only asset.";
+                    message += "Is a scene that is in a bundle with non-scene assets. Scene bundles must have only one or more scene assets.";
                 else
-                    message += "Is included in a bundle with a scene. Scene bundles must have a single scene as the only asset.";
+                    message += "Is included in a bundle with a scene. Scene bundles must have only one or more scene assets.";
+                messages.Add(new MessageSystem.Message(message, MessageType.Error));
+            }
+            if(IsMessageSet(MessageSystem.MessageFlag.DependencySceneConflict))
+            {
+                var message = displayName + "\n";
+                message += MessageSystem.GetMessage(MessageSystem.MessageFlag.DependencySceneConflict).message;
                 messages.Add(new MessageSystem.Message(message, MessageType.Error));
             }
             if (IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))

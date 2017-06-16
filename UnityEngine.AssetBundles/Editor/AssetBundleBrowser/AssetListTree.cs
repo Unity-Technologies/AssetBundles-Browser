@@ -276,14 +276,23 @@ namespace UnityEngine.AssetBundles
             if(data.IsEmpty())
                 return true;
 
+
             if (data.isSceneBundle)
-                return false;
-
-
-            foreach (var assetPath in DragAndDrop.paths)
             {
-                if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(SceneAsset))
-                    return false;
+                foreach (var assetPath in DragAndDrop.paths)
+                {
+                    if ((AssetDatabase.GetMainAssetTypeAtPath(assetPath) != typeof(SceneAsset)) &&
+                        (!AssetDatabase.IsValidFolder(assetPath)))
+                        return false;
+                }
+            }
+            else
+            {
+                foreach (var assetPath in DragAndDrop.paths)
+                {
+                    if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(SceneAsset))
+                        return false;
+                }
             }
 
             return true;

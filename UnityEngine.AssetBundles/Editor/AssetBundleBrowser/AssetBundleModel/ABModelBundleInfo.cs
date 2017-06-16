@@ -307,16 +307,31 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
             m_DependentAssets.Clear();
             m_BundleDependencies.Clear();
-
-            bool sceneInDependency = false;
+            
+            bool assetInBundle = false;
+            bool sceneError = false;
             var assets = AssetBundleModel.Model.DataSource.GetAssetPathsFromAssetBundle(m_Name.fullNativeName);
             foreach(var assetName in assets)
             {
+                if (AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset))
+                {
+                    m_IsSceneBundle = true;
+                    if(assetInBundle)
+                        sceneError = true;
+                }
+                else
+                {
+                    assetInBundle = true;
+                    if (m_IsSceneBundle)
+                        sceneError = true;
+                }
+
                 var bundleName = Model.GetBundleName(assetName);
                 if (bundleName == string.Empty)  
                 {
                     ///we get here if the current asset is only added due to being in an explicitly added folder
                     
+
                     var partialPath = assetName;
                     while(
                         partialPath != string.Empty && 
@@ -329,24 +344,14 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     if(bundleName != string.Empty)
                     {
                         var folderAsset = Model.CreateAsset(partialPath, bundleName);
+                        folderAsset.isFolder = true;
                         if (m_ConcreteAssets.FindIndex(a => a.displayName == folderAsset.displayName) == -1)
                         {
                             m_ConcreteAssets.Add(folderAsset);
                         }
-
+                        
                         m_DependentAssets.Add(Model.CreateAsset(assetName, folderAsset));
                         m_TotalSize += m_DependentAssets.Last().fileSize;
-
-                        if (AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset))
-                        {
-                            m_IsSceneBundle = true;
-                            if(sceneInDependency)
-                            {
-                                //we've hit more than one.  
-                                m_BundleMessages.SetFlag(MessageSystem.MessageFlag.DependencySceneConflict, true);
-                            }
-                            sceneInDependency = true;
-                        }
                     }
                 }
                 else
@@ -364,14 +369,23 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 }
             }
             
-            if(isSceneBundle && m_ConcreteAssets.Count > 1)
+            if(sceneError)
             {
-                m_BundleMessages.SetFlag(MessageSystem.MessageFlag.SceneBundleConflict, true);
                 foreach (var asset in m_ConcreteAssets)
                 {
-                    asset.SetMessageFlag(MessageSystem.MessageFlag.SceneBundleConflict, true);
+                    if (asset.isFolder)
+                    {
+                        asset.SetMessageFlag(MessageSystem.MessageFlag.DependencySceneConflict, true);
+                        m_BundleMessages.SetFlag(MessageSystem.MessageFlag.DependencySceneConflict, true);
+                    }
+                    else
+                    {
+                        asset.SetMessageFlag(MessageSystem.MessageFlag.SceneBundleConflict, true);
+                        m_BundleMessages.SetFlag(MessageSystem.MessageFlag.SceneBundleConflict, true);
+                    }
                 }
             }
+
 
             m_ConcreteCounter = 0;
             m_DependentCounter = 0;
