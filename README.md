@@ -22,7 +22,7 @@ Left hand pane showing a list of all bundles in the project.  Available function
 * Bundles with variants are a darker grey and can be expanded to show the list of variants.
 * Right-click or slow-double-click to rename bundle or bundle folder.
 * If a bundle has any error, warning, or info message, an icon will appear on the right side.  Mouse over the icon for more information.
-* If a bundle has a scene in it (making it a scene bundle) and anything else explicitly included, it will be marked as having an error. This bundle will not build until fixed.
+* If a bundle has at least one scene in it (making it a scene bundle) and non-scene assets explicitly included, it will be marked as having an error. This bundle will not build until fixed.
 * Bundles with duplicated assets will be marked with a warning (more information on duplication in Asset List section below)
 * Empty bundles will be marked with an info message.  For a number of reasons, empty bundles are not very stable and can dissapear from this list at times.
 * Folders of bundles will be marked with the highest message from the contained bundles.
@@ -31,7 +31,7 @@ Left hand pane showing a list of all bundles in the project.  Available function
   * Right click on multiple bundles to either move the assets from all selected bundles that are duplicates into a new bundle, or only those that are shared within the selection.
   * You can also drag duplicate assets out of the Asset List pane into the Bundle List to explicitly include them in a bundle.  More info on this in the Asset List feature set below.
 * Right click or hit DEL to delete bundles.
-* Drag bundles around to move them into and out of folders, or merge them (if none are scene bundles).
+* Drag bundles around to move them into and out of folders, or merge them.
 * Drag assets from the Project Explorer onto bundels to add them.
 * Drag assets onto empty space to create a new bundle.
 * Right click to create new bundles or bundle folders.
@@ -55,7 +55,7 @@ Upper right hand pane providing a list of assets contained in whichever bundles 
   * Note that this list of implicit includes can be incomplete.  There are known issues with materials and textures not always showing up correctly.
   * As multiple assets can share dependencies, it is common for a given asset to be implicitly included in multiple bundles.  If the tool detects this case, it will mark both the bundle and the asset in question with a warning icon.
   * To fix the duplicate-inclusion warnings, you can manually move assets into a new bundle or right click the bundle and selecting one of the "Move duplicate" options.
-* Drag assets from the Project Explorer into this view to add them to the selected bundle. This is only valid if only one bundle is selected, and it is not a scene bundle
+* Drag assets from the Project Explorer into this view to add them to the selected bundle. This is only valid if only one bundle is selected, and the asset type is compatable (scenes onto scene bundles, etc.) 
 * Drag assets (explicit or implicit) from the Asset List into the Bundle List (to add them to different bundles, or a newly created bundle).
 * Right click or hit DEL to remove assets from bundles (does not remove assets from project).
 * Select or double-click assets to reveal them in the Project Explorer.
