@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
+using UnityEngine.AssetBundles.AssetBundleDataSource;
+
 namespace UnityEngine.AssetBundles.AssetBundleModel
 {
     public class Model
@@ -14,6 +16,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         const string k_NewVariantBaseName = "newvariant";
         public static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
 
+        private static ABDataSource m_DataSource;
         private static BundleFolderConcreteInfo m_RootLevelBundles = new BundleFolderConcreteInfo("", null);
         private static List<ABMoveData> m_MoveData = new List<ABMoveData>();
         private static List<BundleInfo> m_BundlesToUpdate = new List<BundleInfo>();
@@ -28,6 +31,16 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         static private Texture2D m_folderIcon = null;
         static private Texture2D m_bundleIcon = null;
         static private Texture2D m_sceneIcon = null;
+
+        public static ABDataSource DataSource {
+            get {
+                if (m_DataSource == null) {
+                    m_DataSource = new AssetDatabaseABDataSource ();
+                }
+                return m_DataSource;
+            }
+            set { m_DataSource = value; }
+        }
 
         public static bool Update()
         {
@@ -115,7 +128,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static string[] ValidateBundleList()
         {
-            var bundleList = AssetDatabase.GetAllAssetBundleNames();
+            var bundleList = DataSource.GetAllAssetBundleNames();
             bool valid = true;
             HashSet<string> bundleSet = new HashSet<string>();
             int index = 0;
@@ -146,10 +159,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            AssetDatabase.RemoveUnusedAssetBundleNames();
+                            if (!DataSource.IsReadOnly ()) {
+                                DataSource.RemoveUnusedAssetBundleNames();
+                            }
                             index = 0;
                             bundleSet.Clear();
-                            bundleList = AssetDatabase.GetAllAssetBundleNames();
+                            bundleList = DataSource.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -168,10 +183,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            AssetDatabase.RemoveUnusedAssetBundleNames();
+                            if (!DataSource.IsReadOnly ()) {
+                                DataSource.RemoveUnusedAssetBundleNames();
+                            }
                             index = 0;
                             bundleSet.Clear();
-                            bundleList = AssetDatabase.GetAllAssetBundleNames();
+                            bundleList = DataSource.GetAllAssetBundleNames();
                             attemptedBundleReset = true;
                             continue;
                         }
@@ -352,6 +369,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static bool HandleBundleRename(BundleTreeItem item, string newName)
         {
+            var originalName = new BundleNameData(item.bundle.m_Name.fullNativeName);
+
             var findDot = newName.LastIndexOf('.');
             var findSlash = newName.LastIndexOf('/');
             var findBSlash = newName.LastIndexOf('\\');
@@ -366,6 +385,16 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
 
             ExecuteAssetMove();
+
+            var node = FindBundle(originalName);
+            if (node != null)
+            {
+                var message = "Failed to rename bundle named: ";
+                message += originalName.fullNativeName;
+                message += ".  Most likely this is due to the bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
+                Debug.LogError(message);
+            }
+
             return result;  
         }
 
@@ -390,11 +419,58 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static void HandleBundleDelete(IEnumerable<BundleInfo> bundles)
         {
+            var nameList = new List<BundleNameData>();
             foreach (var bundle in bundles)
             {
+                nameList.Add(bundle.m_Name);
                 bundle.HandleDelete(true);
             }
             ExecuteAssetMove();
+
+            //check to see if any bundles are still there...
+            foreach(var name in nameList)
+            {
+                var node = FindBundle(name);
+                if(node != null)
+                {
+                    var message = "Failed to delete bundle named: ";
+                    message += name.fullNativeName;
+                    message += ".  Most likely this is due to the bundle being assigned to a folder in your Assets directory, AND that folder is either empty or only contains assets that are explicitly assigned elsewhere.";
+                    Debug.LogError(message);
+                }
+            }
+        }
+
+        public static BundleInfo FindBundle(BundleNameData name)
+        {
+            BundleInfo currNode = m_RootLevelBundles;
+            foreach (var token in name.pathTokens)
+            {
+                if(currNode is BundleFolderInfo)
+                {
+                    currNode = (currNode as BundleFolderInfo).GetChild(token);
+                    if (currNode == null)
+                        return null;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            if(currNode is BundleFolderInfo)
+            {
+                currNode = (currNode as BundleFolderInfo).GetChild(name.shortName);
+                if(currNode is BundleVariantFolderInfo)
+                {
+                    currNode = (currNode as BundleVariantFolderInfo).GetChild(name.variant);
+                }
+                return currNode;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public static BundleInfo HandleDedupeBundles(IEnumerable<BundleInfo> bundles, bool onlyOverlappedAssets)
@@ -465,7 +541,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
             public void Apply()
             {
-                AssetImporter.GetAtPath(assetName).SetAssetBundleNameAndVariant(bundleName, variantName);
+                if (!DataSource.IsReadOnly ()) {
+                    DataSource.SetAssetBundleNameAndVariant(assetName, bundleName, variantName);
+                }
             }
         }
         public static void MoveAssetToBundle(AssetInfo asset, string bundleName, string variant)
@@ -506,7 +584,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     EditorPrefs.SetBool("kAutoRefresh", autoRefresh);
                     m_MoveData.Clear();
                 }
-                AssetDatabase.RemoveUnusedAssetBundleNames();
+                if (!DataSource.IsReadOnly ()) {
+                    DataSource.RemoveUnusedAssetBundleNames();
+                }
                 Refresh();
             }
         }
@@ -564,13 +644,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         internal static string GetBundleName(string asset)
         {
-            var importer = AssetImporter.GetAtPath(asset);
-            if (importer == null)
-                return string.Empty;
-            var bundleName = importer.assetBundleName;
-            if (importer.assetBundleVariant.Length > 0)
-                bundleName = bundleName + "." + importer.assetBundleVariant;
-            return bundleName;
+            return DataSource.GetAssetBundleName (asset);
         }
 
         public static int RegisterAsset(AssetInfo asset, string bundle)

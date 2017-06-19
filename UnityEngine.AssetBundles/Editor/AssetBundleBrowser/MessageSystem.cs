@@ -190,8 +190,8 @@ namespace UnityEngine.AssetBundles
             m_MessageLookup.Add(MessageFlag.AssetsDuplicatedInMultBundles, new Message("Assets being pulled into this bundle due to dependencies are also being pulled into another bundle.  This will cause duplication in memory", MessageType.Warning));
             m_MessageLookup.Add(MessageFlag.VariantBundleMismatch, new Message("Variants of a given bundle must have exactly the same assets between them based on a Name.Extension (without Path) comparison. These bundle variants fail that check.", MessageType.Warning));
             m_MessageLookup.Add(MessageFlag.ErrorInChildren, new Message("Error in child(ren)", MessageType.Error));
-            m_MessageLookup.Add(MessageFlag.SceneBundleConflict, new Message("A bundle with a scene must only contain that one scene.  This bundle has more than one explicitly added bundles.", MessageType.Error));
-            m_MessageLookup.Add(MessageFlag.DependencySceneConflict, new Message("The folder added to this bundle has pulled in more than one scene which is not allowed.", MessageType.Error));
+            m_MessageLookup.Add(MessageFlag.SceneBundleConflict, new Message("A bundle with one or more scenes must only contain scenes.  This bundle has scenes and non-scene assets.", MessageType.Error));
+            m_MessageLookup.Add(MessageFlag.DependencySceneConflict, new Message("The folder added to this bundle has pulled in scenes and non-scene assets.  A bundle must only have one type or the other.", MessageType.Error));
         }
     }
 

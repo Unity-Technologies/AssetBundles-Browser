@@ -8,8 +8,8 @@ using System;
 
 namespace UnityEngine.AssetBundles
 {
-	internal class AssetListTree : TreeView
-	{
+    internal class AssetListTree : TreeView
+    {
         List<AssetBundleModel.BundleInfo> m_SourceBundles = new List<AssetBundleModel.BundleInfo>();
         AssetBundleManageTab m_Controller;
         List<UnityEngine.Object> m_EmptyObjectList = new List<Object>();
@@ -179,12 +179,12 @@ namespace UnityEngine.AssetBundles
         protected override void DoubleClickedItem(int id)
         {
             var assetItem = FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem;
-			if (assetItem != null)
-			{
-				Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
-				EditorGUIUtility.PingObject(o);
-				Selection.activeObject = o;
-			}
+            if (assetItem != null)
+            {
+                Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
+                EditorGUIUtility.PingObject(o);
+                Selection.activeObject = o;
+            }
         }
 
         protected override void SelectionChanged(IList<int> selectedIds)
@@ -248,6 +248,10 @@ namespace UnityEngine.AssetBundles
         }
         protected bool IsValidDragDrop(DragAndDropArgs args)
         {
+            //can't do drag & drop if data source is read only
+            if (AssetBundles.AssetBundleModel.Model.DataSource.IsReadOnly ())
+                return false;
+
             //can't drag onto none or >1 bundles
             if (m_SourceBundles.Count == 0 || m_SourceBundles.Count > 1)
                 return false;
@@ -272,14 +276,23 @@ namespace UnityEngine.AssetBundles
             if(data.IsEmpty())
                 return true;
 
+
             if (data.isSceneBundle)
-                return false;
-
-
-            foreach (var assetPath in DragAndDrop.paths)
             {
-                if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(SceneAsset))
-                    return false;
+                foreach (var assetPath in DragAndDrop.paths)
+                {
+                    if ((AssetDatabase.GetMainAssetTypeAtPath(assetPath) != typeof(SceneAsset)) &&
+                        (!AssetDatabase.IsValidFolder(assetPath)))
+                        return false;
+                }
+            }
+            else
+            {
+                foreach (var assetPath in DragAndDrop.paths)
+                {
+                    if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(SceneAsset))
+                        return false;
+                }
             }
 
             return true;
@@ -288,6 +301,10 @@ namespace UnityEngine.AssetBundles
 
         protected override void ContextClickedItem(int id)
         {
+            if (AssetBundleModel.Model.DataSource.IsReadOnly ()) {
+                return;
+            }
+
             List<AssetBundleModel.AssetTreeItem> selectedNodes = new List<AssetBundleModel.AssetTreeItem>();
             foreach(var nodeID in GetSelection())
             {

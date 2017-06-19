@@ -6,8 +6,8 @@ using System.Collections.Generic;
 namespace UnityEngine.AssetBundles
 {
     [System.Serializable]
-	public class AssetBundleManageTab 
-	{
+    public class AssetBundleManageTab 
+    {
         [SerializeField]
         TreeViewState m_BundleTreeState;
         [SerializeField]
@@ -33,8 +33,8 @@ namespace UnityEngine.AssetBundles
         float m_VerticalSplitterPercentRight;
         [SerializeField]
         float m_VerticalSplitterPercentLeft;
-        const float k_SplitterWidth = 3;
-        private static float m_UpdateDelay = 0;
+        const float k_SplitterWidth = 3f;
+        private static float m_UpdateDelay = 0f;
 
 
         EditorWindow m_Parent = null;
@@ -91,6 +91,8 @@ namespace UnityEngine.AssetBundles
 
         public void ForceReloadData()
         {
+            UpdateSelectedBundles(new List<AssetBundleModel.BundleInfo>());
+            SetSelectedItems(new List<AssetBundleModel.AssetInfo>());
             AssetBundleModel.Model.ForceReloadData(m_BundleTree);
             m_Parent.Repaint();
         }
@@ -143,12 +145,14 @@ namespace UnityEngine.AssetBundles
             }
             else
             {
+
                 //Left half
                 var bundleTreeRect = new Rect(
-                   m_Position.x,
-                   m_Position.y,
-                   m_HorizontalSplitterRect.x,
-                   m_VerticalSplitterRectLeft.y - m_Position.y);
+                    m_Position.x,
+                    m_Position.y,
+                    m_HorizontalSplitterRect.x,
+                    m_VerticalSplitterRectLeft.y - m_Position.y);
+                
                 m_BundleTree.OnGUI(bundleTreeRect);
                 m_DetailsList.OnGUI(new Rect(
                     bundleTreeRect.x,
@@ -177,9 +181,9 @@ namespace UnityEngine.AssetBundles
             }
         }
 
+
         private void HandleHorizontalResize()
         {
-            //m_horizontalSplitterRect.x = Mathf.Clamp(m_horizontalSplitterRect.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
             m_HorizontalSplitterRect.x = (int)(m_Position.width * m_HorizontalSplitterPercent);
             m_HorizontalSplitterRect.height = m_Position.height;
 
@@ -189,7 +193,6 @@ namespace UnityEngine.AssetBundles
 
             if (m_ResizingHorizontalSplitter)
             {
-                //m_horizontalSplitterRect.x = Mathf.Clamp(Event.current.mousePosition.x, position.width * .1f, (position.width - kSplitterWidth) * .9f);
                 m_HorizontalSplitterPercent = Mathf.Clamp(Event.current.mousePosition.x / m_Position.width, 0.1f, 0.9f);
                 m_HorizontalSplitterRect.x = (int)(m_Position.width * m_HorizontalSplitterPercent);
             }
