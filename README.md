@@ -5,4 +5,4 @@ This tool enables the user to view and edit the configuration of asset bundles f
 This tool is intended to replace the current workflow of selecting assets and setting their asset bundle manually in the inspector.  It can be dropped into any Unity project with a version of 5.6 or greater.  It will create a new menu item in *Window->AssetBundle Browser*.  
 
 ## FUll Documentation
-See [the official manual page](https://docs.unity3d.com/Manual/AssetBundles-Browser.html) or view the included [project manual page](https://github.com/Unity-Technologies/AssetBundles-Browser/blob/master/MANUAL.md)
+See [the official manual page](https://docs.unity3d.com/Manual/AssetBundles-Browser.html) or view the included [project manual page](MANUAL.md)
