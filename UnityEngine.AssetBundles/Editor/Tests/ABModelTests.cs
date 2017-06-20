@@ -21,8 +21,8 @@ public class ABModelTests
     [SetUp]
     public void Setup()
     {
-        Model.Rebuild();
         AssetDatabase.RemoveUnusedAssetBundleNames();
+        Model.Rebuild();
 
         m_BundleInfo = new List<BundleInfo>();
         m_BundleInfo.Add(new BundleDataInfo("1bundle1", null));
@@ -489,14 +489,11 @@ public class ABModelTests
         BundleVariantFolderInfo bundleVariantFolderRoot = new BundleVariantFolderInfo("variantFolder", ABModelUtil.Root);
         ABModelUtil.Root.AddChild(bundleVariantFolderRoot);
 
-        BundleVariantDataInfo bundleVariantDataInfo1 = new BundleVariantDataInfo("variant", bundleVariantFolderRoot);
-        bundleVariantDataInfo1.m_Name.variant = "a";
+        BundleVariantDataInfo bundleVariantDataInfo1 = new BundleVariantDataInfo("variant.a", bundleVariantFolderRoot);
 
-        BundleVariantDataInfo bundleVariantDataInfo2 = new BundleVariantDataInfo("variant", bundleVariantFolderRoot);
-        bundleVariantDataInfo2.m_Name.variant = "b";
+        BundleVariantDataInfo bundleVariantDataInfo2 = new BundleVariantDataInfo("variant.b", bundleVariantFolderRoot);
 
-        BundleVariantDataInfo bundleVariantDataInfo3 = new BundleVariantDataInfo("variant", bundleVariantFolderRoot);
-        bundleVariantDataInfo3.m_Name.variant = "c";
+        BundleVariantDataInfo bundleVariantDataInfo3 = new BundleVariantDataInfo("variant.c", bundleVariantFolderRoot);
 
         bundleVariantFolderRoot.AddChild(bundleVariantDataInfo1);
         bundleVariantFolderRoot.AddChild(bundleVariantDataInfo2);
@@ -648,7 +645,6 @@ public class ABModelTests
         ABModelUtil.Root.AddChild(bundle1DataInfo);
         ABModelUtil.Root.AddChild(bundle2DataInfo);
 
-        //TODO: Double check that we need to manually call RefreshAssetList
         bundle1DataInfo.RefreshAssetList();
         bundle2DataInfo.RefreshAssetList();
 
