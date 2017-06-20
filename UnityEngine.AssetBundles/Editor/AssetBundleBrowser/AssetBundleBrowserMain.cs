@@ -25,8 +25,8 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         public AssetBundleBuildTab m_BuildTab;
 
-        //[SerializeField]
-        //public AssetBundleInspectTab m_InspectTab;
+        [SerializeField]
+        public AssetBundleInspectTab m_InspectTab;
 
         private Texture2D m_RefreshTexture;
 
@@ -63,9 +63,9 @@ namespace UnityEngine.AssetBundles
             if(m_BuildTab == null)
                 m_BuildTab = new AssetBundleBuildTab();
             m_BuildTab.OnEnable(subPos, this);
-            //if (m_InspectTab == null)
-            //    m_InspectTab = new AssetBundleInspectTab();
-            //m_InspectTab.OnEnable(subPos, this);
+            if (m_InspectTab == null)
+                m_InspectTab = new AssetBundleInspectTab();
+            m_InspectTab.OnEnable(subPos, this);
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
 
@@ -94,7 +94,7 @@ namespace UnityEngine.AssetBundles
                     //m_BuildTab.Update();
                     break;
                 case Mode.Inspect:
-                    //m_InspectTab.Update();
+                    m_InspectTab.Update();
                     break;
                 case Mode.Browser:
                 default:
@@ -113,7 +113,7 @@ namespace UnityEngine.AssetBundles
                     m_BuildTab.OnGUI(GetSubWindowArea());
                     break;
                 case Mode.Inspect:
-                    //m_InspectTab.OnGUI(GetSubWindowArea());
+                    m_InspectTab.OnGUI(GetSubWindowArea());
                     break;
                 case Mode.Browser:
                 default:
@@ -137,7 +137,7 @@ namespace UnityEngine.AssetBundles
                 GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
             }
             float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
-            string[] labels = new string[2] { "Configure", "Build" };//, "Inspect" }; 
+            string[] labels = new string[3] { "Configure", "Build", "Inspect" }; 
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
