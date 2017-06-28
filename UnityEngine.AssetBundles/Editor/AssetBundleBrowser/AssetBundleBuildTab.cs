@@ -254,7 +254,7 @@ namespace UnityEngine.AssetBundles
             EditorGUILayout.Space();
             if (GUILayout.Button("Build") )
             {
-                ExecuteBuild();
+                EditorApplication.delayCall += ExecuteBuild;
             }
             GUILayout.EndVertical();
             EditorGUILayout.EndScrollView();
