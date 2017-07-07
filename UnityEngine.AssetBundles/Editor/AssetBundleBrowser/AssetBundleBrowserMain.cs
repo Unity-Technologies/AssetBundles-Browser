@@ -76,6 +76,13 @@ namespace UnityEngine.AssetBundles
             if (types.Count > 1)
                 multiDataSource = true;
         }
+        private void OnDisable()
+        {
+            if (m_BuildTab != null)
+                m_BuildTab.OnDisable();
+            if (m_InspectTab != null)
+                m_InspectTab.OnDisable();
+        }
 
         private Rect GetSubWindowArea()
         {
@@ -126,18 +133,27 @@ namespace UnityEngine.AssetBundles
         {
             GUILayout.BeginHorizontal();
             GUILayout.Space(k_ToolbarPadding);
-            if (m_Mode == Mode.Browser)
+            bool clicked = false;
+            switch(m_Mode)
             {
-                bool clicked = GUILayout.Button(m_RefreshTexture);
-                if (clicked)
-                    m_ManageTab.ForceReloadData();
+                case Mode.Browser:
+                    clicked = GUILayout.Button(m_RefreshTexture);
+                    if (clicked)
+                        m_ManageTab.ForceReloadData();
+                    break;
+                case Mode.Builder:
+                    GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
+                    break;
+                case Mode.Inspect:
+                    clicked = GUILayout.Button(m_RefreshTexture);
+                    if (clicked)
+                        m_InspectTab.RefreshBundles();
+                    break;
             }
-            else
-            {
-                GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
-            }
+
             float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
-            string[] labels = new string[3] { "Configure", "Build", "Inspect" }; 
+            //string[] labels = new string[2] { "Configure", "Build"};
+            string[] labels = new string[3] { "Configure", "Build", "Inspect" };
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
