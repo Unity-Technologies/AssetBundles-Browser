@@ -158,7 +158,7 @@ The Build tab provides basic build functionality to get you started using asset 
 
 # Usage - Inspect (Beta Feature)
 This is a new tab added as a currently-beta feature.  Use it to inspect the contents of bundles that have already been built. 
-##### Usage
+### Usage
 * Type in a bundle path, or find one using the 'Browse' button.  
 * Select any bundle listed to see details:
   * Name
@@ -167,6 +167,6 @@ This is a new tab added as a currently-beta feature.  Use it to inspect the cont
   * Container - only explicitly added items
   * Dependencies - bundles that the current bundle depends on
 
-##### Issues
+### Issues
 * If your "bundle path" contains duplicate bundles, you will be unable to view them, and will get errors in the log.  This is most often seen if you had a file structure like "MyBundles/Build1/" and "MyBundles/Build2/" and you pointed the path to just "MyBundles"
 * The tool does not yet handle bundles that have had the hash appended to the bundle name (using "append hash" build option).
