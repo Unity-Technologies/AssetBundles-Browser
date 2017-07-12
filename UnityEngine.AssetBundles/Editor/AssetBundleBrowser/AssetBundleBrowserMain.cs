@@ -25,8 +25,8 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         public AssetBundleBuildTab m_BuildTab;
 
-        //[SerializeField]
-        //public AssetBundleInspectTab m_InspectTab;
+        [SerializeField]
+        public AssetBundleInspectTab m_InspectTab;
 
         private Texture2D m_RefreshTexture;
 
@@ -63,9 +63,9 @@ namespace UnityEngine.AssetBundles
             if(m_BuildTab == null)
                 m_BuildTab = new AssetBundleBuildTab();
             m_BuildTab.OnEnable(subPos, this);
-            //if (m_InspectTab == null)
-            //    m_InspectTab = new AssetBundleInspectTab();
-            //m_InspectTab.OnEnable(subPos, this);
+            if (m_InspectTab == null)
+                m_InspectTab = new AssetBundleInspectTab();
+            m_InspectTab.OnEnable(subPos, this);
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
 
@@ -75,6 +75,13 @@ namespace UnityEngine.AssetBundles
             List<System.Type> types = AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes;
             if (types.Count > 1)
                 multiDataSource = true;
+        }
+        private void OnDisable()
+        {
+            if (m_BuildTab != null)
+                m_BuildTab.OnDisable();
+            if (m_InspectTab != null)
+                m_InspectTab.OnDisable();
         }
 
         private Rect GetSubWindowArea()
@@ -94,7 +101,7 @@ namespace UnityEngine.AssetBundles
                     //m_BuildTab.Update();
                     break;
                 case Mode.Inspect:
-                    //m_InspectTab.Update();
+                    m_InspectTab.Update();
                     break;
                 case Mode.Browser:
                 default:
@@ -113,7 +120,7 @@ namespace UnityEngine.AssetBundles
                     m_BuildTab.OnGUI(GetSubWindowArea());
                     break;
                 case Mode.Inspect:
-                    //m_InspectTab.OnGUI(GetSubWindowArea());
+                    m_InspectTab.OnGUI(GetSubWindowArea());
                     break;
                 case Mode.Browser:
                 default:
@@ -126,18 +133,27 @@ namespace UnityEngine.AssetBundles
         {
             GUILayout.BeginHorizontal();
             GUILayout.Space(k_ToolbarPadding);
-            if (m_Mode == Mode.Browser)
+            bool clicked = false;
+            switch(m_Mode)
             {
-                bool clicked = GUILayout.Button(m_RefreshTexture);
-                if (clicked)
-                    m_ManageTab.ForceReloadData();
+                case Mode.Browser:
+                    clicked = GUILayout.Button(m_RefreshTexture);
+                    if (clicked)
+                        m_ManageTab.ForceReloadData();
+                    break;
+                case Mode.Builder:
+                    GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
+                    break;
+                case Mode.Inspect:
+                    clicked = GUILayout.Button(m_RefreshTexture);
+                    if (clicked)
+                        m_InspectTab.RefreshBundles();
+                    break;
             }
-            else
-            {
-                GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
-            }
+
             float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
-            string[] labels = new string[2] { "Configure", "Build" };//, "Inspect" }; 
+            //string[] labels = new string[2] { "Configure", "Build"};
+            string[] labels = new string[3] { "Configure", "Build", "Inspect" };
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
