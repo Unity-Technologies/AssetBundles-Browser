@@ -98,10 +98,8 @@ namespace UnityEngine.AssetBundles
             switch (m_Mode)
             {
                 case Mode.Builder:
-                    //m_BuildTab.Update();
                     break;
                 case Mode.Inspect:
-                    //m_InspectTab.Update();
                     break;
                 case Mode.Browser:
                 default:
