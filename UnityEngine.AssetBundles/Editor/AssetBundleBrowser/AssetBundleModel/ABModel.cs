@@ -32,9 +32,12 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         static private Texture2D m_bundleIcon = null;
         static private Texture2D m_sceneIcon = null;
 
-        public static ABDataSource DataSource {
-            get {
-                if (m_DataSource == null) {
+        public static ABDataSource DataSource
+        {
+            get
+            {
+                if (m_DataSource == null)
+                {
                     m_DataSource = new AssetDatabaseABDataSource ();
                 }
                 return m_DataSource;
@@ -159,7 +162,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            if (!DataSource.IsReadOnly ()) {
+                            if (!DataSource.IsReadOnly ())
+                            {
                                 DataSource.RemoveUnusedAssetBundleNames();
                             }
                             index = 0;
@@ -183,7 +187,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         else
                         {
-                            if (!DataSource.IsReadOnly ()) {
+                            if (!DataSource.IsReadOnly ())
+                            {
                                 DataSource.RemoveUnusedAssetBundleNames();
                             }
                             index = 0;
@@ -551,7 +556,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             }
             public void Apply()
             {
-                if (!DataSource.IsReadOnly ()) {
+                if (!DataSource.IsReadOnly ())
+                {
                     DataSource.SetAssetBundleNameAndVariant(assetName, bundleName, variantName);
                 }
             }
@@ -594,7 +600,8 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                     EditorPrefs.SetBool("kAutoRefresh", autoRefresh);
                     m_MoveData.Clear();
                 }
-                if (!DataSource.IsReadOnly ()) {
+                if (!DataSource.IsReadOnly ())
+                {
                     DataSource.RemoveUnusedAssetBundleNames();
                 }
                 Refresh();
@@ -676,6 +683,9 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
 
         public static void UnRegisterAsset(AssetInfo asset, string bundle)
         {
+            if (m_DependencyTracker == null || asset == null)
+                return;
+
             if (m_DependencyTracker.ContainsKey(asset.fullAssetName))
             {
                 m_DependencyTracker[asset.fullAssetName].Remove(bundle);

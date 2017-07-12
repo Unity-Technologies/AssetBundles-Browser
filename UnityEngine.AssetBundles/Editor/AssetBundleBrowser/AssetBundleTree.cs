@@ -82,12 +82,19 @@ namespace UnityEngine.AssetBundles
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
+
             var selectedBundles = new List<AssetBundleModel.BundleInfo>();
-            foreach (var id in selectedIds)
+            if (selectedIds != null)
             {
-                var item = FindItem(id, rootItem) as AssetBundleModel.BundleTreeItem;
-                item.bundle.RefreshAssetList();
-                selectedBundles.Add(item.bundle);
+                foreach (var id in selectedIds)
+                {
+                    var item = FindItem(id, rootItem) as AssetBundleModel.BundleTreeItem;
+                    if(item != null && item.bundle != null)
+                    {
+                        item.bundle.RefreshAssetList();
+                        selectedBundles.Add(item.bundle);
+                    }
+                }
             }
 
             m_Controller.UpdateSelectedBundles(selectedBundles);
