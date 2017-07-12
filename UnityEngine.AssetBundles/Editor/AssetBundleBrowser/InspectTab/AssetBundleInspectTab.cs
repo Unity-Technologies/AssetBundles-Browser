@@ -91,10 +91,6 @@ namespace UnityEngine.AssetBundles
             file.Close();
         }
 
-        public void Update()
-        {
-        }
-
         public void OnGUI(Rect pos)
         {
             m_Position = pos;

@@ -89,7 +89,7 @@ namespace UnityEngine.AssetBundles
                 foreach (var id in selectedIds)
                 {
                     var item = FindItem(id, rootItem) as AssetBundleModel.BundleTreeItem;
-                    if(item != null)
+                    if(item != null && item.bundle != null)
                     {
                         item.bundle.RefreshAssetList();
                         selectedBundles.Add(item.bundle);
