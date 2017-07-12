@@ -45,7 +45,6 @@ namespace UnityEngine.AssetBundles
         {
             GUILayout.BeginArea(m_Position);
             m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
-            m_Editor.Repaint();
             m_Editor.OnInspectorGUI();
             EditorGUILayout.EndScrollView();
             GUILayout.EndArea();

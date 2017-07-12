@@ -122,10 +122,7 @@ namespace UnityEngine.AssetBundles
             GUILayout.BeginHorizontal();
             var originalPath = m_Data.m_BundlePath;
             m_Data.m_BundlePath = EditorGUILayout.TextField("Bundle Path", m_Data.m_BundlePath);
-
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
+            
             if (GUILayout.Button("Browse", GUILayout.MaxWidth(75f)))
                 BrowseForFolder();
             GUILayout.EndHorizontal();

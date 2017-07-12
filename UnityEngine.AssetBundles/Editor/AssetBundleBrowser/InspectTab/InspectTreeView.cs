@@ -37,22 +37,20 @@ namespace UnityEngine.AssetBundles
 			if (m_Bundle == null)
 			{
 				m_Bundle = AssetBundle.LoadFromFile(m_BundlePath);
-				m_InspectTab.SaveBundle(m_Bundle);
+                m_InspectTab.SaveBundle(m_Bundle);
 
-                AssetBundleManifest manifest = m_Bundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-                if (manifest != null)
-                {
-                    //this is where we could get some overall data. if we wanted it. which we might. someday.
-                }
-                else
-                {
-                    //gotta actually load assets to keep inspector from crashing :(
-                    var content = m_Bundle.GetAllAssetNames();
-                    foreach (var c in content)
-                    {
-                        m_Bundle.LoadAsset(c);
-                    }
+                //AssetBundleManifest manifest = m_Bundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                //if (manifest != null)
+                //{
+                //    //this is where we could get some overall data. if we wanted it. which we might. someday.
+                //}
 
+
+                //gotta actually load assets to keep inspector from crashing :(
+                var content = m_Bundle.GetAllAssetNames();
+                foreach (var c in content)
+                {
+                    m_Bundle.LoadAsset(c);
                 }
             }
 		}
@@ -72,7 +70,7 @@ namespace UnityEngine.AssetBundles
 			var root = new TreeViewItem(-1, -1);
 			root.children = new List<TreeViewItem>();
 			if (m_InspectTab == null)
-				Debug.Log("how is m_InspectTab null???");
+				Debug.Log("Unknown problem in AssetBundle Browser Inspect tab.  Restart Browser and try again, or file ticket on github.");
 			else
 			{
 				foreach (var b in m_InspectTab.BundleList)
