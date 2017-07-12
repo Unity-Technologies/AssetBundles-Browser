@@ -101,7 +101,7 @@ namespace UnityEngine.AssetBundles
                     //m_BuildTab.Update();
                     break;
                 case Mode.Inspect:
-                    m_InspectTab.Update();
+                    //m_InspectTab.Update();
                     break;
                 case Mode.Browser:
                 default:

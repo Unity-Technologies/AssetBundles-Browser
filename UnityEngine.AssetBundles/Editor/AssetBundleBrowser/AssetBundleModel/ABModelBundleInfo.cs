@@ -351,13 +351,19 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                         }
                         
                         m_DependentAssets.Add(Model.CreateAsset(assetName, folderAsset));
-                        m_TotalSize += m_DependentAssets.Last().fileSize;
+                        if (m_DependentAssets != null && m_DependentAssets.Count > 0)
+                        {
+                            var last = m_DependentAssets.Last();
+                            if (last != null)
+                                m_TotalSize += last.fileSize;
+                        }
                     }
                 }
                 else
                 {
                     var newAsset = Model.CreateAsset (assetName, m_Name.fullNativeName);
-                    if (newAsset != null) {
+                    if (newAsset != null)
+                    {
                         m_ConcreteAssets.Add(newAsset);
                         m_TotalSize += m_ConcreteAssets.Last().fileSize;
                         if (AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset))
@@ -440,7 +446,14 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
             if (parentBundle == string.Empty)
                 parentBundle = asset.bundleName;
 
-            foreach (var ai in asset.GetDependencies())
+            if (asset == null)
+                return;
+
+            var deps = asset.GetDependencies();
+            if (deps == null)
+                return;
+
+            foreach (var ai in deps)
             {
                 if (ai == asset || m_ConcreteAssets.Contains(ai) || m_DependentAssets.Contains(ai))
                     continue;
@@ -466,7 +479,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
         {
             foreach(var asset in m_DependentAssets)
             {
-                if (asset.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles)) 
+                if (asset != null && asset.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles)) 
                 {
                     SetDuplicateWarning();
                     return true;
