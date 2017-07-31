@@ -17,28 +17,64 @@ namespace UnityEngine.AssetBundles
         private InspectTabData m_Data;
         
 
-        private List<string> m_BundleList = new List<string>();
+        private List<string> m_BundleList;
         private InspectBundleTree m_BundleTreeView;
         [SerializeField]
         private TreeViewState m_BundleTreeState;
 
         public Editor m_Editor = null;
 
-        //[SerializeField] 
-        private List<AssetBundle> m_LoadedBundles;
-
         private SingleBundleInspector m_SingleInspector;
 
+        /// <summary>
+        /// Collection of loaded asset bundles indexed by path
+        /// </summary>
+        private Dictionary<string, AssetBundle> m_loadedAssetBundles;
+
+        /// <summary>
+        /// Returns a loaded asset bundle by path if the bundle exists in our container.
+        /// </summary>
+        /// <returns>Asset bundle instance if loaded, otherwise null.</returns>
+        /// <param name="path">Path to the loaded asset bundle.</param>
+        public AssetBundle GetLoadedBundleByPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            string actualPath = GetPathWithoutFileExtension(path);
+            if (!m_loadedAssetBundles.ContainsKey(actualPath))
+            {
+                return null;
+            }
+
+            return m_loadedAssetBundles[actualPath];
+        }
+
+        /// <summary>
+        /// Removes the file extension from the path if it exists.
+        /// </summary>
+        /// <returns>The path without file extension.</returns>
+        /// <param name="path">The input path.</param>
+        public static string GetPathWithoutFileExtension(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return path;
+            }
+
+            string fileNoExtension = Path.GetFileNameWithoutExtension(path);
+            string directory = Path.GetDirectoryName(path);
+
+            return Path.Combine(directory, fileNoExtension);
+        }
 
         public AssetBundleInspectTab()
         {
-            m_LoadedBundles = new List<AssetBundle>();
+            m_BundleList = new List<string>();
             m_SingleInspector = new SingleBundleInspector();
-        }
-
-        public void SaveBundle(AssetBundle b)
-        { 
-            m_LoadedBundles.Add(b);
+            m_loadedAssetBundles = new Dictionary<string, AssetBundle>();
         }
 
         public void OnEnable(Rect pos, EditorWindow parent)
@@ -161,12 +197,20 @@ namespace UnityEngine.AssetBundles
         {
             m_SingleInspector.SetBundle(null);
 
-            foreach (var bundle in m_LoadedBundles)
+            if (null != this.m_loadedAssetBundles)
             {
-                if (bundle != null) //get into this situation on a rare restart weirdness.
-                    bundle.Unload(true);
+                List<string> paths = new List<string>(m_loadedAssetBundles.Keys);
+                foreach (string path in paths)
+                {
+                    AssetBundle bundle = m_loadedAssetBundles[path];
+                    if (null != bundle)
+                    {
+                        bundle.Unload(true);
+                    }
+                }
+
+                m_loadedAssetBundles.Clear();
             }
-            m_LoadedBundles.Clear();
         }
         private void AddFilePathToList(string path)
         {
@@ -223,15 +267,85 @@ namespace UnityEngine.AssetBundles
         public void SetBundleItem(InspectTreeItem selected)
         {
             if (selected == null)
+            {
                 m_SingleInspector.SetBundle(null);
+            }
             else
-                m_SingleInspector.SetBundle(selected.bundle, selected.bundlePath);
+            {
+                AssetBundle bundle = this.LoadBundle(selected.bundlePath);
+                m_SingleInspector.SetBundle(bundle, selected.bundlePath);
+            }
         }
 
         [System.Serializable]
         public class InspectTabData
         {
             public string m_BundlePath = string.Empty;
+        }
+
+        /// <summary>
+        /// Loads the bundle at the specified path.
+        /// Unloads previously loaded bundles if neccessary.
+        /// </summary>
+        /// <returns>Returns loaded bundle, null if it could not be loaded.</returns>
+        /// <param name="path">Path of bundle to load</param>
+        private AssetBundle LoadBundle(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            AssetBundle bundle = this.GetLoadedBundleByPath(path);
+            if (null != bundle)
+            {
+                this.UnloadBundle(path);
+            }
+
+            string actualPath = GetPathWithoutFileExtension(path);
+            bundle = AssetBundle.LoadFromFile(path);
+            if (null == bundle)
+            {
+                return null;
+            }
+
+            m_loadedAssetBundles[actualPath] = bundle;
+
+            string[] assetNames = bundle.GetAllAssetNames();
+            foreach (string name in assetNames)
+            {
+                bundle.LoadAsset(name);
+            }
+
+            return bundle;
+        }
+
+        /// <summary>
+        /// Unloads the bundle at the specfied path.
+        /// </summary>
+        /// <param name="path">Path to bundle.</param>
+        private void UnloadBundle(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            string actualPath = GetPathWithoutFileExtension(path);
+            if (!this.m_loadedAssetBundles.ContainsKey(actualPath))
+            {
+                return;
+            }
+
+            AssetBundle bundle = m_loadedAssetBundles[actualPath];
+            if (null == bundle)
+            {
+                return;
+            }
+
+            bundle.Unload(true);
+            bundle = null;
+            m_loadedAssetBundles.Remove(actualPath);
         }
     }
 }
