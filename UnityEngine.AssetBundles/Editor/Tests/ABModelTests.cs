@@ -119,7 +119,7 @@ public class ABModelTests
 
             //Assert
             Assert.AreEqual(numBundles + 1, list.Length);
-            Assert.AreEqual(bundleName, list[0]);
+            Assert.IsTrue(list.Contains(bundleName));
         }, listOfPrefabs);
     }
 
@@ -143,8 +143,8 @@ public class ABModelTests
 
             //Assert
             Assert.AreEqual(numBundles + 2, list.Length);
-            Assert.AreEqual(bundleName + ".v1", list[0]);
-            Assert.AreEqual(bundleName + ".v2", list[1]);
+            Assert.IsTrue(list.Contains(bundleName + ".v1"));
+            Assert.IsTrue(list.Contains(bundleName + ".v2"));
         }, listOfPrefabs);
     }
 
@@ -169,12 +169,21 @@ public class ABModelTests
 
             //Checks that the root has 1 bundle variant folder object as a child
             Assert.AreEqual(numChildren + 1, rootChildList.Count);
-            Assert.AreEqual(typeof(BundleVariantFolderInfo), rootChildList.FirstOrDefault().GetType());
-
-            BundleVariantFolderInfo folderInfo = rootChildList.FirstOrDefault() as BundleVariantFolderInfo;
-
+            
+            Type variantFolderType = typeof(BundleVariantFolderInfo);
+            BundleVariantFolderInfo foundItem = null;
+            foreach (BundleInfo item in rootChildList)
+            {
+                if (item.GetType() == variantFolderType)
+                {
+                    foundItem = item as BundleVariantFolderInfo;
+                    break;
+                }
+            }
+        
             //Checks that the bundle variant folder object (mentioned above) has two children
-            Assert.AreEqual(2, folderInfo.GetChildList().Count);
+            Assert.IsNotNull(foundItem);
+            Assert.AreEqual(2, foundItem.GetChildList().Count);
 
         }, listOfPrefabs);
     }
@@ -197,10 +206,21 @@ public class ABModelTests
 
             var rootChildList = ABModelUtil.Root.GetChildList();
             Assert.AreEqual(numChildren + 1, rootChildList.Count);
-            Assert.AreEqual(typeof(BundleVariantFolderInfo), rootChildList.FirstOrDefault().GetType());
+        
+            Type bundleVariantFolderInfoType = typeof(BundleVariantFolderInfo);
+            BundleVariantFolderInfo foundItem = null;
+            foreach (BundleInfo item in rootChildList)
+            {
+                if (item.GetType() == bundleVariantFolderInfoType)
+                {
+                    foundItem = item as BundleVariantFolderInfo;
+                    break;
+                }
+            }
 
-            BundleVariantFolderInfo folderInfo = rootChildList.FirstOrDefault() as BundleVariantFolderInfo;
-            BundleInfo[] folderChildArray = folderInfo.GetChildList().ToArray();
+            Assert.IsNotNull(foundItem);
+
+            BundleInfo[] folderChildArray = foundItem.GetChildList().ToArray();
             Assert.AreEqual(2, folderChildArray.Length);
 
             Assert.AreEqual(typeof(BundleVariantDataInfo), folderChildArray[0].GetType());
@@ -624,8 +644,9 @@ public class ABModelTests
         {
             Model.HandleBundleMerge(new BundleInfo[] {bundle2DataInfo}, bundle1DataInfo);
 
-            Assert.AreEqual(numBundles + 1, AssetDatabase.GetAllAssetBundleNames().Length);
-            Assert.AreEqual(bundle1Name, AssetDatabase.GetAllAssetBundleNames()[0]);
+            string[] bundleNames = AssetDatabase.GetAllAssetBundleNames();
+            Assert.AreEqual(numBundles + 1, bundleNames.Length);
+            Assert.IsTrue(bundleNames.Contains(bundle1Name));
 
             //Make sure every asset now has bundle1 as the bundle name
             foreach (string prefab in listOfPrefabs)
@@ -660,8 +681,9 @@ public class ABModelTests
         {
             Model.HandleBundleMerge(new BundleInfo[] { bundle1DataInfo }, bundle2DataInfo);
 
-            Assert.AreEqual(numBundles + 1, AssetDatabase.GetAllAssetBundleNames().Length, GetAllElementsAsString(AssetDatabase.GetAllAssetBundleNames()));
-            Assert.AreEqual(bundle2Name, AssetDatabase.GetAllAssetBundleNames()[numBundles]);
+            string[] bundleNames = AssetDatabase.GetAllAssetBundleNames();
+            Assert.AreEqual(numBundles + 1, bundleNames.Length, GetAllElementsAsString(bundleNames));
+            Assert.IsTrue(bundleNames.Contains(bundle2Name));
 
             //Make sure every asset now has bundle1 as the bundle name
             foreach (string prefab in listOfPrefabs)

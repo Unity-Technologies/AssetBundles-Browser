@@ -27,29 +27,28 @@ namespace UnityEngine.AssetBundles
         private SingleBundleInspector m_SingleInspector;
 
         /// <summary>
-        /// Collection of loaded asset bundles indexed by path
+        /// Collection of loaded asset bundles indexed by bundle name
         /// </summary>
         private Dictionary<string, AssetBundle> m_loadedAssetBundles;
 
         /// <summary>
-        /// Returns a loaded asset bundle by path if the bundle exists in our container.
+        /// Returns a loaded asset bundle by name if the bundle exists in our container.
         /// </summary>
         /// <returns>Asset bundle instance if loaded, otherwise null.</returns>
-        /// <param name="path">Path to the loaded asset bundle.</param>
-        public AssetBundle GetLoadedBundleByPath(string path)
+        /// <param name="bundleName">Name of the loaded asset bundle.</param>
+        private AssetBundle GetLoadedBundleByName(string bundleName)
         {
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(bundleName))
             {
                 return null;
             }
 
-            string actualPath = GetPathWithoutFileExtension(path);
-            if (!m_loadedAssetBundles.ContainsKey(actualPath))
+            if (!m_loadedAssetBundles.ContainsKey(bundleName))
             {
                 return null;
             }
 
-            return m_loadedAssetBundles[actualPath];
+            return m_loadedAssetBundles[bundleName];
         }
 
         /// <summary>
@@ -66,6 +65,10 @@ namespace UnityEngine.AssetBundles
 
             string fileNoExtension = Path.GetFileNameWithoutExtension(path);
             string directory = Path.GetDirectoryName(path);
+            if (null == directory)
+            {
+                directory = string.Empty;
+            }
 
             return Path.Combine(directory, fileNoExtension);
         }
@@ -296,20 +299,20 @@ namespace UnityEngine.AssetBundles
                 return null;
             }
 
-            AssetBundle bundle = this.GetLoadedBundleByPath(path);
+            string bundleName = Path.GetFileNameWithoutExtension(path);
+            AssetBundle bundle = this.GetLoadedBundleByName(bundleName);
             if (null != bundle)
             {
-                this.UnloadBundle(path);
+                this.UnloadBundle(bundleName);
             }
 
-            string actualPath = GetPathWithoutFileExtension(path);
             bundle = AssetBundle.LoadFromFile(path);
             if (null == bundle)
             {
                 return null;
             }
 
-            m_loadedAssetBundles[actualPath] = bundle;
+            m_loadedAssetBundles[bundleName] = bundle;
 
             string[] assetNames = bundle.GetAllAssetNames();
             foreach (string name in assetNames)
@@ -323,21 +326,20 @@ namespace UnityEngine.AssetBundles
         /// <summary>
         /// Unloads the bundle at the specfied path.
         /// </summary>
-        /// <param name="path">Path to bundle.</param>
-        private void UnloadBundle(string path)
+        /// <param name="bundleName">Name of the bundle to unload</param>
+        private void UnloadBundle(string bundleName)
         {
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(bundleName))
             {
                 return;
             }
 
-            string actualPath = GetPathWithoutFileExtension(path);
-            if (!this.m_loadedAssetBundles.ContainsKey(actualPath))
+            if (!this.m_loadedAssetBundles.ContainsKey(bundleName))
             {
                 return;
             }
 
-            AssetBundle bundle = m_loadedAssetBundles[actualPath];
+            AssetBundle bundle = m_loadedAssetBundles[bundleName];
             if (null == bundle)
             {
                 return;
@@ -345,7 +347,7 @@ namespace UnityEngine.AssetBundles
 
             bundle.Unload(true);
             bundle = null;
-            m_loadedAssetBundles.Remove(actualPath);
+            m_loadedAssetBundles.Remove(bundleName);
         }
     }
 }
