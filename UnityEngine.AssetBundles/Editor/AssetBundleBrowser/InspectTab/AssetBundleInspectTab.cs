@@ -27,16 +27,16 @@ namespace UnityEngine.AssetBundles
         private SingleBundleInspector m_SingleInspector;
 
         /// <summary>
-        /// Collection of loaded asset bundles indexed by bundle name
+        /// Collection of loaded asset bundle records indexed by bundle name
         /// </summary>
-        private Dictionary<string, AssetBundle> m_loadedAssetBundles;
+        private Dictionary<string, AssetBundleRecord> m_loadedAssetBundles;
 
         /// <summary>
-        /// Returns a loaded asset bundle by name if the bundle exists in our container.
+        /// Returns the record for a loaded asset bundle by name if it exists in our container.
         /// </summary>
-        /// <returns>Asset bundle instance if loaded, otherwise null.</returns>
-        /// <param name="bundleName">Name of the loaded asset bundle.</param>
-        private AssetBundle GetLoadedBundleByName(string bundleName)
+        /// <returns>Asset bundle record instance if loaded, otherwise null.</returns>
+        /// <param name="bundleName">Name of the loaded asset bundle, excluding the variant extension</param>
+        private AssetBundleRecord GetLoadedBundleRecordByName(string bundleName)
         {
             if (string.IsNullOrEmpty(bundleName))
             {
@@ -51,33 +51,11 @@ namespace UnityEngine.AssetBundles
             return m_loadedAssetBundles[bundleName];
         }
 
-        /// <summary>
-        /// Removes the file extension from the path if it exists.
-        /// </summary>
-        /// <returns>The path without file extension.</returns>
-        /// <param name="path">The input path.</param>
-        public static string GetPathWithoutFileExtension(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return path;
-            }
-
-            string fileNoExtension = Path.GetFileNameWithoutExtension(path);
-            string directory = Path.GetDirectoryName(path);
-            if (null == directory)
-            {
-                directory = string.Empty;
-            }
-
-            return Path.Combine(directory, fileNoExtension);
-        }
-
         public AssetBundleInspectTab()
         {
             m_BundleList = new List<string>();
             m_SingleInspector = new SingleBundleInspector();
-            m_loadedAssetBundles = new Dictionary<string, AssetBundle>();
+            m_loadedAssetBundles = new Dictionary<string, AssetBundleRecord>();
         }
 
         public void OnEnable(Rect pos, EditorWindow parent)
@@ -202,14 +180,10 @@ namespace UnityEngine.AssetBundles
 
             if (null != this.m_loadedAssetBundles)
             {
-                List<string> paths = new List<string>(m_loadedAssetBundles.Keys);
-                foreach (string path in paths)
+                List<AssetBundleRecord> records = new List<AssetBundleRecord>(m_loadedAssetBundles.Values);
+                foreach (AssetBundleRecord record in records)
                 {
-                    AssetBundle bundle = m_loadedAssetBundles[path];
-                    if (null != bundle)
-                    {
-                        bundle.Unload(true);
-                    }
+                    record.bundle.Unload(true);
                 }
 
                 m_loadedAssetBundles.Clear();
@@ -287,11 +261,11 @@ namespace UnityEngine.AssetBundles
         }
 
         /// <summary>
-        /// Loads the bundle at the specified path.
-        /// Unloads previously loaded bundles if neccessary.
+        /// Returns the bundle at the specified path, loading it if neccessary.
+        /// Unloads previously loaded bundles if neccessary when dealing with variants.
         /// </summary>
-        /// <returns>Returns loaded bundle, null if it could not be loaded.</returns>
-        /// <param name="path">Path of bundle to load</param>
+        /// <returns>Returns the loaded bundle, null if it could not be loaded.</returns>
+        /// <param name="path">Path of bundle to get</param>
         private AssetBundle LoadBundle(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -300,53 +274,58 @@ namespace UnityEngine.AssetBundles
             }
 
             string bundleName = Path.GetFileNameWithoutExtension(path);
-            AssetBundle bundle = this.GetLoadedBundleByName(bundleName);
-            if (null != bundle)
-            {
-                this.UnloadBundle(bundleName);
-            }
 
-            bundle = AssetBundle.LoadFromFile(path);
+            // Check if we have a record for this bundle
+            AssetBundleRecord record = this.GetLoadedBundleRecordByName(bundleName);
+            AssetBundle bundle = null;
+            if (null != record)
+            {
+                // Unload existing bundle if variant names differ, otherwise use existing bundle
+                if (!record.path.Equals(path))
+                {
+                    this.UnloadBundle(bundleName);
+                }
+                else
+                {
+                    bundle = record.bundle;
+                }
+            }
+                
             if (null == bundle)
             {
-                return null;
-            }
+                // Load the bundle
+                bundle = AssetBundle.LoadFromFile(path);
+                if (null == bundle)
+                {
+                    return null;
+                }
 
-            m_loadedAssetBundles[bundleName] = bundle;
+                m_loadedAssetBundles[bundleName] = new AssetBundleRecord(path, bundle);
 
-            string[] assetNames = bundle.GetAllAssetNames();
-            foreach (string name in assetNames)
-            {
-                bundle.LoadAsset(name);
+                // Load the bundle's assets
+                string[] assetNames = bundle.GetAllAssetNames();
+                foreach (string name in assetNames)
+                {
+                    bundle.LoadAsset(name);
+                }
             }
 
             return bundle;
         }
 
         /// <summary>
-        /// Unloads the bundle at the specfied path.
+        /// Unloads the bundle with the given name.
         /// </summary>
-        /// <param name="bundleName">Name of the bundle to unload</param>
+        /// <param name="bundleName">Name of the bundle to unload without variant extension</param>
         private void UnloadBundle(string bundleName)
         {
-            if (string.IsNullOrEmpty(bundleName))
+            AssetBundleRecord record = this.GetLoadedBundleRecordByName(bundleName);
+            if (null == record)
             {
                 return;
             }
 
-            if (!this.m_loadedAssetBundles.ContainsKey(bundleName))
-            {
-                return;
-            }
-
-            AssetBundle bundle = m_loadedAssetBundles[bundleName];
-            if (null == bundle)
-            {
-                return;
-            }
-
-            bundle.Unload(true);
-            bundle = null;
+            record.bundle.Unload(true);
             m_loadedAssetBundles.Remove(bundleName);
         }
     }

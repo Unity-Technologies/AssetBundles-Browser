@@ -53,24 +53,23 @@ public class ABModelTests
     }
 
     [Test]
-    public void Update_ReturnsTrue_ForRepaintOnFinalElement()
+    public void ModelUpdate_LastElementReturnsTrueForRepaint()
     {
-        // Account for existing bundles
+        // Clear out existing data
         int numChildren = ABModelUtil.Root.GetChildList().Count;
-
-        Model.AddBundlesToUpdate(m_BundleInfo);
-
-        for (int i = 0; i < numChildren; ++i)
+        for (int i = 0; i <= numChildren; ++i)
         {
-            if (i < numChildren)
+            if (Model.Update())
             {
-                Assert.IsFalse(Model.Update());
-            }
-            else
-            {
-                Assert.IsTrue(Model.Update());
+                break;
             }
         }
+
+        // Step through updates for the test bundle info, last element should require repaint
+        Model.AddBundlesToUpdate(m_BundleInfo);
+        Assert.IsFalse(Model.Update());
+        Assert.IsFalse(Model.Update());
+        Assert.IsTrue(Model.Update());
     }
 
     [Test]
@@ -85,7 +84,7 @@ public class ABModelTests
     }
 
     [Test]
-    public void UpdateShouldReturnFalseForRepaint()
+    public void ModelUpdate_ReturnsFalseForRepaint()
     {
         Model.AddBundlesToUpdate(m_BundleInfo);
         Assert.IsFalse(Model.Update());
