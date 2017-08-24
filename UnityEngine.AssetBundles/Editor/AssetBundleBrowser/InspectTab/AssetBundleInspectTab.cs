@@ -17,28 +17,45 @@ namespace UnityEngine.AssetBundles
         private InspectTabData m_Data;
         
 
-        private List<string> m_BundleList = new List<string>();
+        private List<string> m_BundleList;
         private InspectBundleTree m_BundleTreeView;
         [SerializeField]
         private TreeViewState m_BundleTreeState;
 
         public Editor m_Editor = null;
 
-        //[SerializeField] 
-        private List<AssetBundle> m_LoadedBundles;
-
         private SingleBundleInspector m_SingleInspector;
 
+        /// <summary>
+        /// Collection of loaded asset bundle records indexed by bundle name
+        /// </summary>
+        private Dictionary<string, AssetBundleRecord> m_loadedAssetBundles;
+
+        /// <summary>
+        /// Returns the record for a loaded asset bundle by name if it exists in our container.
+        /// </summary>
+        /// <returns>Asset bundle record instance if loaded, otherwise null.</returns>
+        /// <param name="bundleName">Name of the loaded asset bundle, excluding the variant extension</param>
+        private AssetBundleRecord GetLoadedBundleRecordByName(string bundleName)
+        {
+            if (string.IsNullOrEmpty(bundleName))
+            {
+                return null;
+            }
+
+            if (!m_loadedAssetBundles.ContainsKey(bundleName))
+            {
+                return null;
+            }
+
+            return m_loadedAssetBundles[bundleName];
+        }
 
         public AssetBundleInspectTab()
         {
-            m_LoadedBundles = new List<AssetBundle>();
+            m_BundleList = new List<string>();
             m_SingleInspector = new SingleBundleInspector();
-        }
-
-        public void SaveBundle(AssetBundle b)
-        { 
-            m_LoadedBundles.Add(b);
+            m_loadedAssetBundles = new Dictionary<string, AssetBundleRecord>();
         }
 
         public void OnEnable(Rect pos, EditorWindow parent)
@@ -161,12 +178,16 @@ namespace UnityEngine.AssetBundles
         {
             m_SingleInspector.SetBundle(null);
 
-            foreach (var bundle in m_LoadedBundles)
+            if (null != this.m_loadedAssetBundles)
             {
-                if (bundle != null) //get into this situation on a rare restart weirdness.
-                    bundle.Unload(true);
+                List<AssetBundleRecord> records = new List<AssetBundleRecord>(m_loadedAssetBundles.Values);
+                foreach (AssetBundleRecord record in records)
+                {
+                    record.bundle.Unload(true);
+                }
+
+                m_loadedAssetBundles.Clear();
             }
-            m_LoadedBundles.Clear();
         }
         private void AddFilePathToList(string path)
         {
@@ -223,15 +244,89 @@ namespace UnityEngine.AssetBundles
         public void SetBundleItem(InspectTreeItem selected)
         {
             if (selected == null)
+            {
                 m_SingleInspector.SetBundle(null);
+            }
             else
-                m_SingleInspector.SetBundle(selected.bundle, selected.bundlePath);
+            {
+                AssetBundle bundle = this.LoadBundle(selected.bundlePath);
+                m_SingleInspector.SetBundle(bundle, selected.bundlePath);
+            }
         }
 
         [System.Serializable]
         public class InspectTabData
         {
             public string m_BundlePath = string.Empty;
+        }
+
+        /// <summary>
+        /// Returns the bundle at the specified path, loading it if neccessary.
+        /// Unloads previously loaded bundles if neccessary when dealing with variants.
+        /// </summary>
+        /// <returns>Returns the loaded bundle, null if it could not be loaded.</returns>
+        /// <param name="path">Path of bundle to get</param>
+        private AssetBundle LoadBundle(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            string bundleName = Path.GetFileNameWithoutExtension(path);
+
+            // Check if we have a record for this bundle
+            AssetBundleRecord record = this.GetLoadedBundleRecordByName(bundleName);
+            AssetBundle bundle = null;
+            if (null != record)
+            {
+                // Unload existing bundle if variant names differ, otherwise use existing bundle
+                if (!record.path.Equals(path))
+                {
+                    this.UnloadBundle(bundleName);
+                }
+                else
+                {
+                    bundle = record.bundle;
+                }
+            }
+                
+            if (null == bundle)
+            {
+                // Load the bundle
+                bundle = AssetBundle.LoadFromFile(path);
+                if (null == bundle)
+                {
+                    return null;
+                }
+
+                m_loadedAssetBundles[bundleName] = new AssetBundleRecord(path, bundle);
+
+                // Load the bundle's assets
+                string[] assetNames = bundle.GetAllAssetNames();
+                foreach (string name in assetNames)
+                {
+                    bundle.LoadAsset(name);
+                }
+            }
+
+            return bundle;
+        }
+
+        /// <summary>
+        /// Unloads the bundle with the given name.
+        /// </summary>
+        /// <param name="bundleName">Name of the bundle to unload without variant extension</param>
+        private void UnloadBundle(string bundleName)
+        {
+            AssetBundleRecord record = this.GetLoadedBundleRecordByName(bundleName);
+            if (null == record)
+            {
+                return;
+            }
+
+            record.bundle.Unload(true);
+            m_loadedAssetBundles.Remove(bundleName);
         }
     }
 }

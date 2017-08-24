@@ -45,13 +45,27 @@ public class ABModelTests
     [Test]
     public void AddBundlesToUpdate_AddsCorrectBundles_ToUpdateQueue()
     {
+        // Account for existing asset bundles
+        int numBundles = ABModelUtil.BundlesToUpdate.Count;
+
         Model.AddBundlesToUpdate(m_BundleInfo);
-        Assert.AreEqual(3, ABModelUtil.BundlesToUpdate.Count);
+        Assert.AreEqual(numBundles + 3, ABModelUtil.BundlesToUpdate.Count);
     }
 
     [Test]
-    public void Update_ReturnsTrue_ForRepaintOnFinalElement()
+    public void ModelUpdate_LastElementReturnsTrueForRepaint()
     {
+        // Clear out existing data
+        int numChildren = ABModelUtil.Root.GetChildList().Count;
+        for (int i = 0; i <= numChildren; ++i)
+        {
+            if (Model.Update())
+            {
+                break;
+            }
+        }
+
+        // Step through updates for the test bundle info, last element should require repaint
         Model.AddBundlesToUpdate(m_BundleInfo);
         Assert.IsFalse(Model.Update());
         Assert.IsFalse(Model.Update());
@@ -61,28 +75,36 @@ public class ABModelTests
     [Test]
     public void ModelRebuild_Clears_BundlesToUpdate()
     {
+        // Account for existing bundles
+        int numChildren = ABModelUtil.Root.GetChildList().Count;
+
         Model.AddBundlesToUpdate(m_BundleInfo);
         Model.Rebuild();
-        Assert.AreEqual(0, ABModelUtil.BundlesToUpdate.Count);
+        Assert.AreEqual(numChildren, ABModelUtil.BundlesToUpdate.Count);
     }
 
     [Test]
-    public void UpdateShouldReturnFalseForRepaint()
+    public void ModelUpdate_ReturnsFalseForRepaint()
     {
         Model.AddBundlesToUpdate(m_BundleInfo);
         Assert.IsFalse(Model.Update());
     }
 
     [Test]
-    public void ValidateAssetBundleListIsZeroWhenNoBundleExist()
+    public void ValidateAssetBundleListMatchesAssetDatabase()
     {
+        int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
+
         string[] list = Model.ValidateBundleList();
-        Assert.AreEqual(0, list.Length);
+        Assert.AreEqual(numBundles, list.Length);
     }
 
     [Test]
     public void ValidateAssetBundleList_ReturnsCorrect_ListOfBundles()
     {
+        // Account for existing bundles
+        int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
+
         List<string> listOfPrefabs = new List<string>();
         string bundleName = "bundletest";
 
@@ -95,14 +117,17 @@ public class ABModelTests
             string[] list = Model.ValidateBundleList();
 
             //Assert
-            Assert.AreEqual(1, list.Length);
-            Assert.AreEqual(bundleName, list[0]);
+            Assert.AreEqual(numBundles + 1, list.Length);
+            Assert.IsTrue(list.Contains(bundleName));
         }, listOfPrefabs);
     }
 
     [Test]
     public void ValidateAssetBundleList_WithVariants_ContainsCorrectList()
     {
+        // Account for existing bundles
+        int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
+
         List<string> listOfPrefabs = new List<string>();
 
         string bundleName = "bundletest";
@@ -116,15 +141,18 @@ public class ABModelTests
             string[] list = Model.ValidateBundleList();
 
             //Assert
-            Assert.AreEqual(2, list.Length);
-            Assert.AreEqual(bundleName + ".v1", list[0]);
-            Assert.AreEqual(bundleName + ".v2", list[1]);
+            Assert.AreEqual(numBundles + 2, list.Length);
+            Assert.IsTrue(list.Contains(bundleName + ".v1"));
+            Assert.IsTrue(list.Contains(bundleName + ".v2"));
         }, listOfPrefabs);
     }
 
     [Test]
     public void ModelRebuild_KeepsCorrect_BundlesToUpdate()
     {
+        // Account for existing bundles
+        int numChildren = ABModelUtil.Root.GetChildList().Count;
+
         List<string> listOfPrefabs = new List<string>();
 
         string bundleName = "bundletest";
@@ -139,13 +167,22 @@ public class ABModelTests
             var rootChildList = ABModelUtil.Root.GetChildList();
 
             //Checks that the root has 1 bundle variant folder object as a child
-            Assert.AreEqual(1, rootChildList.Count);
-            Assert.AreEqual(typeof(BundleVariantFolderInfo), rootChildList.FirstOrDefault().GetType());
-
-            BundleVariantFolderInfo folderInfo = rootChildList.FirstOrDefault() as BundleVariantFolderInfo;
-
+            Assert.AreEqual(numChildren + 1, rootChildList.Count);
+            
+            Type variantFolderType = typeof(BundleVariantFolderInfo);
+            BundleVariantFolderInfo foundItem = null;
+            foreach (BundleInfo item in rootChildList)
+            {
+                if (item.GetType() == variantFolderType)
+                {
+                    foundItem = item as BundleVariantFolderInfo;
+                    break;
+                }
+            }
+        
             //Checks that the bundle variant folder object (mentioned above) has two children
-            Assert.AreEqual(2, folderInfo.GetChildList().Count);
+            Assert.IsNotNull(foundItem);
+            Assert.AreEqual(2, foundItem.GetChildList().Count);
 
         }, listOfPrefabs);
     }
@@ -153,6 +190,9 @@ public class ABModelTests
     [Test]
     public void VerifyBasicTreeStructure_ContainsCorrect_ClassTypes()
     {
+        // Account for existing bundles
+        int numChildren = ABModelUtil.Root.GetChildList().Count;
+
         List<string> listOfPrefabs = new List<string>();
         string bundleName = "bundletest";
 
@@ -164,11 +204,22 @@ public class ABModelTests
             Model.Refresh();
 
             var rootChildList = ABModelUtil.Root.GetChildList();
-            Assert.AreEqual(1, rootChildList.Count);
-            Assert.AreEqual(typeof(BundleVariantFolderInfo), rootChildList.FirstOrDefault().GetType());
+            Assert.AreEqual(numChildren + 1, rootChildList.Count);
+        
+            Type bundleVariantFolderInfoType = typeof(BundleVariantFolderInfo);
+            BundleVariantFolderInfo foundItem = null;
+            foreach (BundleInfo item in rootChildList)
+            {
+                if (item.GetType() == bundleVariantFolderInfoType)
+                {
+                    foundItem = item as BundleVariantFolderInfo;
+                    break;
+                }
+            }
 
-            BundleVariantFolderInfo folderInfo = rootChildList.FirstOrDefault() as BundleVariantFolderInfo;
-            BundleInfo[] folderChildArray = folderInfo.GetChildList().ToArray();
+            Assert.IsNotNull(foundItem);
+
+            BundleInfo[] folderChildArray = foundItem.GetChildList().ToArray();
             Assert.AreEqual(2, folderChildArray.Length);
 
             Assert.AreEqual(typeof(BundleVariantDataInfo), folderChildArray[0].GetType());
@@ -180,18 +231,20 @@ public class ABModelTests
     [Test]
     public void CreateEmptyBundle_AddsBundle_ToRootBundles()
     {
-        Assert.AreEqual(0, GetBundleRootFolderChildCount());
+        // Account for existing bundles
+        int numChildren = GetBundleRootFolderChildCount();
 
         string bundleName = "testname";
         Model.CreateEmptyBundle(null, bundleName);
 
-        Assert.AreEqual(1, GetBundleRootFolderChildCount());
+        Assert.AreEqual(numChildren + 1, GetBundleRootFolderChildCount());
     }
 
     [Test]
     public void CreatedEmptyBundle_Remains_AfterRefresh()
     {
-        Assert.AreEqual(0, GetBundleRootFolderChildCount());
+        // Account for existing bundles
+        int numChildren = GetBundleRootFolderChildCount();
 
         //Arrange
         string bundleName = "testname";
@@ -201,20 +254,21 @@ public class ABModelTests
         Model.Refresh();
 
         //Assert
-        Assert.AreEqual(1, GetBundleRootFolderChildCount());
+        Assert.AreEqual(numChildren + 1, GetBundleRootFolderChildCount());
     }
 
     [Test]
     public void CreatedEmptyBundle_IsRemoved_AfterRebuild()
     {
-        Assert.AreEqual(0, GetBundleRootFolderChildCount());
+        // Account for existing bundles
+        int childCount = GetBundleRootFolderChildCount();
 
         string bundleName = "testname";
         Model.CreateEmptyBundle(null, bundleName);
 
         Model.Rebuild();
 
-        Assert.AreEqual(0, GetBundleRootFolderChildCount());
+        Assert.AreEqual(childCount, GetBundleRootFolderChildCount());
     }
 
     [Test]
@@ -334,6 +388,9 @@ public class ABModelTests
     [Test]
     public void BundleFolderInfo_ChildrenTable_UpdatesWhenBundleIsRenamed()
     {
+        // Account for existing asset bundles
+        int numExistingChildren = ABModelUtil.Root.GetChildList().Count;
+
         List<string> listOfPrefabs = new List<string>();
 
         string bundle1Name = "bundle1";
@@ -348,9 +405,9 @@ public class ABModelTests
             BundleTreeItem treeItem = new BundleTreeItem(b, 0, ABModelUtil.FakeTexture2D);
             Model.ExecuteAssetMove();
 
-            Assert.AreEqual(bundle1Name, ABModelUtil.Root.GetChildList().ElementAt(0).m_Name.bundleName);
+            Assert.AreEqual(bundle1Name, ABModelUtil.Root.GetChildList().ElementAt(numExistingChildren).m_Name.bundleName);
             Model.HandleBundleRename(treeItem, bundle2Name);
-            Assert.AreEqual(bundle2Name, ABModelUtil.Root.GetChildList().ElementAt(0).m_Name.bundleName);
+            Assert.AreEqual(bundle2Name, ABModelUtil.Root.GetChildList().ElementAt(numExistingChildren).m_Name.bundleName);
 
         }, listOfPrefabs);
     }
@@ -466,6 +523,9 @@ public class ABModelTests
     [Test]
     public void HandleBundleDelete_Deletes_BundleDataInfo()
     {
+        // Account for existing asset bundles
+        int numChilren = ABModelUtil.Root.GetChildList().Count;
+
         BundleDataInfo bundleDataInfo1 = new BundleDataInfo("bundle1", ABModelUtil.Root);
         BundleDataInfo bundleDataInfo2 = new BundleDataInfo("bundle2", ABModelUtil.Root);
         BundleDataInfo bundleDataInfo3 = new BundleDataInfo("bundle3", ABModelUtil.Root);
@@ -480,12 +540,15 @@ public class ABModelTests
         Dictionary<string, BundleInfo> numberOfConcreteFolderChildren =
             numberOfChildrenFieldInfo.GetValue(ABModelUtil.Root) as Dictionary<string, BundleInfo>;
 
-        Assert.AreEqual(0, numberOfConcreteFolderChildren.Keys.Count);
+        Assert.AreEqual(numChilren, numberOfConcreteFolderChildren.Keys.Count);
     }
 
     [Test]
     public void HandleBundleDelete_Deletes_VariantFolderAndChildren()
     {
+        // Account for existing asset bundles
+        int numChildren = ABModelUtil.Root.GetChildList().Count;
+
         BundleVariantFolderInfo bundleVariantFolderRoot = new BundleVariantFolderInfo("variantFolder", ABModelUtil.Root);
         ABModelUtil.Root.AddChild(bundleVariantFolderRoot);
 
@@ -503,19 +566,23 @@ public class ABModelTests
         Dictionary<string, BundleInfo> numberOfConcreteFolderChildren =
             numberOfChildrenFieldInfo.GetValue(ABModelUtil.Root) as Dictionary<string, BundleInfo>;
 
-        Assert.AreEqual(1, numberOfConcreteFolderChildren.Keys.Count);
+        Assert.AreEqual(numChildren + 1, numberOfConcreteFolderChildren.Keys.Count);
 
         Model.HandleBundleDelete(new BundleInfo[] { bundleVariantFolderRoot });
 
         numberOfConcreteFolderChildren =
             numberOfChildrenFieldInfo.GetValue(ABModelUtil.Root) as Dictionary<string, BundleInfo>;
 
-        Assert.AreEqual(0, numberOfConcreteFolderChildren.Keys.Count);
+        Assert.AreEqual(numChildren, numberOfConcreteFolderChildren.Keys.Count);
     }
 
     [Test]
     public void HandleBundleDelete_Deletes_SingleVariantFromVariantFolder()
     {
+        // Account for existing asset bundles
+        int numChildren = ABModelUtil.Root.GetChildList().Count;
+        int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
+
         BundleVariantFolderInfo bundleVariantFolderRoot = new BundleVariantFolderInfo("variantFolder", ABModelUtil.Root);
         ABModelUtil.Root.AddChild(bundleVariantFolderRoot);
 
@@ -536,14 +603,14 @@ public class ABModelTests
         Dictionary<string, BundleInfo> numberOfConcreteFolderChildren =
             numberOfChildrenFieldInfo.GetValue(ABModelUtil.Root) as Dictionary<string, BundleInfo>;
 
-        Assert.AreEqual(1, numberOfConcreteFolderChildren.Keys.Count);
+        Assert.AreEqual(numChildren + 1, numberOfConcreteFolderChildren.Keys.Count);
 
         Model.HandleBundleDelete(new BundleInfo[] { bundleVariantDataInfo1 });
 
         numberOfConcreteFolderChildren =
             numberOfChildrenFieldInfo.GetValue(ABModelUtil.Root) as Dictionary<string, BundleInfo>;
 
-        Assert.AreEqual(1, numberOfConcreteFolderChildren.Keys.Count);
+        Assert.AreEqual(numChildren + 1, numberOfConcreteFolderChildren.Keys.Count);
 
         FieldInfo numberOfVariantFolderChildrenFieldInfo = typeof(BundleVariantFolderInfo).GetField("m_Children", BindingFlags.NonPublic | BindingFlags.Instance);
         Dictionary<string, BundleInfo> numberOfVariantFolderChildren =
@@ -555,6 +622,9 @@ public class ABModelTests
     [Test]
     public void HandleBundleMerge_Merges_BundlesCorrectly()
     {
+        // Account for existing bundles
+        int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
+
         string bundle1Name = "bundle1";
         string bundle2Name = "bundle2";
 
@@ -573,8 +643,9 @@ public class ABModelTests
         {
             Model.HandleBundleMerge(new BundleInfo[] {bundle2DataInfo}, bundle1DataInfo);
 
-            Assert.AreEqual(1, AssetDatabase.GetAllAssetBundleNames().Length);
-            Assert.AreEqual(bundle1Name, AssetDatabase.GetAllAssetBundleNames()[0]);
+            string[] bundleNames = AssetDatabase.GetAllAssetBundleNames();
+            Assert.AreEqual(numBundles + 1, bundleNames.Length);
+            Assert.IsTrue(bundleNames.Contains(bundle1Name));
 
             //Make sure every asset now has bundle1 as the bundle name
             foreach (string prefab in listOfPrefabs)
@@ -588,6 +659,9 @@ public class ABModelTests
     [Test]
     public void HandleBundleMerge_Merges_BundlesWithChildrenCorrectly()
     {
+        // Account for existing bundles
+        int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
+
         string folderName = "folder";
         string bundle1Name = "bundle1";
         string bundle2Name = folderName + "/bundle2";
@@ -606,8 +680,9 @@ public class ABModelTests
         {
             Model.HandleBundleMerge(new BundleInfo[] { bundle1DataInfo }, bundle2DataInfo);
 
-            Assert.AreEqual(1, AssetDatabase.GetAllAssetBundleNames().Length, GetAllElementsAsString(AssetDatabase.GetAllAssetBundleNames()));
-            Assert.AreEqual(bundle2Name, AssetDatabase.GetAllAssetBundleNames()[0]);
+            string[] bundleNames = AssetDatabase.GetAllAssetBundleNames();
+            Assert.AreEqual(numBundles + 1, bundleNames.Length, GetAllElementsAsString(bundleNames));
+            Assert.IsTrue(bundleNames.Contains(bundle2Name));
 
             //Make sure every asset now has bundle1 as the bundle name
             foreach (string prefab in listOfPrefabs)
