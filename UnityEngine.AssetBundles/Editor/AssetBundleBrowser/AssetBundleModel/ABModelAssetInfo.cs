@@ -187,7 +187,7 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 }
                 if (string.IsNullOrEmpty(message) == false)
                 {
-                    message.Insert(0, displayName + "\n" + "Is dependent on other bundle's asset(s) or auto included asset(s): \n");
+                    message = message.Insert(0, displayName + "\n" + "Is dependent on other bundle's asset(s) or auto included asset(s): \n");
                     message = message.Substring(0, message.Length - 1);//remove trailing line break.
                     messages.Add(new MessageSystem.Message(message, MessageType.Info));
                 }
