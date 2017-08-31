@@ -173,7 +173,25 @@ namespace UnityEngine.AssetBundles.AssetBundleModel
                 }
                 message = message.Substring(0, message.Length - 2);//remove trailing comma.
                 messages.Add(new MessageSystem.Message(message, MessageType.Info));
-            }
+            }            
+
+            if (m_dependencies != null && m_dependencies.Count > 0)
+            {
+                var message = string.Empty;
+                foreach (var dependent in m_dependencies)
+                {
+                    if (dependent.bundleName != bundleName)
+                    {
+                        message += dependent.bundleName + " : " + dependent.displayName + "\n";
+                    }
+                }
+                if (string.IsNullOrEmpty(message) == false)
+                {
+                    message.Insert(0, displayName + "\n" + "Is dependent on other bundle's asset(s) or auto included asset(s): \n");
+                    message = message.Substring(0, message.Length - 1);//remove trailing line break.
+                    messages.Add(new MessageSystem.Message(message, MessageType.Info));
+                }
+            }            
 
             messages.Add(new MessageSystem.Message(displayName + "\n" + "Path: " + fullAssetName, MessageType.Info));
 
