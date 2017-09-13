@@ -376,9 +376,12 @@ namespace UnityEngine.AssetBundles
                     Directory.CreateDirectory(folderPath.Replace(sourceDirName, destDirName));
             }
 
-            foreach (string dirPath in Directory.GetFiles(sourceDirName, "*.*", SearchOption.AllDirectories))
+            foreach (string filePath in Directory.GetFiles(sourceDirName, "*.*", SearchOption.AllDirectories))
             {
-                File.Copy(dirPath, dirPath.Replace(sourceDirName, destDirName), true);
+                string newFilePath = Path.Combine(Path.GetDirectoryName(filePath).Replace(sourceDirName, destDirName),
+                    Path.GetFileName(filePath));
+
+                File.Copy(filePath, newFilePath, true);
             }
         }
 
