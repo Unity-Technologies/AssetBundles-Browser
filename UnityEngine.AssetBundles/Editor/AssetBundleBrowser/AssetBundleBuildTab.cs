@@ -373,21 +373,8 @@ namespace UnityEngine.AssetBundles
                 Directory.CreateDirectory(destDirName);
             }
 
-            // Get the files in the directory and copy them to the new location.
-            FileInfo[] files = dir.GetFiles();
-            foreach (FileInfo file in files)
-            {
-                string temppath = Path.Combine(destDirName, file.Name);
-                file.CopyTo(temppath, false);
-            }
-
-
-            DirectoryInfo[] dirs = dir.GetDirectories();
-            foreach (DirectoryInfo subdir in dirs)
-            {
-                string temppath = Path.Combine(destDirName, subdir.Name);
-                DirectoryCopy(subdir.FullName, temppath);
-            }
+            foreach (string dirPath in Directory.GetFiles(sourceDirName, "*.*", SearchOption.AllDirectories))
+                File.Copy(dirPath, dirPath.Replace(sourceDirName, destDirName), true);
         }
 
         private void BrowseForFolder()
