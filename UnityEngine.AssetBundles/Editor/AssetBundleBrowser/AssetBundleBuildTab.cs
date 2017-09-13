@@ -364,17 +364,22 @@ namespace UnityEngine.AssetBundles
 
         private static void DirectoryCopy(string sourceDirName, string destDirName)
         {
-            // Get the subdirectories for the specified directory.
-            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
-
             // If the destination directory doesn't exist, create it.
             if (!Directory.Exists(destDirName))
             {
                 Directory.CreateDirectory(destDirName);
             }
 
+            foreach (string folderPath in Directory.GetDirectories(sourceDirName, "*", SearchOption.AllDirectories))
+            {
+                if (!Directory.Exists(folderPath.Replace(sourceDirName, destDirName)))
+                    Directory.CreateDirectory(folderPath.Replace(sourceDirName, destDirName));
+            }
+
             foreach (string dirPath in Directory.GetFiles(sourceDirName, "*.*", SearchOption.AllDirectories))
+            {
                 File.Copy(dirPath, dirPath.Replace(sourceDirName, destDirName), true);
+            }
         }
 
         private void BrowseForFolder()
