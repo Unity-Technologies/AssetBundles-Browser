@@ -207,7 +207,6 @@ namespace UnityEngine.AssetBundles
                                 () =>
                                 {
                                     m_DataSourceIndex = counter;
-                                    Debug.Log(m_DataSourceIndex);
                                     var thisDataSource = ds;
                                     AssetBundleModel.Model.DataSource = thisDataSource;
                                     m_ManageTab.ForceReloadData();
