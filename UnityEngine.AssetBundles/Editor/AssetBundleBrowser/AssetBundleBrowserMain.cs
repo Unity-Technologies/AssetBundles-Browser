@@ -5,7 +5,7 @@ using UnityEditor.IMGUI.Controls;
 namespace UnityEngine.AssetBundles
 {
 
-    public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu
+    public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
     {
 
         public const float kButtonWidth = 150;
@@ -18,6 +18,9 @@ namespace UnityEngine.AssetBundles
         }
         [SerializeField]
         Mode m_Mode;
+
+        [SerializeField]
+        int m_DataSourceIndex;
 
         [SerializeField]
         public AssetBundleManageTab m_ManageTab;
@@ -43,9 +46,9 @@ namespace UnityEngine.AssetBundles
 
         [SerializeField]
         public bool multiDataSource = false;
+        List<AssetBundleDataSource.ABDataSource> m_DataSourceList = null;
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
-            //menu.AddSeparator(string.Empty);
             menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
         }
         public void FlipDataSource()
@@ -68,13 +71,26 @@ namespace UnityEngine.AssetBundles
             m_InspectTab.OnEnable(subPos, this);
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
-
-
+            
+            InitDataSources();
+        } 
+        private void InitDataSources()
+        {
             //determine if we are "multi source" or not...
             multiDataSource = false;
-            List<System.Type> types = AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes;
-            if (types.Count > 1)
+            m_DataSourceList = new List<AssetBundleDataSource.ABDataSource>();
+            foreach (var info in AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes)
+            {
+                m_DataSourceList.AddRange(info.GetMethod("CreateDataSources").Invoke(null, null) as List<AssetBundleDataSource.ABDataSource>);
+            }
+             
+            if (m_DataSourceList.Count > 1)
+            {
                 multiDataSource = true;
+                if (m_DataSourceIndex >= m_DataSourceList.Count)
+                    m_DataSourceIndex = 0;
+                AssetBundleModel.Model.DataSource = m_DataSourceList[m_DataSourceIndex];
+            }
         }
         private void OnDisable()
         {
@@ -82,6 +98,14 @@ namespace UnityEngine.AssetBundles
                 m_BuildTab.OnDisable();
             if (m_InspectTab != null)
                 m_InspectTab.OnDisable();
+        }
+
+        public void OnBeforeSerialize()
+        {
+        }
+        public void OnAfterDeserialize()
+        {
+            InitDataSources();
         }
 
         private Rect GetSubWindowArea()
@@ -168,35 +192,27 @@ namespace UnityEngine.AssetBundles
                     if (GUILayout.Button(c , EditorStyles.toolbarPopup) )
                     {
                         GenericMenu menu = new GenericMenu();
-                        bool firstItem = true;
 
-                        foreach (var info in AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes)
+                        for (int index = 0; index < m_DataSourceList.Count; index++)
                         {
-                            List<AssetBundleDataSource.ABDataSource> dataSourceList = null;
-                            dataSourceList = info.GetMethod("CreateDataSources").Invoke(null, null) as List<AssetBundleDataSource.ABDataSource>;
-                        
-
-                            if (dataSourceList == null)
+                            var ds = m_DataSourceList[index];
+                            if (ds == null)
                                 continue;
 
-                            if (!firstItem)
-                            {
+                            if (index > 0)
                                 menu.AddSeparator("");
-                            }
+                             
+                            var counter = index;
+                            menu.AddItem(new GUIContent(string.Format("{0} ({1})", ds.Name, ds.ProviderName)), false,
+                                () =>
+                                {
+                                    m_DataSourceIndex = counter;
+                                    var thisDataSource = ds;
+                                    AssetBundleModel.Model.DataSource = thisDataSource;
+                                    m_ManageTab.ForceReloadData();
+                                }
+                            );
 
-                            foreach (var ds in dataSourceList)
-                            {
-                                menu.AddItem(new GUIContent(string.Format("{0} ({1})", ds.Name, ds.ProviderName)), false,
-                                    () =>
-                                    {
-                                        var thisDataSource = ds;
-                                        AssetBundleModel.Model.DataSource = thisDataSource;
-                                        m_ManageTab.ForceReloadData();
-                                    }
-                                );
-                            }
-
-                            firstItem = false;
                         }
 
                         menu.ShowAsContext();
