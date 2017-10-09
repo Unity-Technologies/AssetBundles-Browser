@@ -156,7 +156,6 @@ namespace UnityEngine.AssetBundles
         {
             m_Data.RemovePath(m_SelectedBundleTreeItem.bundlePath);
             RefreshBundles();
-            m_BundleTreeView.Reload();
             m_SelectedBundleTreeItem = null;
         }
 
