@@ -15,10 +15,10 @@ namespace UnityEngine.AssetBundles
 
         [SerializeField]
         private InspectTabData m_Data;
-        
 
         private List<string> m_BundleList;
         private InspectBundleTree m_BundleTreeView;
+        private InspectTreeItem m_SelectedBundleTreeItem = null;
         [SerializeField]
         private TreeViewState m_BundleTreeState;
 
@@ -133,18 +133,17 @@ namespace UnityEngine.AssetBundles
             //////input path
             EditorGUILayout.Space();
             GUILayout.BeginHorizontal();
-            var originalPath = m_Data.m_BundlePath;
-            m_Data.m_BundlePath = EditorGUILayout.TextField("Bundle Path", m_Data.m_BundlePath);
-            
-            if (GUILayout.Button("Browse", GUILayout.MaxWidth(75f)))
+            //var originalPath = m_Data.m_BundlePath;
+            //m_Data.m_BundlePath = EditorGUILayout.TextField("Bundle Path", m_Data.m_BundlePath);
+
+            GUI.enabled = m_SelectedBundleTreeItem != null;
+            if (GUILayout.Button("Remove", GUILayout.MaxWidth(75f)))
+                RemoveSelectedItem();
+            GUI.enabled = true;
+            if (GUILayout.Button("Add", GUILayout.MaxWidth(75f)))
                 BrowseForFolder();
             GUILayout.EndHorizontal();
             EditorGUILayout.Space();
-
-            if (originalPath != m_Data.m_BundlePath)
-            {
-                RefreshBundles();
-            }
 
             if (m_BundleList.Count > 0)
             {
@@ -153,17 +152,38 @@ namespace UnityEngine.AssetBundles
             }
         }
 
+        private void RemoveSelectedItem()
+        {
+            m_Data.RemovePath(m_SelectedBundleTreeItem.bundlePath);
+            RefreshBundles();
+            m_BundleTreeView.Reload();
+            m_SelectedBundleTreeItem = null;
+        }
+
         //TODO - this is largely copied from BuildTab, should maybe be shared code.
         private void BrowseForFolder()
         {
-            var newPath = EditorUtility.OpenFolderPanel("Bundle Folder", m_Data.m_BundlePath, string.Empty);
+            var newPath = EditorUtility.OpenFilePanelWithFilters("Bundle Folder", string.Empty, new string[] { });
+            //EditorUtility.OpenFolderPanel("Bundle Folder", m_Data.m_BundlePath, string.Empty);
             if (!string.IsNullOrEmpty(newPath))
             {
                 var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
                 gamePath = gamePath.Replace("\\", "/");
                 if (newPath.StartsWith(gamePath))
                     newPath = newPath.Remove(0, gamePath.Length + 1);
-                m_Data.m_BundlePath = newPath;
+
+                var bundleTestPath = this.LoadBundle(newPath);
+                if (bundleTestPath != null)
+                {
+                    this.UnloadBundle(bundleTestPath.name);
+                    m_Data.AddPath(newPath);
+                }
+                else
+                {
+                    Debug.Log("Specified path is not an asset bundle!");
+                }
+
+                RefreshBundles();
             }
         }
         public void RefreshBundles()
@@ -189,40 +209,10 @@ namespace UnityEngine.AssetBundles
                 m_loadedAssetBundles.Clear();
             }
         }
-        private void AddFilePathToList(string path)
-        {
-            //////////////////////////////////////
-            /// code to handle appended hash things
-            //var files = Directory.GetFiles(path);
-            //Array.Sort(files);
-            //int size = files.Length;
-            //for (int i = 0; i < size; i++)
-            //{
-            //    ... do something...
-            //}
-            //////////////////////////////////////
 
-
-            foreach (var file in Directory.GetFiles(path))
-            {
-                if (Path.GetExtension(file) == ".manifest")
-                {
-                    var f = file.Substring(0, file.LastIndexOf('.')).Replace('\\', '/');
-                    if (File.Exists(f))
-                        m_BundleList.Add(f);
-                    else
-                        Debug.Log("Expected bundle not found: " + f + ". Note: Browser does not yet support inspecting bundles with hash appended.");
-                }
-            }
-
-            foreach (var dir in Directory.GetDirectories(path))
-            {
-                AddFilePathToList(dir);
-            }
-        }
         private void LoadBundles()
         {
-            if (m_Data.m_BundlePath == string.Empty)
+            if (m_Data.BundlePaths == null)
                 return;
             
             //find assets
@@ -230,9 +220,16 @@ namespace UnityEngine.AssetBundles
                 m_BundleList = new List<string>();
 
             m_BundleList.Clear();
-            if (Directory.Exists(m_Data.m_BundlePath))
+            foreach(var filePath in m_Data.BundlePaths)
             {
-                AddFilePathToList(m_Data.m_BundlePath);
+                if(File.Exists(filePath))
+                {
+                    m_BundleList.Add(filePath);
+                }
+                else
+                {
+                    Debug.Log("Expected bundle not found: " + filePath);
+                }
             }
             m_BundleTreeView.Reload();
         }
@@ -243,6 +240,7 @@ namespace UnityEngine.AssetBundles
 
         public void SetBundleItem(InspectTreeItem selected)
         {
+            m_SelectedBundleTreeItem = selected;
             if (selected == null)
             {
                 m_SingleInspector.SetBundle(null);
@@ -257,7 +255,20 @@ namespace UnityEngine.AssetBundles
         [System.Serializable]
         public class InspectTabData
         {
-            public string m_BundlePath = string.Empty;
+            [SerializeField]
+            private string[] m_BundlePaths = new string[0];
+
+            public string[] BundlePaths { get { return m_BundlePaths; } }
+
+            public void AddPath(string newPath)
+            {
+                ArrayUtility.Add(ref m_BundlePaths, newPath);
+            }
+
+            public void RemovePath(string pathToRemove)
+            {
+                ArrayUtility.Remove(ref m_BundlePaths, pathToRemove);
+            }
         }
 
         /// <summary>
