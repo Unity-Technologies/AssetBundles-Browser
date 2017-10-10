@@ -18,7 +18,7 @@ namespace UnityEngine.AssetBundles
 
         private List<string> m_BundleList;
         private InspectBundleTree m_BundleTreeView;
-        private InspectTreeItem m_SelectedBundleTreeItem = null;
+        private IList<InspectTreeItem> m_SelectedBundleTreeItems = new List<InspectTreeItem>();
         [SerializeField]
         private TreeViewState m_BundleTreeState;
 
@@ -136,34 +136,57 @@ namespace UnityEngine.AssetBundles
             //var originalPath = m_Data.m_BundlePath;
             //m_Data.m_BundlePath = EditorGUILayout.TextField("Bundle Path", m_Data.m_BundlePath);
 
-            GUI.enabled = m_SelectedBundleTreeItem != null;
-            if (GUILayout.Button("Remove", GUILayout.MaxWidth(75f)))
-                RemoveSelectedItem();
-            GUI.enabled = true;
+            using (new EditorGUI.DisabledScope(m_SelectedBundleTreeItems == null || m_SelectedBundleTreeItems.Count <= 0))
+            {
+                if (GUILayout.Button("Remove", GUILayout.MaxWidth(75f)))
+                    RemoveSelectedItems();
+            }
+
             if (GUILayout.Button("Add", GUILayout.MaxWidth(75f)))
-                BrowseForFolder();
+            {
+                var displayDialog = EditorUtility.DisplayDialogComplex("Add Options", "How would you like to add?", "File", "Folder", "Cancel");
+                if(displayDialog == 0)
+                    BrowseForFile();
+                else if(displayDialog == 1)
+                    BrowseForFolder();
+            }
+
             GUILayout.EndHorizontal();
             EditorGUILayout.Space();
 
             if (m_BundleList.Count > 0)
             {
                 m_BundleTreeView.OnGUI(new Rect(m_Position.x, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
-                m_SingleInspector.OnGUI(new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
+                if (m_SelectedBundleTreeItems != null && m_SelectedBundleTreeItems.Count > 1)
+                {
+                    var style = GUI.skin.label;
+                    style.alignment = TextAnchor.MiddleCenter;
+                    style.wordWrap = true;
+                    GUI.Label(
+                    new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30),
+                    new GUIContent("Mutli-select inspection not supported"),
+                    style);
+                }
+                else
+                {
+                    m_SingleInspector.OnGUI(new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
+                }
             }
         }
 
-        private void RemoveSelectedItem()
+        private void RemoveSelectedItems()
         {
-            m_Data.RemovePath(m_SelectedBundleTreeItem.bundlePath);
+            foreach(var selectedBundleTreeItem in m_SelectedBundleTreeItems)
+            {
+                m_Data.RemovePath(selectedBundleTreeItem.bundlePath);
+            }
             RefreshBundles();
-            m_SelectedBundleTreeItem = null;
+            m_SelectedBundleTreeItems.Clear();
         }
 
-        //TODO - this is largely copied from BuildTab, should maybe be shared code.
-        private void BrowseForFolder()
+        private void BrowseForFile()
         {
             var newPath = EditorUtility.OpenFilePanelWithFilters("Bundle Folder", string.Empty, new string[] { });
-            //EditorUtility.OpenFolderPanel("Bundle Folder", m_Data.m_BundlePath, string.Empty);
             if (!string.IsNullOrEmpty(newPath))
             {
                 var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
@@ -185,6 +208,42 @@ namespace UnityEngine.AssetBundles
                 RefreshBundles();
             }
         }
+
+        //TODO - this is largely copied from BuildTab, should maybe be shared code.
+        private void BrowseForFolder()
+        {
+            var newPath = EditorUtility.OpenFolderPanel("Bundle Folder", string.Empty, string.Empty);
+            if (!string.IsNullOrEmpty(newPath))
+            {
+                var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
+                gamePath = gamePath.Replace("\\", "/");
+                if (newPath.StartsWith(gamePath))
+                    newPath = newPath.Remove(0, gamePath.Length + 1);
+
+                AddFolderFilePath(newPath);
+
+                RefreshBundles();
+            }
+        }
+
+        private void AddFolderFilePath(string folderPath)
+        {
+            foreach (var filePath in Directory.GetFiles(folderPath))
+            {
+                var bundleTestPath = this.LoadBundle(filePath);
+                if (bundleTestPath != null)
+                {
+                    this.UnloadBundle(bundleTestPath.name);
+                    m_Data.AddPath(filePath);
+                }
+            }
+
+            foreach (var dirPath in Directory.GetDirectories(folderPath))
+            {
+                AddFolderFilePath(dirPath);
+            }
+        }
+
         public void RefreshBundles()
         {
             ClearData();
@@ -237,17 +296,17 @@ namespace UnityEngine.AssetBundles
         { get { return m_BundleList; } }
 
 
-        public void SetBundleItem(InspectTreeItem selected)
+        public void SetBundleItem(IList<InspectTreeItem> selected)
         {
-            m_SelectedBundleTreeItem = selected;
+            m_SelectedBundleTreeItems = selected;
             if (selected == null)
             {
                 m_SingleInspector.SetBundle(null);
             }
-            else
+            else if(selected.Count == 1)
             {
-                AssetBundle bundle = this.LoadBundle(selected.bundlePath);
-                m_SingleInspector.SetBundle(bundle, selected.bundlePath);
+                AssetBundle bundle = this.LoadBundle(selected[0].bundlePath);
+                m_SingleInspector.SetBundle(bundle, selected[0].bundlePath);
             }
         }
 
@@ -255,18 +314,21 @@ namespace UnityEngine.AssetBundles
         public class InspectTabData
         {
             [SerializeField]
-            private string[] m_BundlePaths = new string[0];
+            private List<string> m_BundlePaths = new List<string>();
 
-            public string[] BundlePaths { get { return m_BundlePaths; } }
+            public IList<string> BundlePaths { get { return m_BundlePaths.AsReadOnly(); } }
 
             public void AddPath(string newPath)
             {
-                ArrayUtility.Add(ref m_BundlePaths, newPath);
+                m_BundlePaths.Add(newPath);
             }
 
             public void RemovePath(string pathToRemove)
             {
-                ArrayUtility.Remove(ref m_BundlePaths, pathToRemove);
+                if (m_BundlePaths.Contains(pathToRemove))
+                {
+                    m_BundlePaths.Remove(pathToRemove);
+                }
             }
         }
 
