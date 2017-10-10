@@ -194,42 +194,53 @@ namespace UnityEngine.AssetBundles
                 if (newPath.StartsWith(gamePath))
                     newPath = newPath.Remove(0, gamePath.Length + 1);
 
-                var bundleTestPath = this.LoadBundle(newPath);
-                if (bundleTestPath != null)
-                {
-                    this.UnloadBundle(bundleTestPath.name);
-                    m_Data.AddPath(newPath);
-                }
-                else
-                {
-                    Debug.Log("Specified path is not an asset bundle!");
-                }
+                AddFilePath(newPath);
 
                 RefreshBundles();
             }
         }
 
         //TODO - this is largely copied from BuildTab, should maybe be shared code.
-        private void BrowseForFolder()
+        private void BrowseForFolder(string folderPath = null)
         {
-            var newPath = EditorUtility.OpenFolderPanel("Bundle Folder", string.Empty, string.Empty);
-            if (!string.IsNullOrEmpty(newPath))
+           folderPath = EditorUtility.OpenFolderPanel("Bundle Folder", string.Empty, string.Empty);
+            if (!string.IsNullOrEmpty(folderPath))
             {
                 var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
                 gamePath = gamePath.Replace("\\", "/");
-                if (newPath.StartsWith(gamePath))
-                    newPath = newPath.Remove(0, gamePath.Length + 1);
+                if (folderPath.StartsWith(gamePath))
+                    folderPath = folderPath.Remove(0, gamePath.Length + 1);
 
-                AddFolderFilePath(newPath);
+                AddFolderFilePath(folderPath);
 
                 RefreshBundles();
             }
         }
 
-        private void AddFolderFilePath(string folderPath)
+        public void AddFilePath(string filePath)
+        {
+            if (m_Data.Contains(filePath))
+                return;
+
+            var bundleTestPath = this.LoadBundle(filePath);
+            if (bundleTestPath != null)
+            {
+                this.UnloadBundle(bundleTestPath.name);
+                m_Data.AddPath(filePath);
+            }
+            else
+            {
+                Debug.Log("Specified path is not an asset bundle!");
+            }
+        }
+
+        public void AddFolderFilePath(string folderPath)
         {
             foreach (var filePath in Directory.GetFiles(folderPath))
             {
+                if (m_Data.Contains(filePath))
+                    continue;
+
                 var bundleTestPath = this.LoadBundle(filePath);
                 if (bundleTestPath != null)
                 {
@@ -329,6 +340,11 @@ namespace UnityEngine.AssetBundles
                 {
                     m_BundlePaths.Remove(pathToRemove);
                 }
+            }
+
+            public bool Contains(string pathToCheck)
+            {
+                return m_BundlePaths.Contains(pathToCheck);
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 
 namespace UnityEngine.AssetBundles.AssetBundleDataSource
 {
@@ -7,6 +8,7 @@ namespace UnityEngine.AssetBundles.AssetBundleDataSource
         public string outputDirectory;
         public BuildAssetBundleOptions options;
         public BuildTarget buildTarget;
+        public Action<string> onBuild;
     }
 
     public partial interface ABDataSource
