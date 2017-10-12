@@ -189,7 +189,7 @@ namespace AssetBundleBrowser
             m_HorizontalSplitterRect.height = m_Position.height;
 
             EditorGUIUtility.AddCursorRect(m_HorizontalSplitterRect, MouseCursor.ResizeHorizontal);
-            if (Event.current.type == EventType.mouseDown && m_HorizontalSplitterRect.Contains(Event.current.mousePosition))
+            if (Event.current.type == EventType.MouseDown && m_HorizontalSplitterRect.Contains(Event.current.mousePosition))
                 m_ResizingHorizontalSplitter = true;
 
             if (m_ResizingHorizontalSplitter)
@@ -212,11 +212,11 @@ namespace AssetBundleBrowser
 
 
             EditorGUIUtility.AddCursorRect(m_VerticalSplitterRectRight, MouseCursor.ResizeVertical);
-            if (Event.current.type == EventType.mouseDown && m_VerticalSplitterRectRight.Contains(Event.current.mousePosition))
+            if (Event.current.type == EventType.MouseDown && m_VerticalSplitterRectRight.Contains(Event.current.mousePosition))
                 m_ResizingVerticalSplitterRight = true;
 
             EditorGUIUtility.AddCursorRect(m_VerticalSplitterRectLeft, MouseCursor.ResizeVertical);
-            if (Event.current.type == EventType.mouseDown && m_VerticalSplitterRectLeft.Contains(Event.current.mousePosition))
+            if (Event.current.type == EventType.MouseDown && m_VerticalSplitterRectLeft.Contains(Event.current.mousePosition))
                 m_ResizingVerticalSplitterLeft = true;
 
 
