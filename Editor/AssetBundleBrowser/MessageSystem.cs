@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     public class MessageSystem
     {

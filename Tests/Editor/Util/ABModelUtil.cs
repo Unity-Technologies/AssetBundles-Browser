@@ -5,9 +5,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
-using UnityEngine.AssetBundles.AssetBundleModel;
+using AssetBundleBrowser.AssetBundleModel;
 
-namespace Assets.AssetBundles_Browser.UnityEngine.AssetBundles.Editor.Tests.Util
+namespace Assets.AssetBundles_Browser.Editor.Tests.Util
 {
     class ABModelUtil
     {

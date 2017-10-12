@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     /// <summary>
     /// This class maintains a record of a loaded asset bundle, allowing us

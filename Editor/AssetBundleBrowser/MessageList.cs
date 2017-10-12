@@ -1,12 +1,8 @@
 ﻿using UnityEditor;
-using UnityEditorInternal;
+using UnityEngine;
 using System.Collections.Generic;
-using UnityEditor.IMGUI.Controls;
-using System.Linq;
-using System;
 
-
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     internal class MessageList
     {

@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-using UnityEngine.AssetBundles.AssetBundleDataSource;
+using AssetBundleBrowser.AssetBundleDataSource;
 
-namespace UnityEngine.AssetBundles.AssetBundleModel
+namespace AssetBundleBrowser.AssetBundleModel
 {
     public class Model
     {

@@ -1,10 +1,8 @@
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
-using System.Collections.Generic;
+using UnityEngine;
 using System.IO;
-using System;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     class SingleBundleInspector
     {

@@ -1,6 +1,6 @@
 ﻿using UnityEditor;
 
-namespace UnityEngine.AssetBundles.AssetBundleDataSource
+namespace AssetBundleBrowser.AssetBundleDataSource
 {
     public partial struct ABBuildInfo
     {

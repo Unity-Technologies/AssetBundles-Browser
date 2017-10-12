@@ -1,10 +1,9 @@
-using UnityEditor;
+
+using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
-using System.IO;
-using System;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
 	public class InspectTreeItem : TreeViewItem
 	{

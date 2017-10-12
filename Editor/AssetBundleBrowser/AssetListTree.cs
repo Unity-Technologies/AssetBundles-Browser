@@ -1,18 +1,18 @@
 ﻿using UnityEditor;
-using UnityEditorInternal;
+using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
 using System.Linq;
-using System;
+//using System;
 
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     internal class AssetListTree : TreeView
     {
         List<AssetBundleModel.BundleInfo> m_SourceBundles = new List<AssetBundleModel.BundleInfo>();
         AssetBundleManageTab m_Controller;
-        List<UnityEngine.Object> m_EmptyObjectList = new List<Object>();
+        List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
 
         public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
         {
@@ -249,7 +249,7 @@ namespace UnityEngine.AssetBundles
         protected bool IsValidDragDrop(DragAndDropArgs args)
         {
             //can't do drag & drop if data source is read only
-            if (AssetBundles.AssetBundleModel.Model.DataSource.IsReadOnly ())
+            if (AssetBundleModel.Model.DataSource.IsReadOnly ())
                 return false;
 
             //can't drag onto none or >1 bundles
@@ -417,7 +417,7 @@ namespace UnityEngine.AssetBundles
     }
     static class MyExtensionMethods
     {
-        public static IOrderedEnumerable<T> Order<T, TKey>(this IEnumerable<T> source, Func<T, TKey> selector, bool ascending)
+        public static IOrderedEnumerable<T> Order<T, TKey>(this IEnumerable<T> source, System.Func<T, TKey> selector, bool ascending)
         {
             if (ascending)
             {
@@ -429,7 +429,7 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-        public static IOrderedEnumerable<T> ThenBy<T, TKey>(this IOrderedEnumerable<T> source, Func<T, TKey> selector, bool ascending)
+        public static IOrderedEnumerable<T> ThenBy<T, TKey>(this IOrderedEnumerable<T> source, System.Func<T, TKey> selector, bool ascending)
         {
             if (ascending)
             {

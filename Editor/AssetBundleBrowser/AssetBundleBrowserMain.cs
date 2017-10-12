@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
+using UnityEngine;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
 
     public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver

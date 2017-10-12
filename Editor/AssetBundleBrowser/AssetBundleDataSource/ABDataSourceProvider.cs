@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace UnityEngine.AssetBundles.AssetBundleDataSource
+namespace AssetBundleBrowser.AssetBundleDataSource
 {
     public class ABDataSourceProviderUtility {
 

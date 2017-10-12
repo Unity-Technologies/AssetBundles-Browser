@@ -1,18 +1,18 @@
 ﻿using UnityEditor;
-using UnityEditorInternal;
+using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
 using System.Linq;
 using System;
 
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     internal class AssetBundleTree : TreeView
     { 
         AssetBundleManageTab m_Controller;
         private bool m_ContextOnItem = false;
-        List<UnityEngine.Object> m_EmptyObjectList = new List<Object>();
+        List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
 
         public AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
         {

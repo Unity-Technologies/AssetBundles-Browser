@@ -1,9 +1,10 @@
 ﻿using UnityEditor;
 using UnityEditor.IMGUI.Controls;
+using UnityEngine;
 using System.Collections.Generic;
 
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     [System.Serializable]
     public class AssetBundleManageTab 

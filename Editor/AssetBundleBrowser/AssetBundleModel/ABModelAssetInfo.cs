@@ -1,11 +1,9 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-namespace UnityEngine.AssetBundles.AssetBundleModel
+namespace AssetBundleBrowser.AssetBundleModel
 {
     public class AssetTreeItem : TreeViewItem
     {

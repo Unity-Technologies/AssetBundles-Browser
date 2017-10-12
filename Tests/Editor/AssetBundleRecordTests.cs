@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using UnityEngine;
-using UnityEngine.AssetBundles;
+using AssetBundleBrowser;
 
 public class AssetBundleRecordTests
 {

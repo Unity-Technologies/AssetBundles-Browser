@@ -8,10 +8,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Assets.AssetBundles_Browser.UnityEngine.AssetBundles.Editor.Tests.Util;
+using Assets.AssetBundles_Browser.Editor.Tests.Util;
 using Assets.Editor.Tests.Util;
 using Boo.Lang.Runtime;
-using UnityEngine.AssetBundles.AssetBundleModel;
+using AssetBundleBrowser.AssetBundleModel;
 using UnityEngine.SceneManagement;
 
 public class ABModelTests

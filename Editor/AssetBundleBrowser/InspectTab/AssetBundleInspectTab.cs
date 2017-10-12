@@ -1,10 +1,11 @@
 using UnityEditor;
+using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     [System.Serializable]
     public class AssetBundleInspectTab
