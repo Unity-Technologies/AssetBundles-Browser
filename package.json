@@ -1,6 +1,6 @@
 {
 	"name": "com.unity.assetbundlebrowser",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"unity": "5.6",
 	"description": "Editor tool used to manually manage Asset Bundle configuration.",
 	"keywords": ["asset", "bundle", "bundles", "assetbundles"],
