@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
-using System;
+using System.Linq;
 
 namespace UnityEngine.AssetBundles
 {
@@ -56,7 +56,8 @@ namespace UnityEngine.AssetBundles
 			
 			if (selectedIds.Count > 0)
 			{
-				m_InspectTab.SetBundleItem(FindItem(selectedIds[0], rootItem) as InspectTreeItem);
+                m_InspectTab.SetBundleItem(FindRows(selectedIds).Select(tvi => tvi as InspectTreeItem).ToList());
+				//m_InspectTab.SetBundleItem(FindItem(selectedIds[0], rootItem) as InspectTreeItem);
 			}
 			else
             {
@@ -66,7 +67,7 @@ namespace UnityEngine.AssetBundles
 
 		protected override bool CanMultiSelect(TreeViewItem item)
 		{
-			return false;
+			return true;
 		}
 	}
 
