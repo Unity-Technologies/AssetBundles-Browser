@@ -146,8 +146,9 @@ namespace UnityEngine.AssetBundles
 
             if (m_BundleList.Count > 0)
             {
-                m_BundleTreeView.OnGUI(new Rect(m_Position.x, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
-                m_SingleInspector.OnGUI(new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
+                int halfWidth = (int)(m_Position.width / 2.0f);
+                m_BundleTreeView.OnGUI(new Rect(m_Position.x, m_Position.y + 30, halfWidth, m_Position.height - 30));
+                m_SingleInspector.OnGUI(new Rect(m_Position.x + halfWidth, m_Position.y + 30, halfWidth, m_Position.height - 30));
             }
         }
 
