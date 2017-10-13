@@ -61,7 +61,7 @@ namespace UnityEngine.AssetBundles
     }
 
     [CustomEditor(typeof(AssetBundle))]
-    public class LevelScriptEditor : Editor
+    public class AssetBundleEditor : Editor
     {
         public bool pathFoldout = false;
         public bool advancedFoldout = false;

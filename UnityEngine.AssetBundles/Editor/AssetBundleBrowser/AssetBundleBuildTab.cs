@@ -356,7 +356,7 @@ namespace UnityEngine.AssetBundles
             buildInfo.outputDirectory = m_UserData.m_OutputPath;
             buildInfo.options = opt;
             buildInfo.buildTarget = (BuildTarget)m_UserData.m_BuildTarget;
-            buildInfo.onBuild = (assetBundleName) => m_InspectTab.AddFilePath(string.Format("{0}/{1}", buildInfo.outputDirectory, assetBundleName));
+            buildInfo.onBuild = (assetBundleName) => { m_InspectTab.AddBundleFolder(buildInfo.outputDirectory); m_InspectTab.RefreshBundles(); };
 
             AssetBundleModel.Model.DataSource.BuildAssetBundles (buildInfo);
 
