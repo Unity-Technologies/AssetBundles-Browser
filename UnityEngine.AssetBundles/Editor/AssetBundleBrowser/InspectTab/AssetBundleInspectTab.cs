@@ -3,6 +3,7 @@ using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Linq;
 
 namespace UnityEngine.AssetBundles
 {
@@ -157,19 +158,20 @@ namespace UnityEngine.AssetBundles
             if (m_BundleList.Count > 0)
             {
                 m_BundleTreeView.OnGUI(new Rect(m_Position.x, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
+                var inspectorRect = new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30);
                 if (m_SelectedBundleTreeItems != null && m_SelectedBundleTreeItems.Count > 1)
                 {
                     var style = GUI.skin.label;
                     style.alignment = TextAnchor.MiddleCenter;
                     style.wordWrap = true;
                     GUI.Label(
-                    new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30),
-                    new GUIContent("Mutli-select inspection not supported"),
+                    inspectorRect,
+                    new GUIContent("Multi-select inspection not supported"),
                     style);
                 }
                 else
                 {
-                    m_SingleInspector.OnGUI(new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
+                    m_SingleInspector.OnGUI(inspectorRect);
                 }
             }
         }
@@ -236,17 +238,13 @@ namespace UnityEngine.AssetBundles
 
         public void AddFolderFilePath(string folderPath)
         {
+            var notAllowedExtensions = new string[] {".meta", ".manifest", ".dll", ".cs", ".exe", ".js"};
             foreach (var filePath in Directory.GetFiles(folderPath))
             {
-                if (m_Data.Contains(filePath))
+                if (m_Data.Contains(filePath) || notAllowedExtensions.Contains(Path.GetExtension(filePath)))
                     continue;
 
-                var bundleTestPath = this.LoadBundle(filePath);
-                if (bundleTestPath != null)
-                {
-                    this.UnloadBundle(bundleTestPath.name);
-                    m_Data.AddPath(filePath);
-                }
+                m_Data.AddPath(filePath);
             }
 
             foreach (var dirPath in Directory.GetDirectories(folderPath))
@@ -289,6 +287,7 @@ namespace UnityEngine.AssetBundles
                 m_BundleList = new List<string>();
 
             m_BundleList.Clear();
+            var pathsToRemove = new List<string>();
             foreach(var filePath in m_Data.BundlePaths)
             {
                 if(File.Exists(filePath))
@@ -298,7 +297,12 @@ namespace UnityEngine.AssetBundles
                 else
                 {
                     Debug.Log("Expected bundle not found: " + filePath);
+                    pathsToRemove.Add(filePath);
                 }
+            }
+            foreach (var path in pathsToRemove)
+            {
+                m_Data.RemovePath(path);
             }
             m_BundleTreeView.Reload();
         }
@@ -331,6 +335,7 @@ namespace UnityEngine.AssetBundles
 
             public void AddPath(string newPath)
             {
+                newPath = newPath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 m_BundlePaths.Add(newPath);
             }
 
