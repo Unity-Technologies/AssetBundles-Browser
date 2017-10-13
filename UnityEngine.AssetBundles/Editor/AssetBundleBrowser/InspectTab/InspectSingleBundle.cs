@@ -54,6 +54,8 @@ namespace UnityEngine.AssetBundles
     [CustomEditor(typeof(AssetBundle))]
     public class LevelScriptEditor : Editor
     {
+        public bool pathFoldout = false;
+        public bool advancedFoldout = false;
         public override void OnInspectorGUI()
         {
             AssetBundle bundle = target as AssetBundle;
@@ -76,9 +78,27 @@ namespace UnityEngine.AssetBundles
                 else
                     GUILayout.Label(new GUIContent("Size: " + EditorUtility.FormatBytes(fileSize)), leftStyle);
 
+                var assetNames = bundle.GetAllAssetNames();
+                pathFoldout = EditorGUILayout.Foldout(pathFoldout, "Source Asset Paths");
+                if (pathFoldout)
+                {
+                    EditorGUI.indentLevel++;
+                    foreach (var asset in assetNames)
+                        EditorGUILayout.LabelField(asset);
+                    EditorGUI.indentLevel--;
+                }
+
+
+                advancedFoldout = EditorGUILayout.Foldout(advancedFoldout, "Advanced Data");
+
             }
 
-            base.OnInspectorGUI();
+            if (advancedFoldout)
+            {
+                EditorGUI.indentLevel++;
+                base.OnInspectorGUI();
+                EditorGUI.indentLevel--;
+            }
         }
     }
 }
