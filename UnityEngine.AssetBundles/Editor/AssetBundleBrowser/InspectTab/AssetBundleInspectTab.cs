@@ -324,17 +324,7 @@ namespace UnityEngine.AssetBundles
             else if(selected.Count == 1)
             {
                 AssetBundle bundle = LoadBundle(selected[0].bundlePath);
-                if (bundle == null)
-                {
-                    var possibleFolderData = m_Data.FolderDataContainingFilePath(selected[0].bundlePath);
-                    if (possibleFolderData != null)
-                    {
-                        if(!possibleFolderData.IgnoredFiles.Contains(selected[0].bundlePath))
-                            possibleFolderData.IgnoredFiles.Add(selected[0].bundlePath);
-                        RefreshBundles();
-                    }
-                }
-                m_SingleInspector.SetBundle(bundle, selected[0].bundlePath);
+                m_SingleInspector.SetBundle(bundle, selected[0].bundlePath, m_Data, this);
             }
             else
             {
