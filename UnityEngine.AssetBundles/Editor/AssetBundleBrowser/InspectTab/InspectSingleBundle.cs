@@ -20,10 +20,15 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         private Vector2 m_ScrollPosition;
 
-        public void SetBundle(AssetBundle bundle, string path = "")
+        private AssetBundleInspectTab m_assetBundleInspectTab = null;
+        private AssetBundleInspectTab.InspectTabData m_inspectTabData = null;
+
+        public void SetBundle(AssetBundle bundle, string path = "", AssetBundleInspectTab.InspectTabData inspectTabData = null, AssetBundleInspectTab assetBundleInspectTab = null)
         {
             //static var...
             currentPath = path;
+            m_inspectTabData = inspectTabData;
+            m_assetBundleInspectTab = assetBundleInspectTab;
 
             //members
             m_Editor = null;
@@ -56,6 +61,19 @@ namespace UnityEngine.AssetBundles
                 style.alignment = TextAnchor.MiddleCenter;
                 style.wordWrap = true;
                 GUI.Label(m_Position, new GUIContent("Invalid bundle selected"), style);
+
+                if (m_inspectTabData != null && GUI.Button(new Rect(new Vector2((m_Position.position.x + m_Position.width / 2f) - 37.5f, (m_Position.position.y + m_Position.height / 2f) + 15), new Vector2(75, 30)), "Ignore file"))
+                {
+                    var possibleFolderData = m_inspectTabData.FolderDataContainingFilePath(currentPath);
+                    if (possibleFolderData != null)
+                    {
+                        if (!possibleFolderData.IgnoredFiles.Contains(currentPath))
+                            possibleFolderData.IgnoredFiles.Add(currentPath);
+
+                        if(m_assetBundleInspectTab != null)
+                            m_assetBundleInspectTab.RefreshBundles();
+                    }
+                } 
             }
         }
     }

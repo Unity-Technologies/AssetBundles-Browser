@@ -258,14 +258,14 @@ namespace UnityEngine.AssetBundles
 
             foreach(var folder in m_Data.BundleFolders)
             {
-                if(Directory.Exists(folder))
+                if(Directory.Exists(folder.Path))
                 {
-                    AddFilePathToList(folder, folder);
+                    AddFilePathToList(folder.Path, folder.Path);
                 }
                 else
                 {
                     Debug.Log("Expected folder not found: " + folder);
-                    pathsToRemove.Add(folder);
+                    pathsToRemove.Add(folder.Path);
                 }
             }
             foreach (var path in pathsToRemove)
@@ -297,7 +297,7 @@ namespace UnityEngine.AssetBundles
                 if(!notAllowedExtensions.Contains(ext))
                 {
                     var f = file.Replace('\\', '/');
-                    if (File.Exists(file))
+                    if (File.Exists(file) && !m_Data.FolderIgnoresFile(rootPath, f))
                     {
                         AddBundleToList(rootPath, f);
                     }
@@ -324,7 +324,7 @@ namespace UnityEngine.AssetBundles
             else if(selected.Count == 1)
             {
                 AssetBundle bundle = LoadBundle(selected[0].bundlePath);
-                m_SingleInspector.SetBundle(bundle, selected[0].bundlePath);
+                m_SingleInspector.SetBundle(bundle, selected[0].bundlePath, m_Data, this);
             }
             else
             {
@@ -347,20 +347,31 @@ namespace UnityEngine.AssetBundles
             [SerializeField]
             private List<string> m_BundlePaths = new List<string>();
             [SerializeField]
-            private List<string> m_BundleFolders = new List<string>();
+            private List<BundleFolderData> m_BundleFolders = new List<BundleFolderData>();
 
             public IList<string> BundlePaths { get { return m_BundlePaths.AsReadOnly(); } }
-            public IList<string> BundleFolders { get { return m_BundleFolders.AsReadOnly(); } }
+            public IList<BundleFolderData> BundleFolders { get { return m_BundleFolders.AsReadOnly(); } }
 
             public void AddPath(string newPath)
             {
                 if (!m_BundlePaths.Contains(newPath))
-                    m_BundlePaths.Add(newPath);
+                {
+                    var possibleFolderData = FolderDataContainingFilePath(newPath);
+                    if(possibleFolderData == null)
+                    {
+                        m_BundlePaths.Add(newPath);
+                    }
+                    else
+                    {
+                        possibleFolderData.IgnoredFiles.Remove(newPath);
+                    }
+                }
             }
+
             public void AddFolder(string newPath)
             {
-                if (!m_BundleFolders.Contains(newPath))
-                    m_BundleFolders.Add(newPath);
+                if (!BundleFolderContains(newPath))
+                    m_BundleFolders.Add(new BundleFolderData(newPath));
             }
 
             public void RemovePath(string pathToRemove)
@@ -370,9 +381,52 @@ namespace UnityEngine.AssetBundles
 
             public void RemoveFolder(string pathToRemove)
             {
-                m_BundleFolders.Remove(pathToRemove);
+                m_BundleFolders.Remove(BundleFolders.FirstOrDefault(bfd => bfd.Path == pathToRemove));
             }
 
+            public bool FolderIgnoresFile(string folderPath, string filePath)
+            {
+                var bundleFolderData = BundleFolders.FirstOrDefault(bfd => bfd.Path == folderPath);
+                return bundleFolderData != null && bundleFolderData.IgnoredFiles.Contains(filePath);
+            }
+
+            public BundleFolderData FolderDataContainingFilePath(string filePath)
+            {
+                foreach (var bundleFolderData in BundleFolders)
+                {
+                    if (Path.GetFullPath(filePath).StartsWith(Path.GetFullPath(bundleFolderData.Path)))
+                    {
+                        return bundleFolderData;
+                    }
+                }
+                return null;
+            }
+
+            private bool BundleFolderContains(string folderPath)
+            {
+                foreach(var bundleFolderData in BundleFolders)
+                {
+                    if(Path.GetFullPath(bundleFolderData.Path) == Path.GetFullPath(folderPath))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            [System.Serializable]
+            public class BundleFolderData
+            {
+                public string Path;
+
+                public IList<string> IgnoredFiles;
+
+                public BundleFolderData(string path)
+                {
+                    Path = path;
+                    IgnoredFiles = new List<string>();
+                }
+            }
         }
 
         /// <summary>
