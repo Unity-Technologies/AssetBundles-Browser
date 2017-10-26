@@ -3,6 +3,7 @@ using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Linq;
 
 namespace UnityEngine.AssetBundles
 {
@@ -17,7 +18,7 @@ namespace UnityEngine.AssetBundles
         private InspectTabData m_Data;
         
 
-        private List<string> m_BundleList;
+        private Dictionary<string, List<string> > m_BundleList;
         private InspectBundleTree m_BundleTreeView;
         [SerializeField]
         private TreeViewState m_BundleTreeState;
@@ -53,7 +54,7 @@ namespace UnityEngine.AssetBundles
 
         public AssetBundleInspectTab()
         {
-            m_BundleList = new List<string>();
+            m_BundleList = new Dictionary<string, List<string>>();
             m_SingleInspector = new SingleBundleInspector();
             m_loadedAssetBundles = new Dictionary<string, AssetBundleRecord>();
         }
@@ -81,16 +82,14 @@ namespace UnityEngine.AssetBundles
 
 
             if (m_BundleList == null)
-                m_BundleList = new List<string>(); 
+                m_BundleList = new Dictionary<string, List<string>>();
 
             if (m_BundleTreeState == null)
                 m_BundleTreeState = new TreeViewState();
             m_BundleTreeView = new InspectBundleTree(m_BundleTreeState, this);
-            m_BundleTreeView.Reload();
 
 
             RefreshBundles();
-            
         }
 
         public void OnDisable()
@@ -130,55 +129,90 @@ namespace UnityEngine.AssetBundles
 
         private void OnGUIEditor()
         {
-            //////input path
             EditorGUILayout.Space();
             GUILayout.BeginHorizontal();
-            var originalPath = m_Data.m_BundlePath;
-            m_Data.m_BundlePath = EditorGUILayout.TextField("Bundle Path", m_Data.m_BundlePath);
-            
-            if (GUILayout.Button("Browse", GUILayout.MaxWidth(75f)))
+
+            if (GUILayout.Button("Add File", GUILayout.MaxWidth(75f)))
+            {
+                BrowseForFile();
+            }
+            if (GUILayout.Button("Add Folder", GUILayout.MaxWidth(75f)))
+            {
                 BrowseForFolder();
+            }
+
             GUILayout.EndHorizontal();
             EditorGUILayout.Space();
 
-            if (originalPath != m_Data.m_BundlePath)
-            {
-                RefreshBundles();
-            }
-
             if (m_BundleList.Count > 0)
             {
-                m_BundleTreeView.OnGUI(new Rect(m_Position.x, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
-                m_SingleInspector.OnGUI(new Rect(m_Position.x + m_Position.width / 2.0f, m_Position.y + 30, m_Position.width / 2.0f, m_Position.height - 30));
+                int halfWidth = (int)(m_Position.width / 2.0f);
+                m_BundleTreeView.OnGUI(new Rect(m_Position.x, m_Position.y + 30, halfWidth, m_Position.height - 30));
+                m_SingleInspector.OnGUI(new Rect(m_Position.x + halfWidth, m_Position.y + 30, halfWidth, m_Position.height - 30));
             }
         }
 
-        //TODO - this is largely copied from BuildTab, should maybe be shared code.
-        private void BrowseForFolder()
+        public void RemoveBundlePath(string pathToRemove)
         {
-            var newPath = EditorUtility.OpenFolderPanel("Bundle Folder", m_Data.m_BundlePath, string.Empty);
+            UnloadBundle(pathToRemove);
+            m_Data.RemovePath(pathToRemove);
+        }
+        public void RemoveBundleFolder(string pathToRemove)
+        {
+            List<string> paths = null;
+            if(m_BundleList.TryGetValue(pathToRemove, out paths))
+            {
+                foreach(var p in paths)
+                {
+                    UnloadBundle(p);
+                }
+            }
+            m_Data.RemoveFolder(pathToRemove);
+        }
+
+        private void BrowseForFile()
+        {
+            var newPath = EditorUtility.OpenFilePanelWithFilters("Bundle Folder", string.Empty, new string[] { });
             if (!string.IsNullOrEmpty(newPath))
             {
                 var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
                 gamePath = gamePath.Replace("\\", "/");
                 if (newPath.StartsWith(gamePath))
                     newPath = newPath.Remove(0, gamePath.Length + 1);
-                m_Data.m_BundlePath = newPath;
+
+                m_Data.AddPath(newPath);
+
+                RefreshBundles();
             }
         }
-        public void RefreshBundles()
-        {
-            ClearData();
 
-            //Debug.Log("Did someone say refresh?");
-            //do some loading
-            LoadBundles();
+        //TODO - this is largely copied from BuildTab, should maybe be shared code.
+        private void BrowseForFolder(string folderPath = null)
+        {
+           folderPath = EditorUtility.OpenFolderPanel("Bundle Folder", string.Empty, string.Empty);
+            if (!string.IsNullOrEmpty(folderPath))
+            {
+                var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
+                gamePath = gamePath.Replace("\\", "/");
+                if (folderPath.StartsWith(gamePath))
+                    folderPath = folderPath.Remove(0, gamePath.Length + 1);
+
+                AddBundleFolder(folderPath);
+
+                RefreshBundles();
+            }
         }
+
+        public void AddBundleFolder(string folderPath)
+        {
+            m_Data.AddFolder(folderPath);
+        }
+
         private void ClearData()
         {
             m_SingleInspector.SetBundle(null);
 
-            if (null != this.m_loadedAssetBundles)
+            if (null != m_loadedAssetBundles)
             {
                 List<AssetBundleRecord> records = new List<AssetBundleRecord>(m_loadedAssetBundles.Values);
                 foreach (AssetBundleRecord record in records)
@@ -189,80 +223,215 @@ namespace UnityEngine.AssetBundles
                 m_loadedAssetBundles.Clear();
             }
         }
-        private void AddFilePathToList(string path)
+
+        public void RefreshBundles()
         {
-            //////////////////////////////////////
-            /// code to handle appended hash things
-            //var files = Directory.GetFiles(path);
-            //Array.Sort(files);
-            //int size = files.Length;
-            //for (int i = 0; i < size; i++)
-            //{
-            //    ... do something...
-            //}
-            //////////////////////////////////////
+            ClearData();
 
 
+            if (m_Data.BundlePaths == null)
+                return;
+
+            //find assets
+            if (m_BundleList == null)
+                m_BundleList = new Dictionary<string, List<string>>();
+
+            m_BundleList.Clear();
+            var pathsToRemove = new List<string>();
+            foreach(var filePath in m_Data.BundlePaths)
+            {
+                if(File.Exists(filePath))
+                {
+                    AddBundleToList(string.Empty, filePath);
+                }
+                else
+                {
+                    Debug.Log("Expected bundle not found: " + filePath);
+                    pathsToRemove.Add(filePath);
+                }
+            }
+            foreach(var path in pathsToRemove)
+            {
+                m_Data.RemovePath(path);
+            }
+            pathsToRemove.Clear();
+
+            foreach(var folder in m_Data.BundleFolders)
+            {
+                if(Directory.Exists(folder.Path))
+                {
+                    AddFilePathToList(folder.Path, folder.Path);
+                }
+                else
+                {
+                    Debug.Log("Expected folder not found: " + folder);
+                    pathsToRemove.Add(folder.Path);
+                }
+            }
+            foreach (var path in pathsToRemove)
+            {
+                m_Data.RemoveFolder(path);
+            }
+
+            m_BundleTreeView.Reload();
+        }
+
+        private void AddBundleToList(string parent, string bundlePath)
+        {
+            List<string> bundles = null;
+            m_BundleList.TryGetValue(parent, out bundles);
+
+            if(bundles == null)
+            {
+                bundles = new List<string>();
+                m_BundleList.Add(parent, bundles);
+            }
+            bundles.Add(bundlePath);
+        }
+        private void AddFilePathToList(string rootPath, string path)
+        {
+            var notAllowedExtensions = new string[] { ".meta", ".manifest", ".dll", ".cs", ".exe", ".js" };
             foreach (var file in Directory.GetFiles(path))
             {
-                if (Path.GetExtension(file) == ".manifest")
+                var ext = Path.GetExtension(file);
+                if(!notAllowedExtensions.Contains(ext))
                 {
-                    var f = file.Substring(0, file.LastIndexOf('.')).Replace('\\', '/');
-                    if (File.Exists(f))
-                        m_BundleList.Add(f);
-                    else
-                        Debug.Log("Expected bundle not found: " + f + ". Note: Browser does not yet support inspecting bundles with hash appended.");
+                    var f = file.Replace('\\', '/');
+                    if (File.Exists(file) && !m_Data.FolderIgnoresFile(rootPath, f))
+                    {
+                        AddBundleToList(rootPath, f);
+                    }
                 }
             }
 
             foreach (var dir in Directory.GetDirectories(path))
             {
-                AddFilePathToList(dir);
+                AddFilePathToList(rootPath, dir);
             }
         }
-        private void LoadBundles()
-        {
-            if (m_Data.m_BundlePath == string.Empty)
-                return;
-            
-            //find assets
-            if (m_BundleList == null)
-                m_BundleList = new List<string>();
 
-            m_BundleList.Clear();
-            if (Directory.Exists(m_Data.m_BundlePath))
-            {
-                AddFilePathToList(m_Data.m_BundlePath);
-            }
-            m_BundleTreeView.Reload();
-        }
-
-        public List<string> BundleList
+        public Dictionary<string, List<string>> BundleList
         { get { return m_BundleList; } }
 
 
-        public void SetBundleItem(InspectTreeItem selected)
+        public void SetBundleItem(IList<InspectTreeItem> selected)
         {
-            if (selected == null)
+            //m_SelectedBundleTreeItems = selected;
+            if (selected == null || selected.Count == 0 || selected[0] == null)
             {
                 m_SingleInspector.SetBundle(null);
             }
+            else if(selected.Count == 1)
+            {
+                AssetBundle bundle = LoadBundle(selected[0].bundlePath);
+                m_SingleInspector.SetBundle(bundle, selected[0].bundlePath, m_Data, this);
+            }
             else
             {
-                AssetBundle bundle = this.LoadBundle(selected.bundlePath);
-                m_SingleInspector.SetBundle(bundle, selected.bundlePath);
+                m_SingleInspector.SetBundle(null);
+
+                //perhaps there should be a way to set a message in the inspector, to tell it...
+                //var style = GUI.skin.label;
+                //style.alignment = TextAnchor.MiddleCenter;
+                //style.wordWrap = true;
+                //GUI.Label(
+                //    inspectorRect,
+                //    new GUIContent("Multi-select inspection not supported"),
+                //    style);
             }
         }
 
         [System.Serializable]
         public class InspectTabData
         {
-            public string m_BundlePath = string.Empty;
+            [SerializeField]
+            private List<string> m_BundlePaths = new List<string>();
+            [SerializeField]
+            private List<BundleFolderData> m_BundleFolders = new List<BundleFolderData>();
+
+            public IList<string> BundlePaths { get { return m_BundlePaths.AsReadOnly(); } }
+            public IList<BundleFolderData> BundleFolders { get { return m_BundleFolders.AsReadOnly(); } }
+
+            public void AddPath(string newPath)
+            {
+                if (!m_BundlePaths.Contains(newPath))
+                {
+                    var possibleFolderData = FolderDataContainingFilePath(newPath);
+                    if(possibleFolderData == null)
+                    {
+                        m_BundlePaths.Add(newPath);
+                    }
+                    else
+                    {
+                        possibleFolderData.IgnoredFiles.Remove(newPath);
+                    }
+                }
+            }
+
+            public void AddFolder(string newPath)
+            {
+                if (!BundleFolderContains(newPath))
+                    m_BundleFolders.Add(new BundleFolderData(newPath));
+            }
+
+            public void RemovePath(string pathToRemove)
+            {
+                m_BundlePaths.Remove(pathToRemove);
+            }
+
+            public void RemoveFolder(string pathToRemove)
+            {
+                m_BundleFolders.Remove(BundleFolders.FirstOrDefault(bfd => bfd.Path == pathToRemove));
+            }
+
+            public bool FolderIgnoresFile(string folderPath, string filePath)
+            {
+                var bundleFolderData = BundleFolders.FirstOrDefault(bfd => bfd.Path == folderPath);
+                return bundleFolderData != null && bundleFolderData.IgnoredFiles.Contains(filePath);
+            }
+
+            public BundleFolderData FolderDataContainingFilePath(string filePath)
+            {
+                foreach (var bundleFolderData in BundleFolders)
+                {
+                    if (Path.GetFullPath(filePath).StartsWith(Path.GetFullPath(bundleFolderData.Path)))
+                    {
+                        return bundleFolderData;
+                    }
+                }
+                return null;
+            }
+
+            private bool BundleFolderContains(string folderPath)
+            {
+                foreach(var bundleFolderData in BundleFolders)
+                {
+                    if(Path.GetFullPath(bundleFolderData.Path) == Path.GetFullPath(folderPath))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            [System.Serializable]
+            public class BundleFolderData
+            {
+                public string Path;
+
+                public IList<string> IgnoredFiles;
+
+                public BundleFolderData(string path)
+                {
+                    Path = path;
+                    IgnoredFiles = new List<string>();
+                }
+            }
         }
 
         /// <summary>
-        /// Returns the bundle at the specified path, loading it if neccessary.
-        /// Unloads previously loaded bundles if neccessary when dealing with variants.
+        /// Returns the bundle at the specified path, loading it if necessary.
+        /// Unloads previously loaded bundles if necessary when dealing with variants.
         /// </summary>
         /// <returns>Returns the loaded bundle, null if it could not be loaded.</returns>
         /// <param name="path">Path of bundle to get</param>
@@ -273,17 +442,19 @@ namespace UnityEngine.AssetBundles
                 return null;
             }
 
-            string bundleName = Path.GetFileNameWithoutExtension(path);
+            string extension = Path.GetExtension(path);
+
+            string bundleName = path.Substring(0, path.Length - extension.Length);
 
             // Check if we have a record for this bundle
-            AssetBundleRecord record = this.GetLoadedBundleRecordByName(bundleName);
+            AssetBundleRecord record = GetLoadedBundleRecordByName(bundleName);
             AssetBundle bundle = null;
             if (null != record)
             {
                 // Unload existing bundle if variant names differ, otherwise use existing bundle
                 if (!record.path.Equals(path))
                 {
-                    this.UnloadBundle(bundleName);
+                    UnloadBundle(bundleName);
                 }
                 else
                 {

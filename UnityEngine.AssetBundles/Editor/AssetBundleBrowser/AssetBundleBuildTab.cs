@@ -51,6 +51,8 @@ namespace UnityEngine.AssetBundles
             public BuildAssetBundleOptions option;
         }
 
+        private AssetBundleInspectTab m_InspectTab;
+
         [SerializeField]
         private BuildTabData m_UserData;
 
@@ -97,6 +99,7 @@ namespace UnityEngine.AssetBundles
         }
         public void OnEnable(Rect pos, EditorWindow parent)
         {
+            m_InspectTab = (parent as AssetBundleBrowserMain).m_InspectTab;
 
             //LoadData...
             var dataPath = System.IO.Path.GetFullPath(".");
@@ -353,6 +356,7 @@ namespace UnityEngine.AssetBundles
             buildInfo.outputDirectory = m_UserData.m_OutputPath;
             buildInfo.options = opt;
             buildInfo.buildTarget = (BuildTarget)m_UserData.m_BuildTarget;
+            buildInfo.onBuild = (assetBundleName) => { m_InspectTab.AddBundleFolder(buildInfo.outputDirectory); m_InspectTab.RefreshBundles(); };
 
             AssetBundleModel.Model.DataSource.BuildAssetBundles (buildInfo);
 

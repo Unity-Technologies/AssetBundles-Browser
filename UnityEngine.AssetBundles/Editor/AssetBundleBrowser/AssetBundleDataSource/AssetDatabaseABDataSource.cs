@@ -78,8 +78,14 @@ namespace UnityEngine.AssetBundles.AssetBundleDataSource
         }
 
         public bool BuildAssetBundles (ABBuildInfo info) {
-            BuildPipeline.BuildAssetBundles(info.outputDirectory, info.options, info.buildTarget);
-
+            var buildManifest = BuildPipeline.BuildAssetBundles(info.outputDirectory, info.options, info.buildTarget);
+            foreach(var assetBundleName in buildManifest.GetAllAssetBundles())
+            {
+                if (info.onBuild != null)
+                {
+                    info.onBuild(assetBundleName);
+                }
+            }
             return true;
         }
     }
