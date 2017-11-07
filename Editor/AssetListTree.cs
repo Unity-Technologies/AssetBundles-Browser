@@ -14,7 +14,7 @@ namespace AssetBundleBrowser
         AssetBundleManageTab m_Controller;
         List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
 
-        public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
+        internal static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
         {
             return new MultiColumnHeaderState(GetColumns());
         }
@@ -67,7 +67,7 @@ namespace AssetBundleBrowser
             Size,
             Message
         }
-        public enum SortOption
+        internal enum SortOption
         {
             Asset,
             Bundle,
@@ -82,7 +82,7 @@ namespace AssetBundleBrowser
             SortOption.Message
         };
 
-        public AssetListTree(TreeViewState state, MultiColumnHeaderState mchs, AssetBundleManageTab ctrl ) : base(state, new MultiColumnHeader(mchs))
+        internal AssetListTree(TreeViewState state, MultiColumnHeaderState mchs, AssetBundleManageTab ctrl ) : base(state, new MultiColumnHeader(mchs))
         {
             m_Controller = ctrl;
             showBorder = true;
@@ -92,7 +92,7 @@ namespace AssetBundleBrowser
         }
 
 
-        public void Update()
+        internal void Update()
         {
             bool dirty = false;
             foreach (var bundle in m_SourceBundles)
@@ -417,7 +417,7 @@ namespace AssetBundleBrowser
     }
     static class MyExtensionMethods
     {
-        public static IOrderedEnumerable<T> Order<T, TKey>(this IEnumerable<T> source, System.Func<T, TKey> selector, bool ascending)
+        internal static IOrderedEnumerable<T> Order<T, TKey>(this IEnumerable<T> source, System.Func<T, TKey> selector, bool ascending)
         {
             if (ascending)
             {
@@ -429,7 +429,7 @@ namespace AssetBundleBrowser
             }
         }
 
-        public static IOrderedEnumerable<T> ThenBy<T, TKey>(this IOrderedEnumerable<T> source, System.Func<T, TKey> selector, bool ascending)
+        internal static IOrderedEnumerable<T> ThenBy<T, TKey>(this IOrderedEnumerable<T> source, System.Func<T, TKey> selector, bool ascending)
         {
             if (ascending)
             {

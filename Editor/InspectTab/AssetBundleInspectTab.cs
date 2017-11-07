@@ -8,7 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace AssetBundleBrowser
 {
     [System.Serializable]
-    public class AssetBundleInspectTab
+    internal class AssetBundleInspectTab
     {
         Rect m_Position;
         [SerializeField]
@@ -23,7 +23,7 @@ namespace AssetBundleBrowser
         [SerializeField]
         private TreeViewState m_BundleTreeState;
 
-        public Editor m_Editor = null;
+        internal Editor m_Editor = null;
 
         private SingleBundleInspector m_SingleInspector;
 
@@ -52,14 +52,14 @@ namespace AssetBundleBrowser
             return m_loadedAssetBundles[bundleName];
         }
 
-        public AssetBundleInspectTab()
+        internal AssetBundleInspectTab()
         {
             m_BundleList = new List<string>();
             m_SingleInspector = new SingleBundleInspector();
             m_loadedAssetBundles = new Dictionary<string, AssetBundleRecord>();
         }
 
-        public void OnEnable(Rect pos, EditorWindow parent)
+        internal void OnEnable(Rect pos, EditorWindow parent)
         {
             m_Position = pos;
             if (m_Data == null)
@@ -94,7 +94,7 @@ namespace AssetBundleBrowser
             
         }
 
-        public void OnDisable()
+        internal void OnDisable()
         {
             ClearData();
 
@@ -109,7 +109,7 @@ namespace AssetBundleBrowser
             file.Close();
         }
 
-        public void OnGUI(Rect pos)
+        internal void OnGUI(Rect pos)
         {
             m_Position = pos;
 
@@ -167,7 +167,7 @@ namespace AssetBundleBrowser
                 m_Data.m_BundlePath = newPath;
             }
         }
-        public void RefreshBundles()
+        internal void RefreshBundles()
         {
             ClearData();
 
@@ -238,11 +238,11 @@ namespace AssetBundleBrowser
             m_BundleTreeView.Reload();
         }
 
-        public List<string> BundleList
+        internal List<string> BundleList
         { get { return m_BundleList; } }
 
 
-        public void SetBundleItem(InspectTreeItem selected)
+        internal void SetBundleItem(InspectTreeItem selected)
         {
             if (selected == null)
             {
@@ -256,9 +256,9 @@ namespace AssetBundleBrowser
         }
 
         [System.Serializable]
-        public class InspectTabData
+        internal class InspectTabData
         {
-            public string m_BundlePath = string.Empty;
+            internal string m_BundlePath = string.Empty;
         }
 
         /// <summary>

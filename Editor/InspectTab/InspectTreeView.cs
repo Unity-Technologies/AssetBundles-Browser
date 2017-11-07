@@ -5,11 +5,11 @@ using System.Collections.Generic;
 
 namespace AssetBundleBrowser
 {
-	public class InspectTreeItem : TreeViewItem
+	internal class InspectTreeItem : TreeViewItem
 	{
-        public string bundlePath { get; private set; }
+        internal string bundlePath { get; private set; }
             
-		public InspectTreeItem(string path) : base(path.GetHashCode(), 0, path)
+		internal InspectTreeItem(string path) : base(path.GetHashCode(), 0, path)
 		{
             this.bundlePath = path;
 		}
@@ -18,7 +18,7 @@ namespace AssetBundleBrowser
 	class InspectBundleTree : TreeView
 	{
 		AssetBundleInspectTab m_InspectTab;
-		public InspectBundleTree(TreeViewState s, AssetBundleInspectTab parent) : base(s)
+		internal InspectBundleTree(TreeViewState s, AssetBundleInspectTab parent) : base(s)
 		{
 			m_InspectTab = parent;
 			showBorder = true;

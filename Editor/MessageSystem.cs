@@ -8,7 +8,7 @@ using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBrowser
 {
-    public class MessageSystem
+    internal class MessageSystem
     {
         private static Texture2D m_ErrorIcon = null;
         private static Texture2D m_WarningIcon = null;
@@ -16,7 +16,7 @@ namespace AssetBundleBrowser
         private static Dictionary<MessageFlag, Message> m_MessageLookup = null;
 
         [Flags]
-        public enum MessageFlag
+        internal enum MessageFlag
         {
             None = 0x0,
 
@@ -35,7 +35,7 @@ namespace AssetBundleBrowser
             DependencySceneConflict = 0x840000,
         }
 
-        public class MessageState
+        internal class MessageState
         {
             //I have an enum and a set of enums to make some logic cleaner.  
             // The enum has masks for Error/Warning/Info that won't ever be in the set
@@ -44,19 +44,19 @@ namespace AssetBundleBrowser
             private HashSet<MessageFlag> m_MessageSet;
 
 
-            public MessageState()
+            internal MessageState()
             {
                 m_MessageFlags = MessageFlag.None;
                 m_MessageSet = new HashSet<MessageFlag>();
             }
 
-            public void Clear()
+            internal void Clear()
             {
                 m_MessageFlags = MessageFlag.None;
                 m_MessageSet.Clear();
             }
 
-            public void SetFlag(MessageFlag flag, bool on)
+            internal void SetFlag(MessageFlag flag, bool on)
             {
                 if (flag == MessageFlag.Info || flag == MessageFlag.Warning || flag == MessageFlag.Error)
                     return;
@@ -72,16 +72,16 @@ namespace AssetBundleBrowser
                     m_MessageSet.Remove(flag);
                 }
             }
-            public bool IsSet(MessageFlag flag)
+            internal bool IsSet(MessageFlag flag)
             {
                 return (m_MessageFlags & flag) == flag;
             }
-            public bool HasMessages()
+            internal bool HasMessages()
             {
                 return (m_MessageFlags != MessageFlag.None);
             }
 
-            public MessageType HighestMessageLevel()
+            internal MessageType HighestMessageLevel()
             {
                 if (IsSet(MessageFlag.Error))
                     return MessageType.Error;
@@ -91,7 +91,7 @@ namespace AssetBundleBrowser
                     return MessageType.Info;
                 return MessageType.None;
             }
-            public MessageFlag HighestMessageFlag()
+            internal MessageFlag HighestMessageFlag()
             {
                 MessageFlag high = MessageFlag.None;
                 foreach(var f in m_MessageSet)
@@ -102,7 +102,7 @@ namespace AssetBundleBrowser
                 return high;
             }
 
-            public List<Message> GetMessages()
+            internal List<Message> GetMessages()
             {
                 var msgs = new List<Message>();
                 foreach(var f in m_MessageSet)
@@ -112,7 +112,7 @@ namespace AssetBundleBrowser
                 return msgs;
             }
         }
-        public static Texture2D GetIcon(MessageType sev)
+        internal static Texture2D GetIcon(MessageType sev)
         {
             if (sev == MessageType.Error)
                 return GetErrorIcon();
@@ -148,17 +148,17 @@ namespace AssetBundleBrowser
             m_WarningIcon = EditorGUIUtility.FindTexture("console.warnicon");
             m_InfoIcon = EditorGUIUtility.FindTexture("console.infoIcon");
         }
-        public class Message
+        internal class Message
         {
-            public Message(string msg, MessageType sev)
+            internal Message(string msg, MessageType sev)
             {
                 message = msg;
                 severity = sev;
             }
 
-            public MessageType severity;
-            public string message;
-            public Texture2D icon
+            internal MessageType severity;
+            internal string message;
+            internal Texture2D icon
             {
                 get
                 {
@@ -167,7 +167,7 @@ namespace AssetBundleBrowser
             }
         }
 
-        public static Message GetMessage(MessageFlag lookup)
+        internal static Message GetMessage(MessageFlag lookup)
         {
             if (m_MessageLookup == null)
                 InitMessages();

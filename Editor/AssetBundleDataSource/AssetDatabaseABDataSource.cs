@@ -8,9 +8,9 @@ using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBrowser.AssetBundleDataSource
 {
-    public class AssetDatabaseABDataSource : ABDataSource
+    internal class AssetDatabaseABDataSource : ABDataSource
     {
-        public static List<ABDataSource> CreateDataSources()
+        internal static List<ABDataSource> CreateDataSources()
         {
             var op = new AssetDatabaseABDataSource();
             var retList = new List<ABDataSource>();

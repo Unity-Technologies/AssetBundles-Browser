@@ -8,7 +8,7 @@ namespace AssetBundleBrowser
     public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
     {
 
-        public const float kButtonWidth = 150;
+        internal const float kButtonWidth = 150;
 
         enum Mode
         {
@@ -23,13 +23,13 @@ namespace AssetBundleBrowser
         int m_DataSourceIndex;
 
         [SerializeField]
-        public AssetBundleManageTab m_ManageTab;
+        internal AssetBundleManageTab m_ManageTab;
 
         [SerializeField]
-        public AssetBundleBuildTab m_BuildTab;
+        internal AssetBundleBuildTab m_BuildTab;
 
         [SerializeField]
-        public AssetBundleInspectTab m_InspectTab;
+        internal AssetBundleInspectTab m_InspectTab;
 
         private Texture2D m_RefreshTexture;
 
@@ -45,13 +45,13 @@ namespace AssetBundleBrowser
         }
 
         [SerializeField]
-        public bool multiDataSource = false;
+        internal bool multiDataSource = false;
         List<AssetBundleDataSource.ABDataSource> m_DataSourceList = null;
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
             menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
         }
-        public void FlipDataSource()
+        internal void FlipDataSource()
         {
             multiDataSource = !multiDataSource;
         }

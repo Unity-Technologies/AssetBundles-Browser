@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace AssetBundleBrowser
 {
     [System.Serializable]
-    public class AssetBundleManageTab 
+    internal class AssetBundleManageTab 
     {
         [SerializeField]
         TreeViewState m_BundleTreeState;
@@ -40,14 +40,14 @@ namespace AssetBundleBrowser
 
         EditorWindow m_Parent = null;
 
-        public AssetBundleManageTab()
+        internal AssetBundleManageTab()
         {
             m_HorizontalSplitterPercent = 0.4f;
             m_VerticalSplitterPercentRight = 0.7f;
             m_VerticalSplitterPercentLeft = 0.85f;
         }
 
-        public void OnEnable(Rect pos, EditorWindow parent)
+        internal void OnEnable(Rect pos, EditorWindow parent)
         {
             m_Parent = parent;
             m_Position = pos;
@@ -70,7 +70,7 @@ namespace AssetBundleBrowser
 
 
 
-        public void Update()
+        internal void Update()
         {
             if(Time.realtimeSinceStartup - m_UpdateDelay > 0.1f)
             {
@@ -90,7 +90,7 @@ namespace AssetBundleBrowser
             }
         }
 
-        public void ForceReloadData()
+        internal void ForceReloadData()
         {
             UpdateSelectedBundles(new List<AssetBundleModel.BundleInfo>());
             SetSelectedItems(new List<AssetBundleModel.AssetInfo>());
@@ -98,7 +98,7 @@ namespace AssetBundleBrowser
             m_Parent.Repaint();
         }
 
-        public void OnGUI(Rect pos)
+        internal void OnGUI(Rect pos)
         {
             m_Position = pos;
 
@@ -239,7 +239,7 @@ namespace AssetBundleBrowser
             }
         }
 
-        public void UpdateSelectedBundles(IEnumerable<AssetBundleModel.BundleInfo> bundles)
+        internal void UpdateSelectedBundles(IEnumerable<AssetBundleModel.BundleInfo> bundles)
         {
             AssetBundleModel.Model.AddBundlesToUpdate(bundles);
             m_AssetList.SetSelectedBundles(bundles);
@@ -247,7 +247,7 @@ namespace AssetBundleBrowser
             m_MessageList.SetItems(null);
         }
 
-        public void SetSelectedItems(IEnumerable<AssetBundleModel.AssetInfo> items)
+        internal void SetSelectedItems(IEnumerable<AssetBundleModel.AssetInfo> items)
         {
             m_MessageList.SetItems(items);
         }

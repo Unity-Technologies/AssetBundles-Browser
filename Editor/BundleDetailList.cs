@@ -7,12 +7,12 @@ namespace AssetBundleBrowser
 {
     internal class BundleDetailItem : TreeViewItem
     {
-        public BundleDetailItem(int id, int depth, string displayName, MessageType type) : base(id, depth, displayName)
+        internal BundleDetailItem(int id, int depth, string displayName, MessageType type) : base(id, depth, displayName)
         {
             MessageLevel = type;
         }
 
-        public MessageType MessageLevel
+        internal MessageType MessageLevel
         { get; set; }
     }
     internal class BundleDetailList : TreeView
@@ -28,12 +28,12 @@ namespace AssetBundleBrowser
         const string k_MessageEmpty = k_MessageHeader + " - None";
 
 
-        public BundleDetailList(TreeViewState state) : base(state)
+        internal BundleDetailList(TreeViewState state) : base(state)
         {
             m_Selecteditems = new HashSet<AssetBundleModel.BundleDataInfo>();
             showBorder = true;
         }
-        public void Update()
+        internal void Update()
         {
             bool dirty = false;
             foreach (var bundle in m_Selecteditems)

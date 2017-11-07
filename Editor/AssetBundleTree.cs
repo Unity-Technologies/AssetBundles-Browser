@@ -14,7 +14,7 @@ namespace AssetBundleBrowser
         private bool m_ContextOnItem = false;
         List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
 
-        public AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
+        internal AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
         {
             AssetBundleModel.Model.Rebuild();
             m_Controller = ctrl;
@@ -354,16 +354,16 @@ namespace AssetBundleBrowser
 
         class DragAndDropData
         {
-            public bool hasBundleFolder = false;
-            public bool hasScene = false;
-            public bool hasNonScene = false;
-            public bool hasVariantChild = false;
-            public List<AssetBundleModel.BundleInfo> draggedNodes;
-            public AssetBundleModel.BundleTreeItem targetNode;
-            public DragAndDropArgs args;
-            public string[] paths;
+            internal bool hasBundleFolder = false;
+            internal bool hasScene = false;
+            internal bool hasNonScene = false;
+            internal bool hasVariantChild = false;
+            internal List<AssetBundleModel.BundleInfo> draggedNodes;
+            internal AssetBundleModel.BundleTreeItem targetNode;
+            internal DragAndDropArgs args;
+            internal string[] paths;
 
-            public DragAndDropData(DragAndDropArgs a)
+            internal DragAndDropData(DragAndDropArgs a)
             {
                 args = a;
                 draggedNodes = DragAndDrop.GetGenericData("AssetBundleModel.BundleInfo") as List<AssetBundleModel.BundleInfo>;

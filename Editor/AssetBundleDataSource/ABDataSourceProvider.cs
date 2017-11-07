@@ -5,11 +5,11 @@ using System.Reflection;
 
 namespace AssetBundleBrowser.AssetBundleDataSource
 {
-    public class ABDataSourceProviderUtility {
+    internal class ABDataSourceProviderUtility {
 
         private static List<Type> s_customNodes;
 
-        public static List<Type> CustomABDataSourceTypes {
+        internal static List<Type> CustomABDataSourceTypes {
             get {
                 if(s_customNodes == null) {
                     s_customNodes = BuildCustomABDataSourceList();

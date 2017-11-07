@@ -5,15 +5,15 @@ using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBrowser.AssetBundleModel
 {
-    public class AssetTreeItem : TreeViewItem
+    internal class AssetTreeItem : TreeViewItem
     {
         private AssetInfo m_asset;
-        public AssetInfo asset
+        internal AssetInfo asset
         {
             get { return m_asset; }
         }
-        public AssetTreeItem() : base(-1, -1) { }
-        public AssetTreeItem(AssetInfo a) : base(a != null ? a.fullAssetName.GetHashCode() : Random.Range(int.MinValue, int.MaxValue), 0, a != null ? a.displayName : "failed")
+        internal AssetTreeItem() : base(-1, -1) { }
+        internal AssetTreeItem(AssetInfo a) : base(a != null ? a.fullAssetName.GetHashCode() : Random.Range(int.MinValue, int.MaxValue), 0, a != null ? a.displayName : "failed")
         {
             m_asset = a;
             if (a != null)
@@ -21,7 +21,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         }
 
         private Color m_color = new Color(0, 0, 0, 0);
-        public Color itemColor
+        internal Color itemColor
         {
             get
             {
@@ -33,17 +33,17 @@ namespace AssetBundleBrowser.AssetBundleModel
             }
             set { m_color = value; }
         }
-        public Texture2D MessageIcon()
+        internal Texture2D MessageIcon()
         {
             return MessageSystem.GetIcon(HighestMessageLevel());
         }
-        public MessageType HighestMessageLevel()
+        internal MessageType HighestMessageLevel()
         {
             return m_asset != null ?
                 m_asset.HighestMessageLevel() : MessageType.Error;
         }
 
-        public bool ContainsChild(AssetInfo asset)
+        internal bool ContainsChild(AssetInfo asset)
         {
             bool contains = false;
             if (children == null)
@@ -67,11 +67,11 @@ namespace AssetBundleBrowser.AssetBundleModel
 
     }
 
-    public class AssetInfo
+    internal class AssetInfo
     {
-        public bool isScene { get; set; }
-        public bool isFolder { get; set; }
-        public long fileSize;
+        internal bool isScene { get; set; }
+        internal bool isFolder { get; set; }
+        internal long fileSize;
 
         private HashSet<string> m_Parents;
         private string m_AssetName;
@@ -79,7 +79,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         private string m_BundleName;
         private MessageSystem.MessageState m_AssetMessages = new MessageSystem.MessageState();
 
-        public AssetInfo(string inName, string bundleName="")
+        internal AssetInfo(string inName, string bundleName="")
         {
             fullAssetName = inName;
             m_BundleName = bundleName;
@@ -88,7 +88,7 @@ namespace AssetBundleBrowser.AssetBundleModel
             isFolder = false;
         }
 
-        public string fullAssetName
+        internal string fullAssetName
         {
             get { return m_AssetName; }
             set
@@ -104,14 +104,14 @@ namespace AssetBundleBrowser.AssetBundleModel
                     fileSize = 0;
             }
         }
-        public string displayName
+        internal string displayName
         {
             get { return m_DisplayName; }
         }
-        public string bundleName
+        internal string bundleName
         { get { return m_BundleName == "" ? "auto" : m_BundleName; } }
         
-        public Color GetColor()
+        internal Color GetColor()
         {
             if (m_BundleName == "")
                 return Model.k_LightGrey;
@@ -119,19 +119,19 @@ namespace AssetBundleBrowser.AssetBundleModel
                 return Color.white;
         }
 
-        public bool IsMessageSet(MessageSystem.MessageFlag flag)
+        internal bool IsMessageSet(MessageSystem.MessageFlag flag)
         {
             return m_AssetMessages.IsSet(flag);
         }
-        public void SetMessageFlag(MessageSystem.MessageFlag flag, bool on)
+        internal void SetMessageFlag(MessageSystem.MessageFlag flag, bool on)
         {
             m_AssetMessages.SetFlag(flag, on);
         }
-        public MessageType HighestMessageLevel()
+        internal MessageType HighestMessageLevel()
         {
             return m_AssetMessages.HighestMessageLevel();
         }
-        public IEnumerable<MessageSystem.Message> GetMessages()
+        internal IEnumerable<MessageSystem.Message> GetMessages()
         {
             List<MessageSystem.Message> messages = new List<MessageSystem.Message>();
             if(IsMessageSet(MessageSystem.MessageFlag.SceneBundleConflict))
@@ -195,16 +195,16 @@ namespace AssetBundleBrowser.AssetBundleModel
 
             return messages;
         }
-        public void AddParent(string name)
+        internal void AddParent(string name)
         {
             m_Parents.Add(name);
         }
-        public void RemoveParent(string name)
+        internal void RemoveParent(string name)
         {
             m_Parents.Remove(name);
         }
 
-        public string GetSizeString()
+        internal string GetSizeString()
         {
             if (fileSize == 0)
                 return "--";
@@ -212,7 +212,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         }
 
         List<AssetInfo> m_dependencies = null;
-        public List<AssetInfo> GetDependencies()
+        internal List<AssetInfo> GetDependencies()
         {
             //TODO - not sure this refreshes enough. need to build tests around that.
             if (m_dependencies == null)

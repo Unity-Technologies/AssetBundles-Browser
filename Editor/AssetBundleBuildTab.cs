@@ -9,17 +9,10 @@ using AssetBundleBrowser.AssetBundleDataSource;
 namespace AssetBundleBrowser
 {
     [System.Serializable]
-    public class AssetBundleBuildTab
+    internal class AssetBundleBuildTab
     {
         const string k_BuildPrefPrefix = "ABBBuild:";
-        // gui vars
-        //[SerializeField]
-        //private ValidBuildTarget m_BuildTarget = ValidBuildTarget.StandaloneWindows;
-        //[SerializeField]
-        //private CompressOptions m_Compression = CompressOptions.StandardCompression;        
-        //private string m_OutputPath = string.Empty;
-        //[SerializeField]
-        //private bool m_UseDefaultPath = true;
+
         private string m_streamingPath = "Assets/StreamingAssets";
 
         [SerializeField]
@@ -31,7 +24,7 @@ namespace AssetBundleBrowser
 
         class ToggleData
         {
-            public ToggleData(bool s, 
+            internal ToggleData(bool s, 
                 string title, 
                 string tooltip,
                 List<string> onToggles,
@@ -44,11 +37,11 @@ namespace AssetBundleBrowser
                 content = new GUIContent(title, tooltip);
                 option = opt;
             }
-            //public string prefsKey
+            //internal string prefsKey
             //{ get { return k_BuildPrefPrefix + content.text; } }
-            public bool state;
-            public GUIContent content;
-            public BuildAssetBundleOptions option;
+            internal bool state;
+            internal GUIContent content;
+            internal BuildAssetBundleOptions option;
         }
 
         [SerializeField]
@@ -59,7 +52,7 @@ namespace AssetBundleBrowser
         ToggleData m_CopyToStreaming;
         GUIContent m_TargetContent;
         GUIContent m_CompressionContent;
-        public enum CompressOptions
+        internal enum CompressOptions
         {
             Uncompressed = 0,
             StandardCompression,
@@ -74,7 +67,7 @@ namespace AssetBundleBrowser
         int[] m_CompressionValues = { 0, 1, 2 };
 
 
-        public AssetBundleBuildTab()
+        internal AssetBundleBuildTab()
         {
             m_AdvancedSettings = false;
             m_UserData = new BuildTabData();
@@ -82,7 +75,7 @@ namespace AssetBundleBrowser
             m_UserData.m_UseDefaultPath = true;
         }
 
-        public void OnDisable()
+        internal void OnDisable()
         {
             var dataPath = System.IO.Path.GetFullPath(".");
             dataPath = dataPath.Replace("\\", "/");
@@ -95,7 +88,7 @@ namespace AssetBundleBrowser
             file.Close();
 
         }
-        public void OnEnable(Rect pos, EditorWindow parent)
+        internal void OnEnable(Rect pos, EditorWindow parent)
         {
 
             //LoadData...
@@ -172,7 +165,7 @@ namespace AssetBundleBrowser
             }
         }
 
-        public void OnGUI(Rect pos)
+        internal void OnGUI(Rect pos)
         {
             m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
             bool newState = false;
@@ -408,7 +401,7 @@ namespace AssetBundleBrowser
         }
 
         //Note: this is the provided BuildTarget enum with some entries removed as they are invalid in the dropdown
-        public enum ValidBuildTarget
+        internal enum ValidBuildTarget
         {
             //NoTarget = -2,        --doesn't make sense
             //iPhone = -1,          --deprecated
@@ -445,13 +438,13 @@ namespace AssetBundleBrowser
         }
 
         [System.Serializable]
-        public class BuildTabData
+        internal class BuildTabData
         {
-            public List<string> m_OnToggles;
-            public ValidBuildTarget m_BuildTarget = ValidBuildTarget.StandaloneWindows;
-            public CompressOptions m_Compression = CompressOptions.StandardCompression;
-            public string m_OutputPath = string.Empty;
-            public bool m_UseDefaultPath = true;
+            internal List<string> m_OnToggles;
+            internal ValidBuildTarget m_BuildTarget = ValidBuildTarget.StandaloneWindows;
+            internal CompressOptions m_Compression = CompressOptions.StandardCompression;
+            internal string m_OutputPath = string.Empty;
+            internal bool m_UseDefaultPath = true;
         }
     }
 

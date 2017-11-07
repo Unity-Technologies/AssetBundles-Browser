@@ -18,7 +18,7 @@ namespace AssetBundleBrowser
         const float k_BorderSize = 1f;
 
 
-        public MessageList()
+        internal MessageList()
         {
             Init();
         }
@@ -33,7 +33,7 @@ namespace AssetBundleBrowser
             m_Messages = new List<MessageSystem.Message>();
 
         }
-        public void OnGUI(Rect fullPos)
+        internal void OnGUI(Rect fullPos)
         {
             DrawOutline(fullPos, 1f);
 

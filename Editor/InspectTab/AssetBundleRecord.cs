@@ -31,19 +31,19 @@ namespace AssetBundleBrowser
     /// Will both resolve to "mybundle" when loaded.
     /// 
     /// </summary>
-    public class AssetBundleRecord
+    internal class AssetBundleRecord
     {
         /// <summary>
         /// Full path of the asset bundle.
         /// </summary>
-        public string path { get; private set; }
+        internal string path { get; private set; }
 
         /// <summary>
         /// Reference to the loaded asset bundle associated with the path.
         /// </summary>
-        public AssetBundle bundle { get; private set; }
+        internal AssetBundle bundle { get; private set; }
 
-        public AssetBundleRecord(string path, AssetBundle bundle)
+        internal AssetBundleRecord(string path, AssetBundle bundle)
         {
             if (string.IsNullOrEmpty(path) ||
                 null == bundle)

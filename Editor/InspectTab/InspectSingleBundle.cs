@@ -6,10 +6,10 @@ namespace AssetBundleBrowser
 {
     class SingleBundleInspector
     {
-        public static string currentPath { get; set; }
+        internal static string currentPath { get; set; }
 
 
-        public SingleBundleInspector() { }
+        internal SingleBundleInspector() { }
 
         private Editor m_Editor = null;
 
@@ -18,7 +18,7 @@ namespace AssetBundleBrowser
         [SerializeField]
         private Vector2 m_ScrollPosition;
 
-        public void SetBundle(AssetBundle bundle, string path = "")
+        internal void SetBundle(AssetBundle bundle, string path = "")
         {
             //static var...
             currentPath = path;
@@ -29,7 +29,7 @@ namespace AssetBundleBrowser
                 m_Editor = Editor.CreateEditor(bundle);
         }
 
-        public void OnGUI(Rect pos)
+        internal void OnGUI(Rect pos)
         {
             if (m_Editor == null)
                 return;
@@ -50,7 +50,7 @@ namespace AssetBundleBrowser
     }
 
     [CustomEditor(typeof(AssetBundle))]
-    public class LevelScriptEditor : Editor
+    internal class LevelScriptEditor : Editor
     {
         public override void OnInspectorGUI()
         {
