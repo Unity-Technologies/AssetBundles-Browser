@@ -11,7 +11,12 @@ using AssetBundleBrowser.AssetBundleDataSource;
 namespace AssetBundleBrowser.AssetBundleModel
 {
     /// <summary>
-    /// TODO - doc
+    /// Static class holding model data for Asset Bundle Browser tool. Data in Model is read from DataSource, but is not pushed.  
+    /// 
+    /// If not using a custom DataSource, then the data comes from the AssetDatabase.  If you wish to alter the data from code, 
+    ///  you should just push changes to the AssetDatabase then tell the Model to Rebuild(). If needed, you can also loop over
+    ///  Update() until it returns true to force all sub-items to refresh.
+    ///  
     /// </summary>
     public class Model
     {
@@ -36,7 +41,12 @@ namespace AssetBundleBrowser.AssetBundleModel
         static private Texture2D m_sceneIcon = null;
 
         /// <summary>
-        /// TODO - doc
+        /// If using a custom source of asset bundles, you can implement your own ABDataSource and set it here as the active
+        ///  DataSource.  This will allow you to use the Browser with data that you provide.
+        ///  
+        /// If no custom DataSource is provided, then the Browser will create one that feeds off of and into the 
+        ///  AssetDatabase.
+        ///  
         /// </summary>
         public static ABDataSource DataSource
         {
@@ -51,7 +61,12 @@ namespace AssetBundleBrowser.AssetBundleModel
             set { m_DataSource = value; }
         }
 
-        internal static bool Update()
+        /// <summary>
+        /// Update will loop over bundles that need updating and update them. It will only update one bundle
+        ///  per frame and will continue on the same bundle next frame until that bundle is marked as doneUpdating.
+        ///  By default, this will cause a very slow collection of dependency data as it will only update one bundle per
+        /// </summary>
+        public static bool Update()
         {
             bool shouldRepaint = false;
             ExecuteAssetMove(false);     //this should never do anything. just a safety check.
@@ -92,8 +107,11 @@ namespace AssetBundleBrowser.AssetBundleModel
             }
             EditorUtility.ClearProgressBar();
         }
-
-        internal static void Rebuild()
+        
+        /// <summary>
+        /// Clears and rebuilds model data.  
+        /// </summary>
+        public static void Rebuild()
         {
             m_RootLevelBundles = new BundleFolderConcreteInfo("", null);
             m_MoveData = new List<ABMoveData>();

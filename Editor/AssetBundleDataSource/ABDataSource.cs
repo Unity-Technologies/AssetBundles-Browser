@@ -3,27 +3,33 @@
 namespace AssetBundleBrowser.AssetBundleDataSource
 {
     /// <summary>
-    /// TODO - doc
+    /// Build Info struct used by ABDataSource to pass needed build data around.
     /// </summary>
     public partial struct ABBuildInfo
     {
         /// <summary>
-        /// TODO - doc
+        /// Directory to place build result
         /// </summary>
         public string outputDirectory;
         /// <summary>
-        /// TODO - doc
+        /// Standard asset bundle build options.
         /// </summary>
         public BuildAssetBundleOptions options;
         /// <summary>
-        /// TODO - doc
+        /// Target platform for build.
         /// </summary>
         public BuildTarget buildTarget;
     }
 
     /// <summary>
-    /// TODO - doc
+    /// Interface class used by browser. It is expected to contain all information needed to display predicted bundle layout.
+    ///  Any class deriving from this interface AND imlementing CreateDataSources() will be picked up by the browser automatically
+    ///  and displayed in an in-tool dropdown.  By default, that dropdown is hidden if the browser detects no external data sources.
+    ///  To turn it on, right click on tab header "AssetBUndles" and enable "Custom Sources"
+    ///  
     /// Must implement CreateDataSources() to be picked up by the browser.
+    ///   public static List<ABDataSource> CreateDataSources();
+    /// 
     /// </summary>
     public partial interface ABDataSource
     {
@@ -31,59 +37,64 @@ namespace AssetBundleBrowser.AssetBundleDataSource
         //public static List<ABDataSource> CreateDataSources();
 
         /// <summary>
-        /// TODO - doc
+        /// Name of DataSource. Displayed in menu as "Name (ProvidorName)"
         /// </summary>
         string Name { get; }
         /// <summary>
-        /// TODO - doc
+        /// Name of provider for DataSource. Displayed in menu as "Name (ProvidorName)"
         /// </summary>
         string ProviderName { get; }
 
         /// <summary>
-        /// TODO - doc
+        /// Array of paths in bundle.
         /// </summary>
         string[] GetAssetPathsFromAssetBundle (string assetBundleName);
         /// <summary>
-        /// TODO - doc
+        /// Name of bundle explicitly associated with asset at path.  
         /// </summary>
         string GetAssetBundleName(string assetPath);
         /// <summary>
-        /// TODO - doc
+        /// Name of bundle associated with asset at path.  
+        ///  The difference between this and GetAssetBundleName() is for assets unassigned to a bundle, but
+        ///  residing inside a folder that is assigned to a bundle.  Those assets will implicilty associate
+        ///  with the bundle associated with the parent folder.
         /// </summary>
         string GetImplicitAssetBundleName(string assetPath);
         /// <summary>
-        /// TODO - doc
+        /// Array of asset bundle names in project
         /// </summary>
         string[] GetAllAssetBundleNames();
         /// <summary>
-        /// TODO - doc
+        /// If this data source is read only. 
+        ///  If this returns true, much of the Browsers's interface will be diabled (drag&drop, etc.)
         /// </summary>
         bool IsReadOnly();
 
         /// <summary>
-        /// TODO - doc
+        /// Sets the asset bundle name (and variant) on a given asset
         /// </summary>
         void SetAssetBundleNameAndVariant (string assetPath, string bundleName, string variantName);
         /// <summary>
-        /// TODO - doc
+        /// Clears out any asset bundle names that do not have assets associated with them.
         /// </summary>
         void RemoveUnusedAssetBundleNames();
 
         /// <summary>
-        /// TODO - doc
+        /// Signals if this data source can have build target set by tool
         /// </summary>
         bool CanSpecifyBuildTarget { get; }
         /// <summary>
-        /// TODO - doc
+        /// Signals if this data source can have output directory set by tool
         /// </summary>
         bool CanSpecifyBuildOutputDirectory { get; }
         /// <summary>
-        /// TODO - doc
+        /// Signals if this data source can have build options set by tool
         /// </summary>
         bool CanSpecifyBuildOptions { get; }
 
         /// <summary>
-        /// TODO - doc
+        /// Executes data source's implementation of asset bundle building.
+        ///   Called by "build" button in build tab of tool.
         /// </summary>
         bool BuildAssetBundles (ABBuildInfo info);
     }

@@ -72,9 +72,11 @@ namespace AssetBundleBrowser
 
         internal void Update()
         {
-            if(Time.realtimeSinceStartup - m_UpdateDelay > 0.1f)
+            var t = Time.realtimeSinceStartup;
+            if (t - m_UpdateDelay > 0.1f ||
+                m_UpdateDelay > t) //something went strangely wrong if this second check is true.
             {
-                m_UpdateDelay = Time.realtimeSinceStartup;
+                m_UpdateDelay = t - 0.001f;
 
                 if(AssetBundleModel.Model.Update())
                 {
