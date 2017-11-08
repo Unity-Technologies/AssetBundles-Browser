@@ -6,7 +6,7 @@ This tool is intended to replace the current workflow of selecting assets and se
 
 ## FUll Documentation
 #### Official Released Features
-See [the official manual page](https://docs.unity3d.com/Manual/AssetBundles-Browser.html) or view the included [project manual page](MANUAL.md)
+See [the official manual page](https://docs.unity3d.com/Manual/AssetBundles-Browser.html) or view the included [project manual page](Documentation/com.unity.assetbundlebrowser.md)
 #### Beta Feature - Inspect Tab
 This is a new tab added as a currently-beta feature.  Use it to inspect the contents of bundles that have already been built. 
 ##### Usage
