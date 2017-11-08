@@ -2,15 +2,13 @@
 
 This tool enables the user to view and edit the configuration of asset bundles for their Unity project. It will block editing that would create invalid bundles, and inform you of any issues with existing bundles. It also provides basic build functionality.
 
-Use this tool as an alternative to selecting assets and setting their asset bundle manually in the inspector. It can be dropped into any Unity project with a version of 5.6 or greater. It will create a new menu item in __Window__ > __AssetBundle Browser__. The bundle configuration and build functionality are split into two tabs within the new window.
+Use this tool as an alternative to selecting assets and setting their asset bundle manually in the inspector. It can be dropped into any Unity project with a version of 5.6 or greater. It will create a new menu item in __Window__ > __AssetBundle Browser__. The bundle configuration, build functionality, and build-bundle inspection are split into three tabs within the new window.
 
 ![BrowserHeader](/Documentation/images/browser_header.png)
 
 ### Requires Unity 5.6+
 
 # Usage - Configure
-
-Note: this utility is in a pre-release state, and accordingly we recommend creating a backup of your project before using it.
 
 This window provides an explorer like interface to managing and modifying asset bundles in your project. When first opened, the tool will parse all bundle data in the background, slowly marking warnings or errors it detects. It does what it can to stay in sync with the project, but cannot always be aware of activity outside the tool. To force a quick pass at error detection, or to update the tool with changes made externally, hit the Refresh button in the upper left.
 
@@ -156,8 +154,8 @@ The Build tab provides basic build functionality to get you started using asset 
 
 * *Build* - Executes build.
 
-# Usage - Inspect (Beta Feature)
-This is a new tab added as a currently-beta feature.  Use it to inspect the contents of bundles that have already been built. 
+# Usage - Inspect
+This tab enables you to inspect the contents of bundles that have already been built. 
 ### Usage
 * Type in a bundle path, or find one using the 'Browse' button.  
 * Select any bundle listed to see details:
@@ -166,7 +164,3 @@ This is a new tab added as a currently-beta feature.  Use it to inspect the cont
   * Preload Table - full contents of bundle
   * Container - only explicitly added items
   * Dependencies - bundles that the current bundle depends on
-
-### Issues
-* If your "bundle path" contains duplicate bundles, you will be unable to view them, and will get errors in the log.  This is most often seen if you had a file structure like "MyBundles/Build1/" and "MyBundles/Build2/" and you pointed the path to just "MyBundles"
-* The tool does not yet handle bundles that have had the hash appended to the bundle name (using "append hash" build option).
