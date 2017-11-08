@@ -10,7 +10,7 @@ namespace AssetBundleBrowser.AssetBundleDataSource
 {
     internal class AssetDatabaseABDataSource : ABDataSource
     {
-        internal static List<ABDataSource> CreateDataSources()
+        public static List<ABDataSource> CreateDataSources()
         {
             var op = new AssetDatabaseABDataSource();
             var retList = new List<ABDataSource>();
@@ -79,6 +79,12 @@ namespace AssetBundleBrowser.AssetBundleDataSource
 
         public bool BuildAssetBundles (ABBuildInfo info) {
             var buildManifest = BuildPipeline.BuildAssetBundles(info.outputDirectory, info.options, info.buildTarget);
+            if (buildManifest == null)
+            {
+                Debug.Log("Error in build");
+                return false;
+            }
+
             foreach(var assetBundleName in buildManifest.GetAllAssetBundles())
             {
                 if (info.onBuild != null)

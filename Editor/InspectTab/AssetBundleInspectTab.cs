@@ -1,14 +1,15 @@
 using UnityEditor;
+using UnityEngine;
 using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Linq;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     [System.Serializable]
-    public class AssetBundleInspectTab
+    internal class AssetBundleInspectTab
     {
         Rect m_Position;
         [SerializeField]
@@ -23,7 +24,7 @@ namespace UnityEngine.AssetBundles
         [SerializeField]
         private TreeViewState m_BundleTreeState;
 
-        public Editor m_Editor = null;
+        internal Editor m_Editor = null;
 
         private SingleBundleInspector m_SingleInspector;
 
@@ -52,14 +53,14 @@ namespace UnityEngine.AssetBundles
             return m_loadedAssetBundles[bundleName];
         }
 
-        public AssetBundleInspectTab()
+        internal AssetBundleInspectTab()
         {
             m_BundleList = new Dictionary<string, List<string>>();
             m_SingleInspector = new SingleBundleInspector();
             m_loadedAssetBundles = new Dictionary<string, AssetBundleRecord>();
         }
 
-        public void OnEnable(Rect pos, EditorWindow parent)
+        internal void OnEnable(Rect pos, EditorWindow parent)
         {
             m_Position = pos;
             if (m_Data == null)
@@ -92,7 +93,7 @@ namespace UnityEngine.AssetBundles
             RefreshBundles();
         }
 
-        public void OnDisable()
+        internal void OnDisable()
         {
             ClearData();
 
@@ -107,7 +108,7 @@ namespace UnityEngine.AssetBundles
             file.Close();
         }
 
-        public void OnGUI(Rect pos)
+        internal void OnGUI(Rect pos)
         {
             m_Position = pos;
 
@@ -152,12 +153,12 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-        public void RemoveBundlePath(string pathToRemove)
+        internal void RemoveBundlePath(string pathToRemove)
         {
             UnloadBundle(pathToRemove);
             m_Data.RemovePath(pathToRemove);
         }
-        public void RemoveBundleFolder(string pathToRemove)
+        internal void RemoveBundleFolder(string pathToRemove)
         {
             List<string> paths = null;
             if(m_BundleList.TryGetValue(pathToRemove, out paths))
@@ -203,7 +204,7 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-        public void AddBundleFolder(string folderPath)
+        internal void AddBundleFolder(string folderPath)
         {
             m_Data.AddFolder(folderPath);
         }
@@ -224,7 +225,7 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-        public void RefreshBundles()
+        internal void RefreshBundles()
         {
             ClearData();
 
@@ -310,11 +311,11 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-        public Dictionary<string, List<string>> BundleList
+        internal Dictionary<string, List<string>> BundleList
         { get { return m_BundleList; } }
 
 
-        public void SetBundleItem(IList<InspectTreeItem> selected)
+        internal void SetBundleItem(IList<InspectTreeItem> selected)
         {
             //m_SelectedBundleTreeItems = selected;
             if (selected == null || selected.Count == 0 || selected[0] == null)
@@ -342,17 +343,17 @@ namespace UnityEngine.AssetBundles
         }
 
         [System.Serializable]
-        public class InspectTabData
+        internal class InspectTabData
         {
             [SerializeField]
             private List<string> m_BundlePaths = new List<string>();
             [SerializeField]
             private List<BundleFolderData> m_BundleFolders = new List<BundleFolderData>();
 
-            public IList<string> BundlePaths { get { return m_BundlePaths.AsReadOnly(); } }
-            public IList<BundleFolderData> BundleFolders { get { return m_BundleFolders.AsReadOnly(); } }
+            internal IList<string> BundlePaths { get { return m_BundlePaths.AsReadOnly(); } }
+            internal IList<BundleFolderData> BundleFolders { get { return m_BundleFolders.AsReadOnly(); } }
 
-            public void AddPath(string newPath)
+            internal void AddPath(string newPath)
             {
                 if (!m_BundlePaths.Contains(newPath))
                 {
@@ -368,29 +369,29 @@ namespace UnityEngine.AssetBundles
                 }
             }
 
-            public void AddFolder(string newPath)
+            internal void AddFolder(string newPath)
             {
                 if (!BundleFolderContains(newPath))
                     m_BundleFolders.Add(new BundleFolderData(newPath));
             }
 
-            public void RemovePath(string pathToRemove)
+            internal void RemovePath(string pathToRemove)
             {
                 m_BundlePaths.Remove(pathToRemove);
             }
 
-            public void RemoveFolder(string pathToRemove)
+            internal void RemoveFolder(string pathToRemove)
             {
                 m_BundleFolders.Remove(BundleFolders.FirstOrDefault(bfd => bfd.Path == pathToRemove));
             }
 
-            public bool FolderIgnoresFile(string folderPath, string filePath)
+            internal bool FolderIgnoresFile(string folderPath, string filePath)
             {
                 var bundleFolderData = BundleFolders.FirstOrDefault(bfd => bfd.Path == folderPath);
                 return bundleFolderData != null && bundleFolderData.IgnoredFiles.Contains(filePath);
             }
 
-            public BundleFolderData FolderDataContainingFilePath(string filePath)
+            internal BundleFolderData FolderDataContainingFilePath(string filePath)
             {
                 foreach (var bundleFolderData in BundleFolders)
                 {
@@ -415,13 +416,13 @@ namespace UnityEngine.AssetBundles
             }
 
             [System.Serializable]
-            public class BundleFolderData
+            internal class BundleFolderData
             {
-                public string Path;
+                internal string Path;
 
-                public IList<string> IgnoredFiles;
+                internal IList<string> IgnoredFiles;
 
-                public BundleFolderData(string path)
+                internal BundleFolderData(string path)
                 {
                     Path = path;
                     IgnoredFiles = new List<string>();

@@ -157,10 +157,11 @@ The Build tab provides basic build functionality to get you started using asset 
 # Usage - Inspect
 This tab enables you to inspect the contents of bundles that have already been built. 
 ### Usage
-* Type in a bundle path, or find one using the 'Browse' button.  
+* If you use the Browser to build, then the path you built to will automatically be added here.
+* Click "Add File" or "Add Folder" to add bundles to inspect.  
+* Click the "-" next to each row to remove that file or folder. Note, you cannot remove individual files that were added by adding a folder.  
 * Select any bundle listed to see details:
   * Name
   * Size on disk
-  * Preload Table - full contents of bundle
-  * Container - only explicitly added items
-  * Dependencies - bundles that the current bundle depends on
+  * Source Asset Paths - the assets explicitly added to this bundle. Note this list is incomplete for scene bundles.
+  * Advanced Data - includes information on the Preload Table, Container (explicit assets) and Dependencies.

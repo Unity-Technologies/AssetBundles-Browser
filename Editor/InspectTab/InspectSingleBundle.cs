@@ -1,17 +1,15 @@
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
-using System.Collections.Generic;
+using UnityEngine;
 using System.IO;
-using System;
 
-namespace UnityEngine.AssetBundles
+namespace AssetBundleBrowser
 {
     class SingleBundleInspector
     {
-        public static string currentPath { get; set; }
+        internal static string currentPath { get; set; }
 
 
-        public SingleBundleInspector() { }
+        internal SingleBundleInspector() { }
 
         private Editor m_Editor = null;
 
@@ -23,7 +21,7 @@ namespace UnityEngine.AssetBundles
         private AssetBundleInspectTab m_assetBundleInspectTab = null;
         private AssetBundleInspectTab.InspectTabData m_inspectTabData = null;
 
-        public void SetBundle(AssetBundle bundle, string path = "", AssetBundleInspectTab.InspectTabData inspectTabData = null, AssetBundleInspectTab assetBundleInspectTab = null)
+        internal void SetBundle(AssetBundle bundle, string path = "", AssetBundleInspectTab.InspectTabData inspectTabData = null, AssetBundleInspectTab assetBundleInspectTab = null)
         {
             //static var...
             currentPath = path;
@@ -38,7 +36,7 @@ namespace UnityEngine.AssetBundles
             }
         }
 
-        public void OnGUI(Rect pos)
+        internal void OnGUI(Rect pos)
         {
             m_Position = pos;
 
@@ -79,10 +77,10 @@ namespace UnityEngine.AssetBundles
     }
 
     [CustomEditor(typeof(AssetBundle))]
-    public class AssetBundleEditor : Editor
+    internal class AssetBundleEditor : Editor
     {
-        public bool pathFoldout = false;
-        public bool advancedFoldout = false;
+        internal bool pathFoldout = false;
+        internal bool advancedFoldout = false;
         public override void OnInspectorGUI()
         {
             AssetBundle bundle = target as AssetBundle;

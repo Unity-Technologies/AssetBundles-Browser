@@ -1,4 +1,5 @@
 ﻿using UnityEditor;
+using System;
 
 namespace AssetBundleBrowser.AssetBundleDataSource
 {
@@ -19,6 +20,10 @@ namespace AssetBundleBrowser.AssetBundleDataSource
         /// Target platform for build.
         /// </summary>
         public BuildTarget buildTarget;
+        /// <summary>
+        /// Callback for build event.
+        /// </summary>
+        public Action<string> onBuild;
     }
 
     /// <summary>
