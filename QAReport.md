@@ -15,4 +15,4 @@
 
 ## Package Status
 * open bugs: https://github.com/Unity-Technologies/AssetBundles-Browser/issues
-* package has been openly available on github since April, officially released on github and the asset store sincef June.  
+* package has been openly available on github since April, officially released on github and the asset store since June.  Users have been able to report bugs through github (see above link) and give feedback in the asset store.  Current asset store rating is 5 stars after 19 votes.
