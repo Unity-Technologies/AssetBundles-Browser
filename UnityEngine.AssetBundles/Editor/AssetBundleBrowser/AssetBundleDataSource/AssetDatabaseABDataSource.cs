@@ -79,6 +79,8 @@ namespace UnityEngine.AssetBundles.AssetBundleDataSource
 
         public bool BuildAssetBundles (ABBuildInfo info) {
             var buildManifest = BuildPipeline.BuildAssetBundles(info.outputDirectory, info.options, info.buildTarget);
+            if (buildManifest == null)
+                return false;
             foreach(var assetBundleName in buildManifest.GetAllAssetBundles())
             {
                 if (info.onBuild != null)
