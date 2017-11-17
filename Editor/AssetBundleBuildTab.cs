@@ -349,7 +349,13 @@ namespace AssetBundleBrowser
             buildInfo.outputDirectory = m_UserData.m_OutputPath;
             buildInfo.options = opt;
             buildInfo.buildTarget = (BuildTarget)m_UserData.m_BuildTarget;
-            buildInfo.onBuild = (assetBundleName) => { m_InspectTab.AddBundleFolder(buildInfo.outputDirectory); m_InspectTab.RefreshBundles(); };
+            buildInfo.onBuild = (assetBundleName) =>
+            {
+                if (m_InspectTab == null)
+                    return;
+                m_InspectTab.AddBundleFolder(buildInfo.outputDirectory);
+                m_InspectTab.RefreshBundles();
+            };
 
             AssetBundleModel.Model.DataSource.BuildAssetBundles (buildInfo);
 
