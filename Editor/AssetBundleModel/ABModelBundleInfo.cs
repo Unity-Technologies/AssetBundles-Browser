@@ -25,6 +25,93 @@ namespace AssetBundleBrowser.AssetBundleModel
         {
             return m_Bundle.HighestMessage();
         }
+        
+        public bool RemoveChildrenBySearchTerm( string searchTerm, SearchMode searchMode, List<TreeViewItem> itemsMatchingSearchTerms )
+        {
+            bool searchValid = false;
+            string searchTermLower = searchTerm.ToLower();
+
+            if( ( searchMode == SearchMode.All || searchMode == SearchMode.Name ) && displayName.ToLower().Contains(searchTermLower) )
+                searchValid = true;
+
+            if( searchValid == false && children.Count == 0 )
+            {
+                BundleDataInfo dataInfo = m_Bundle as BundleDataInfo;
+                if (dataInfo != null )
+                {
+                    m_Bundle.RefreshAssetList();
+                    List<AssetInfo> assets = dataInfo.GetConcretes();
+                    switch (searchMode)
+                    {
+                        case SearchMode.All:
+                        {
+                            string typeString = "UnityEngine." + (searchTerm.StartsWith("t:") || searchTerm.StartsWith("T:")
+                                             ? searchTerm.Remove(0, 2)
+                                             : searchTerm);
+                            Type searchedType = typeof(Material).Assembly.GetType(typeString);
+
+                            foreach (AssetInfo asset in assets)
+                            {
+                                if( asset.displayName.ToLower().Contains(searchTermLower) ||
+                                    (searchedType != null && AssetDatabase.GetMainAssetTypeAtPath(asset.fullAssetName) == searchedType))
+                                {
+                                    searchValid = true;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case SearchMode.Name:
+                        {
+                            foreach (AssetInfo asset in assets)
+                            {
+                                if( !asset.displayName.ToLower().Contains(searchTermLower) )
+                                    continue;
+                                searchValid = true;
+                                break;
+                            }
+                            break;
+                        }
+                        case SearchMode.Type:
+                        {
+                            string typeString = "UnityEngine." + (searchTerm.StartsWith("t:") || searchTerm.StartsWith("T:")
+                                                    ? searchTerm.Remove(0, 2)
+                                                    : searchTerm);
+                            Type searchedType = typeof(Material).Assembly.GetType(typeString);
+
+                            foreach (AssetInfo asset in assets)
+                            {
+                                if( searchedType != null && AssetDatabase.GetMainAssetTypeAtPath(asset.fullAssetName) == searchedType )
+                                {
+                                    searchValid = true;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (searchValid)
+            {
+                itemsMatchingSearchTerms.Add(this);
+            }
+            
+            for (int i = children.Count - 1; i >= 0; --i)
+            {
+                BundleTreeItem b = children[i] as BundleTreeItem;
+                if (b == null)
+                    continue;
+
+                if (b.RemoveChildrenBySearchTerm(searchTerm, searchMode, itemsMatchingSearchTerms))
+                    searchValid = true;
+                else
+                    children.RemoveAt(i);
+            }
+
+            return searchValid;
+        }
     }
 
     internal class BundleNameData
@@ -545,6 +632,11 @@ namespace AssetBundleBrowser.AssetBundleModel
         {
             return m_DependentAssets;
         }
+        
+        public List<AssetInfo> GetConcretes()
+        {
+            return m_ConcreteAssets;
+        }
     }
 
     internal class BundleVariantDataInfo : BundleDataInfo
@@ -843,12 +935,33 @@ namespace AssetBundleBrowser.AssetBundleModel
         }
         internal override BundleTreeItem CreateTreeView(int depth)
         {
+            AssetBundleManageTab manageTab = AssetBundleBrowserMain.GetWindow<AssetBundleBrowserMain>().m_ManageTab;
+            
+            List<TreeViewItem> itemsMatchingSearchTerms = new List<TreeViewItem>();
+            List<int> itemsBeenChecked = new List<int>();
+            
             RefreshMessages();
             var result = new BundleTreeItem(this, depth, Model.GetFolderIcon());
             foreach (var child in m_Children)
             {
-                result.AddChild(child.Value.CreateTreeView(depth + 1));
+                BundleTreeItem item = child.Value.CreateTreeView(depth + 1);
+
+                if( string.IsNullOrEmpty(manageTab.SearchTerm) == false )
+                {
+                    if (itemsBeenChecked.Contains(item.id) == false)
+                    {
+                        bool includedInSearch = item.RemoveChildrenBySearchTerm( manageTab.SearchTerm, manageTab.SearchMode, itemsMatchingSearchTerms );
+                        itemsBeenChecked.Add(item.id);
+
+                        if (item != null && includedInSearch)
+                            result.AddChild(item);
+                    }
+                }
+                else if( item != null )
+                    result.AddChild(item);
             }
+            manageTab.SetFocusedTreeViewItems(itemsMatchingSearchTerms);
+            
             return result;
         }
         internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
