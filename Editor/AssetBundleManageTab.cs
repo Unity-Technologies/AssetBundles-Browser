@@ -184,6 +184,7 @@ namespace AssetBundleBrowser
                 bundleTreeRect.height -= 20;
 
                 string uiSearchString = "";
+                SearchMode uiSearchMode = m_SearchMode;
                 
                 // using reflection to access internal -> ToolbarSearchField(Rect position, string[] searchModes, ref int searchMode, string text)
                 MethodInfo[] infos = typeof(EditorGUI).GetMethods( BindingFlags.NonPublic | BindingFlags.Static );
@@ -214,7 +215,7 @@ namespace AssetBundleBrowser
                     }
                 }
                 
-                if( uiSearchString != m_SearchTerm )
+                if( uiSearchString != m_SearchTerm || uiSearchMode != m_SearchMode )
                 {
                     if (string.IsNullOrEmpty(m_SearchTerm))
                     {
