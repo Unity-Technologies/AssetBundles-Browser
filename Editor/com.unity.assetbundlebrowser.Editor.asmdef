@@ -1,7 +1,6 @@
 {
-    "name": "com.unity.resourcemanager.Editor",
+    "name": "com.unity.assetbundlebrowser.Editor",
     "references": [
-      "com.unity.resourcemanager.Runtime"
     ],
     "includePlatforms": [
         "Editor"
