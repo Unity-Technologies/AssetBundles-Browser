@@ -1,0 +1,9 @@
+{
+    "name": "com.unity.assetbundlebrowser.Editor",
+    "references": [
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
