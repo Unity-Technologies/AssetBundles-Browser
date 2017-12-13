@@ -1,0 +1,13 @@
+{
+    "name": "com.unity.assetbundlebrowser.EditorTests",
+    "references": [
+        "com.unity.assetbundlebrowser.Editor"
+    ],
+	"optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
