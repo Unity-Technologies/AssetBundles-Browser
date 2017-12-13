@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("com.unity.assetbundlebrowser.EditorTests")]
+
 namespace AssetBundleBrowser
 {
 
