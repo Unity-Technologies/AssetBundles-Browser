@@ -63,9 +63,9 @@ Left hand pane showing a list of all bundles in the project. Available functiona
     
 Icons indicate if the bundle is a standard or a scene bundle. 
 
-![Icon for standard bundle](https://github.com/Unity-Technologies/AssetBundles-Browser/blob/master/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/ABundleBrowserIconY1756Basic.png)
+![Icon for standard bundle](../Editor/Icons/ABundleBrowserIconY1756Basic.png)
 
-![Icon for scene bundle](https://github.com/Unity-Technologies/AssetBundles-Browser/blob/master/UnityEngine.AssetBundles/Editor/AssetBundleBrowser/Icons/ABundleBrowserIconY1756Scene.png)
+![Icon for scene bundle](../Editor/Icons/ABundleBrowserIconY1756Scene.png)
 
 ### Bundle Details
 
