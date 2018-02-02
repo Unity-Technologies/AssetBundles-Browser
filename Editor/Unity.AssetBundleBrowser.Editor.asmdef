@@ -1,5 +1,5 @@
 {
-    "name": "com.unity.assetbundlebrowser.Editor",
+    "name": "Unity.AssetBundleBrowser.Editor",
     "references": [
     ],
     "includePlatforms": [

@@ -4,7 +4,7 @@ This tool enables the user to view and edit the configuration of asset bundles f
 
 Use this tool as an alternative to selecting assets and setting their asset bundle manually in the inspector. It can be dropped into any Unity project with a version of 5.6 or greater. It will create a new menu item in __Window__ > __AssetBundle Browser__. The bundle configuration, build functionality, and build-bundle inspection are split into three tabs within the new window.
 
-![BrowserHeader](../Documentation/images/browser_header.png)
+![BrowserHeader](images/browser_header.png)
 
 ### Requires Unity 5.6+
 
@@ -13,7 +13,7 @@ Use this tool as an alternative to selecting assets and setting their asset bund
 This window provides an explorer like interface to managing and modifying asset bundles in your project. When first opened, the tool will parse all bundle data in the background, slowly marking warnings or errors it detects. It does what it can to stay in sync with the project, but cannot always be aware of activity outside the tool. To force a quick pass at error detection, or to update the tool with changes made externally, hit the Refresh button in the upper left.
 
 The window is broken into four sections: Bundle List, Bundle Details, Asset List, and Asset Details. 
-![BroserConfigure](../Documentation/images/browser_configure2.png)
+![BroserConfigure](images/browser_configure2.png)
 
 ### Bundle List
 
@@ -63,9 +63,9 @@ Left hand pane showing a list of all bundles in the project. Available functiona
     
 Icons indicate if the bundle is a standard or a scene bundle. 
 
-![Icon for standard bundle](../Editor/Icons/ABundleBrowserIconY1756Basic.png)
+![Icon for standard bundle](images/ABundleBrowserIconY1756Basic.png)
 
-![Icon for scene bundle](../Editor/Icons/ABundleBrowserIconY1756Scene.png)
+![Icon for scene bundle](images/ABundleBrowserIconY1756Scene.png)
 
 ### Bundle Details
 
