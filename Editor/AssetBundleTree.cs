@@ -5,11 +5,10 @@ using UnityEditor.IMGUI.Controls;
 using System.Linq;
 using System;
 
-
 namespace AssetBundleBrowser
 {
     internal class AssetBundleTree : TreeView
-    { 
+    {
         AssetBundleManageTab m_Controller;
         private bool m_ContextOnItem = false;
         List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
@@ -46,17 +45,17 @@ namespace AssetBundleBrowser
             GUI.color = old;
 
             var message = bundleItem.BundleMessage();
-            if(message.severity != MessageType.None)
+            if (message.severity != MessageType.None)
             {
                 var size = args.rowRect.height;
                 var right = args.rowRect.xMax;
                 Rect messageRect = new Rect(right - size, args.rowRect.yMin, size, size);
-                GUI.Label(messageRect, new GUIContent(message.icon, message.message ));
+                GUI.Label(messageRect, new GUIContent(message.icon, message.message));
             }
         }
 
         protected override void RenameEnded(RenameEndedArgs args)
-        { 
+        {
             base.RenameEnded(args);
             if (args.newName.Length > 0 && args.newName != args.originalName)
             {
@@ -89,7 +88,7 @@ namespace AssetBundleBrowser
                 foreach (var id in selectedIds)
                 {
                     var item = FindItem(id, rootItem) as AssetBundleModel.BundleTreeItem;
-                    if(item != null && item.bundle != null)
+                    if (item != null && item.bundle != null)
                     {
                         item.bundle.RefreshAssetList();
                         selectedBundles.Add(item.bundle);
@@ -103,7 +102,7 @@ namespace AssetBundleBrowser
         public override void OnGUI(Rect rect)
         {
             base.OnGUI(rect);
-            if(Event.current.type == EventType.MouseDown && Event.current.button == 0 && rect.Contains(Event.current.mousePosition))
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && rect.Contains(Event.current.mousePosition))
             {
                 SetSelection(new int[0], TreeViewSelectionOptions.FireSelectionChanged);
             }
@@ -121,10 +120,16 @@ namespace AssetBundleBrowser
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
             GenericMenu menu = new GenericMenu();
 
-            if (!AssetBundleModel.Model.DataSource.IsReadOnly ()) {
-                menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
+            if (!AssetBundleModel.Model.DataSource.IsReadOnly())
+            {
+                menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes);
                 menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
+                menu.AddSeparator("");
             }
+
+            menu.AddItem(new GUIContent("Export to JSON"), false, ExportToJson, selectedNodes);
+            menu.AddItem(new GUIContent("Import from JSON"), false, ImportFromJson, selectedNodes);
+            menu.AddSeparator("");
 
             menu.AddItem(new GUIContent("Reload all data"), false, ForceReloadData, selectedNodes);
             menu.ShowAsContext();
@@ -132,7 +137,8 @@ namespace AssetBundleBrowser
 
         protected override void ContextClickedItem(int id)
         {
-            if (AssetBundleModel.Model.DataSource.IsReadOnly ()) {
+            if (AssetBundleModel.Model.DataSource.IsReadOnly())
+            {
                 return;
             }
 
@@ -142,10 +148,10 @@ namespace AssetBundleBrowser
             {
                 selectedNodes.Add(FindItem(nodeID, rootItem) as AssetBundleModel.BundleTreeItem);
             }
-            
+
             GenericMenu menu = new GenericMenu();
-            
-            if(selectedNodes.Count == 1)
+
+            if (selectedNodes.Count == 1)
             {
                 if ((selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo) != null)
                 {
@@ -154,7 +160,7 @@ namespace AssetBundleBrowser
                     menu.AddItem(new GUIContent("Add Sibling/New Bundle"), false, CreateNewSiblingBundle, selectedNodes);
                     menu.AddItem(new GUIContent("Add Sibling/New Folder"), false, CreateNewSiblingFolder, selectedNodes);
                 }
-                else if( (selectedNodes[0].bundle as AssetBundleModel.BundleVariantFolderInfo) != null)
+                else if ((selectedNodes[0].bundle as AssetBundleModel.BundleVariantFolderInfo) != null)
                 {
                     menu.AddItem(new GUIContent("Add Child/New Variant"), false, CreateNewVariant, selectedNodes);
                     menu.AddItem(new GUIContent("Add Sibling/New Bundle"), false, CreateNewSiblingBundle, selectedNodes);
@@ -174,14 +180,14 @@ namespace AssetBundleBrowser
                         menu.AddItem(new GUIContent("Add Sibling/New Variant"), false, CreateNewSiblingVariant, selectedNodes);
                     }
                 }
-                if(selectedNodes[0].bundle.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
+                if (selectedNodes[0].bundle.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
                     menu.AddItem(new GUIContent("Move duplicates to new bundle"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Rename"), false, RenameBundle, selectedNodes);
                 menu.AddItem(new GUIContent("Delete " + selectedNodes[0].displayName), false, DeleteBundles, selectedNodes);
-                
+
             }
             else if (selectedNodes.Count > 1)
-            { 
+            {
                 menu.AddItem(new GUIContent("Move duplicates shared by selected"), false, DedupeOverlappedBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Move duplicates existing in any selected"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Delete " + selectedNodes.Count + " selected bundles"), false, DeleteBundles, selectedNodes);
@@ -191,6 +197,23 @@ namespace AssetBundleBrowser
         void ForceReloadData(object context)
         {
             AssetBundleModel.Model.ForceReloadData(this);
+        }
+
+
+
+        void ExportToJson(object context)
+        {
+            var path = EditorUtility.SaveFilePanel("Export Asset Bundle Settings", "", "AssetBundles.json", "json");
+            if (!string.IsNullOrEmpty(path))
+                ExportImport.ExportToJson(path);
+        }
+
+        void ImportFromJson(object context)
+        {
+            var path = EditorUtility.OpenFilePanel("Import Asset bundle Settings", "", "json");
+            if (!string.IsNullOrEmpty(path))
+                ExportImport.ImportFromJson(path);
+            Refresh();
         }
 
         void CreateNewSiblingFolder(object context)
@@ -316,7 +339,7 @@ namespace AssetBundleBrowser
         {
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
             var newBundle = AssetBundleModel.Model.HandleDedupeBundles(selectedNodes.Select(item => item.bundle), onlyOverlappedAssets);
-            if(newBundle != null)
+            if (newBundle != null)
             {
                 var selection = new List<int>();
                 selection.Add(newBundle.nameHashCode);
@@ -388,7 +411,7 @@ namespace AssetBundleBrowser
                                 else
                                     hasNonScene = true;
 
-                                if ( (dataBundle as AssetBundleModel.BundleVariantDataInfo) != null)
+                                if ((dataBundle as AssetBundleModel.BundleVariantDataInfo) != null)
                                     hasVariantChild = true;
                             }
                         }
@@ -411,15 +434,16 @@ namespace AssetBundleBrowser
         {
             DragAndDropVisualMode visualMode = DragAndDropVisualMode.None;
             DragAndDropData data = new DragAndDropData(args);
-            
-            if (AssetBundleModel.Model.DataSource.IsReadOnly ()) {
+
+            if (AssetBundleModel.Model.DataSource.IsReadOnly())
+            {
                 return DragAndDropVisualMode.Rejected;
             }
 
-            if ( (data.hasScene && data.hasNonScene) ||
-                (data.hasVariantChild) )
+            if ((data.hasScene && data.hasNonScene) ||
+                (data.hasVariantChild))
                 return DragAndDropVisualMode.Rejected;
-            
+
             switch (args.dragAndDropPosition)
             {
                 case DragAndDropPosition.UponItem:
@@ -438,7 +462,7 @@ namespace AssetBundleBrowser
                             Reload();
                         }
                     }
-                    else if(data.paths != null)
+                    else if (data.paths != null)
                     {
                         visualMode = DragAndDropVisualMode.Copy;
                         if (data.args.performDrop)
@@ -459,7 +483,7 @@ namespace AssetBundleBrowser
             {
                 if (targetDataBundle.isSceneBundle)
                 {
-                    if(data.hasNonScene)
+                    if (data.hasNonScene)
                         return DragAndDropVisualMode.Rejected;
                 }
                 else
@@ -475,7 +499,7 @@ namespace AssetBundleBrowser
 
                 }
 
-               
+
                 if (data.args.performDrop)
                 {
                     if (data.draggedNodes != null)
@@ -512,7 +536,7 @@ namespace AssetBundleBrowser
                 }
                 else
                     visualMode = DragAndDropVisualMode.Rejected; //must be a variantfolder
-                
+
             }
             return visualMode;
         }
@@ -623,7 +647,7 @@ namespace AssetBundleBrowser
             var selection = new List<int>();
             selection.Add(hashCode);
             ReloadAndSelect(selection);
-            if(rename)
+            if (rename)
             {
                 BeginRename(FindItem(hashCode, rootItem), 0.25f);
             }
