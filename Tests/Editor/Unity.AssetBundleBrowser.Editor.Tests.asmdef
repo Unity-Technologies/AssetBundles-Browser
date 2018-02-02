@@ -1,7 +1,7 @@
 {
-    "name": "com.unity.assetbundlebrowser.EditorTests",
+    "name": "Unity.AssetBundleBrowser.Editor.Tests",
     "references": [
-        "com.unity.assetbundlebrowser.Editor"
+        "Unity.AssetBundleBrowser.Editor"
     ],
 	"optionalUnityReferences": [
         "TestAssemblies"
