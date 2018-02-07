@@ -150,7 +150,8 @@ namespace AssetBundleBrowser
                 case 0:
                     {
                         var iconRect = new Rect(cellRect.x + 1, cellRect.y + 1, cellRect.height - 2, cellRect.height - 2);
-                        GUI.DrawTexture(iconRect, item.icon, ScaleMode.ScaleToFit);
+                        if(item.icon != null)
+                            GUI.DrawTexture(iconRect, item.icon, ScaleMode.ScaleToFit);
                         DefaultGUI.Label(
                             new Rect(cellRect.x + iconRect.xMax + 1, cellRect.y, cellRect.width - iconRect.width, cellRect.height), 
                             item.displayName, 
