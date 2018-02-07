@@ -242,6 +242,8 @@ namespace AssetBundleBrowser.AssetBundleModel
 
         abstract internal void HandleReparent(string parentName, BundleFolderInfo newParent = null);
         abstract internal List<AssetInfo> GetDependencies();
+
+        abstract internal bool DoesItemMatchSearch(string search);
     }
 
     internal class BundleDataInfo : BundleInfo
@@ -545,6 +547,21 @@ namespace AssetBundleBrowser.AssetBundleModel
         {
             return m_DependentAssets;
         }
+
+        internal override bool DoesItemMatchSearch(string search)
+        {
+            foreach(var asset in m_ConcreteAssets)
+            {
+                if (asset.displayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            foreach (var asset in m_DependentAssets)
+            {
+                if (asset.displayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            return false;
+        }
     }
 
     internal class BundleVariantDataInfo : BundleDataInfo
@@ -719,6 +736,14 @@ namespace AssetBundleBrowser.AssetBundleModel
                 child.Value.HandleDelete(false, forcedNewName, forcedNewVariant);
             }
             m_Children.Clear();
+        }
+
+        internal override bool DoesItemMatchSearch(string search)
+        {
+            bool match = false;
+            foreach (var child in m_Children)
+                match |= child.Value.DoesItemMatchSearch(search);
+            return match;
         }
 
         protected override void RefreshMessages()
