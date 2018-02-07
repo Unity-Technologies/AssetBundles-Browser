@@ -2,12 +2,10 @@
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Reflection;
+
 
 namespace AssetBundleBrowser
 {
-    public enum SearchMode{ All = 0, Name, Type }
-    
     [System.Serializable]
     internal class AssetBundleManageTab 
     {
@@ -39,24 +37,10 @@ namespace AssetBundleBrowser
         const float k_SplitterWidth = 3f;
         private static float m_UpdateDelay = 0f;
 
-        private string m_SearchTerm = "";
-        private List<TreeViewItem> m_FocusedItems;
-        private List<int> m_PreExpandedIDs;
-        private Vector2 m_PreScrollPos;
-        private SearchMode m_SearchMode;
+        SearchField m_searchField;
 
         EditorWindow m_Parent = null;
 
-        public string SearchTerm
-        {
-            get { return m_SearchTerm; }
-        }
-
-        public SearchMode SearchMode
-        {
-            get { return m_SearchMode;  }
-        }
-        
         internal AssetBundleManageTab()
         {
             m_HorizontalSplitterPercent = 0.4f;
@@ -83,6 +67,8 @@ namespace AssetBundleBrowser
                 (int)(m_Position.y + m_HorizontalSplitterRect.height * m_VerticalSplitterPercentLeft),
                 (m_HorizontalSplitterRect.width) - k_SplitterWidth,
                 k_SplitterWidth);
+
+            m_searchField = new SearchField();
         }
 
 
@@ -107,11 +93,6 @@ namespace AssetBundleBrowser
                     m_AssetList.Update();
 
             }
-        }
-
-        public void SetFocusedTreeViewItems( List<TreeViewItem> items )
-        {
-            m_FocusedItems = items;
         }
 
         internal void ForceReloadData()
@@ -178,100 +159,6 @@ namespace AssetBundleBrowser
                     m_HorizontalSplitterRect.x,
                     m_VerticalSplitterRectLeft.y - m_Position.y);
                 
-                Rect searchRect = bundleTreeRect;
-                searchRect.height = 20;
-                bundleTreeRect.y += 20;
-                bundleTreeRect.height -= 20;
-
-                string uiSearchString = "";
-                SearchMode uiSearchMode = m_SearchMode;
-                
-                // using reflection to access internal -> ToolbarSearchField(Rect position, string[] searchModes, ref int searchMode, string text)
-                MethodInfo[] infos = typeof(EditorGUI).GetMethods( BindingFlags.NonPublic | BindingFlags.Static );
-                foreach( var methodInfo in infos )
-                {
-                    if (methodInfo.Name == "ToolbarSearchField")
-                    {
-                        ParameterInfo[] parameters = methodInfo.GetParameters();
-                        if( parameters.Length != 5 ||
-                            parameters[0].ParameterType != typeof(int) ||
-                            parameters[1].ParameterType != typeof(Rect) || 
-                            parameters[2].ParameterType != typeof(string[]) ||
-                            parameters[3].ParameterType.Name != "Int32&" ||
-                            parameters[4].ParameterType != typeof(string) )
-                            continue;
-                        
-                        int s_SearchFieldHash = "AssetBundleSearchField".GetHashCode();
-                        
-                        int id = GUIUtility.GetControlID(s_SearchFieldHash, FocusType.Keyboard, searchRect);
-                        object[] methodParams = new object[]{   
-                            id, 
-                            searchRect,
-                            new string[] {"All", "Name", "Type"},
-                            (int)m_SearchMode,
-                            m_SearchTerm};
-                        uiSearchString = methodInfo.Invoke(methodInfo, methodParams ) as string;
-                        m_SearchMode = (SearchMode)methodParams[3];
-                    }
-                }
-                
-                if( uiSearchString != m_SearchTerm || uiSearchMode != m_SearchMode )
-                {
-                    if (string.IsNullOrEmpty(m_SearchTerm))
-                    {
-                        m_PreExpandedIDs = new List<int>(m_BundleTreeState.expandedIDs.Count);
-                        for (int i = 0; i < m_BundleTreeState.expandedIDs.Count; ++i)
-                            m_PreExpandedIDs.Add(m_BundleTreeState.expandedIDs[i]);
-            
-                        m_PreScrollPos = m_BundleTreeState.scrollPos;
-
-                        if (m_FocusedItems != null)
-                        {
-                            m_FocusedItems.Clear();
-                            m_FocusedItems = null;
-                        }
-                    }
-                    else if (string.IsNullOrEmpty(uiSearchString))
-                    {
-                        m_BundleTreeState.expandedIDs = new List<int>(m_PreExpandedIDs.Count);
-                        for (int i = 0; i < m_PreExpandedIDs.Count; ++i)
-                            m_BundleTreeState.expandedIDs.Add(m_PreExpandedIDs[i]);
-            
-                        for (int i = 0; i < m_BundleTreeState.selectedIDs.Count; ++i)
-                            m_BundleTree.FrameItem(m_BundleTreeState.selectedIDs[i]);
-
-                        m_BundleTreeState.scrollPos = m_PreScrollPos;
-
-                        if (m_FocusedItems != null)
-                        {
-                            m_FocusedItems.Clear();
-                            m_FocusedItems = null;
-                        }
-                    }
-                    
-                    m_SearchTerm = uiSearchString;
-                    m_BundleTree.Reload();
-                }
-                
-                if ( m_FocusedItems != null && m_FocusedItems.Count > 0 )
-                {
-                    List<int> expanded = new List<int>();
-                    foreach (TreeViewItem item in m_FocusedItems)
-                    {
-                        TreeViewItem toExpand = item.parent;
-                        while (toExpand != null)
-                        {
-                            if( expanded.Contains(toExpand.id) == false )
-                                expanded.Add(toExpand.id);
-                            toExpand = toExpand.parent;
-                        }
-                    }
-                    
-                    m_BundleTreeState.expandedIDs.Clear();
-                    m_BundleTree.SetExpanded(expanded);
-                    m_FocusedItems.Clear();
-                }
-                
                 m_BundleTree.OnGUI(bundleTreeRect);
                 m_DetailsList.OnGUI(new Rect(
                     bundleTreeRect.x,
@@ -283,15 +170,18 @@ namespace AssetBundleBrowser
                 //Right half.
                 float panelLeft = m_HorizontalSplitterRect.x + k_SplitterWidth;
                 float panelWidth = m_VerticalSplitterRectRight.width - k_SplitterWidth * 2;
-                float panelHeight = m_VerticalSplitterRectRight.y - m_Position.y;
+                float searchHeight = 20f;
+                float panelTop = m_Position.y + searchHeight;
+                float panelHeight = m_VerticalSplitterRectRight.y - panelTop;
+                OnGUISearchBar(new Rect(panelLeft, m_Position.y, panelWidth, searchHeight));
                 m_AssetList.OnGUI(new Rect(
                     panelLeft,
-                    m_Position.y,
+                    panelTop,
                     panelWidth,
                     panelHeight));
                 m_MessageList.OnGUI(new Rect(
                     panelLeft,
-                    m_Position.y + panelHeight + k_SplitterWidth,
+                    panelTop + panelHeight + k_SplitterWidth,
                     panelWidth,
                     (m_Position.height - panelHeight) - k_SplitterWidth * 2));
 
@@ -300,6 +190,11 @@ namespace AssetBundleBrowser
             }
         }
 
+        void OnGUISearchBar(Rect rect)
+        {
+            m_BundleTree.searchString = m_searchField.OnGUI(rect, m_BundleTree.searchString);
+            m_AssetList.searchString = m_BundleTree.searchString;
+        }
 
         private void HandleHorizontalResize()
         {
