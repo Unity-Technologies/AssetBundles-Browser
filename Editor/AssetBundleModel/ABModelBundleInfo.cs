@@ -8,9 +8,7 @@ using UnityEditor.IMGUI.Controls;
 namespace AssetBundleBrowser.AssetBundleModel
 {
     internal class BundleTreeItem : TreeViewItem
-    {
-        private AssetBundleManageTab m_ManageTab;
-        
+    {   
         private BundleInfo m_Bundle;
         internal BundleInfo bundle
         {
@@ -21,7 +19,6 @@ namespace AssetBundleBrowser.AssetBundleModel
             m_Bundle = b;
             icon = iconTexture;
             children = new List<TreeViewItem>();
-            m_ManageTab = AssetBundleBrowserMain.GetWindow<AssetBundleBrowserMain>().m_ManageTab;
         }
 
         internal MessageSystem.Message BundleMessage()
@@ -33,7 +30,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         {
             get
             {
-                return m_ManageTab.hasSearch ? m_Bundle.m_Name.fullNativeName : m_Bundle.displayName;
+                return AssetBundleBrowserMain.instance.m_ManageTab.hasSearch ? m_Bundle.m_Name.fullNativeName : m_Bundle.displayName;
             }
         }
     }
