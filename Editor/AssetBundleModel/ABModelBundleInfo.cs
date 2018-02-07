@@ -740,10 +740,7 @@ namespace AssetBundleBrowser.AssetBundleModel
 
         internal override bool DoesItemMatchSearch(string search)
         {
-            bool match = false;
-            foreach (var child in m_Children)
-                match |= child.Value.DoesItemMatchSearch(search);
-            return match;
+            return false; //folders don't ever match.
         }
 
         protected override void RefreshMessages()
