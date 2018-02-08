@@ -52,9 +52,9 @@ namespace AssetBundleBrowser
         [MenuItem("Window/AssetBundle Browser", priority = 2050)]
         static void ShowWindow()
         {
-            m_instance = GetWindow<AssetBundleBrowserMain>();
-            m_instance.titleContent = new GUIContent("AssetBundles");
-            m_instance.Show();
+            m_instance = null;
+            instance.titleContent = new GUIContent("AssetBundles");
+            instance.Show();
         }
 
         [SerializeField]
