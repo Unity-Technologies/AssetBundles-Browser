@@ -8,7 +8,7 @@ using UnityEditor.IMGUI.Controls;
 namespace AssetBundleBrowser.AssetBundleModel
 {
     internal class BundleTreeItem : TreeViewItem
-    {
+    {   
         private BundleInfo m_Bundle;
         internal BundleInfo bundle
         {
@@ -24,6 +24,14 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal MessageSystem.Message BundleMessage()
         {
             return m_Bundle.HighestMessage();
+        }
+
+        public override string displayName
+        {
+            get
+            {
+                return AssetBundleBrowserMain.instance.m_ManageTab.hasSearch ? m_Bundle.m_Name.fullNativeName : m_Bundle.displayName;
+            }
         }
     }
 
@@ -242,6 +250,8 @@ namespace AssetBundleBrowser.AssetBundleModel
 
         abstract internal void HandleReparent(string parentName, BundleFolderInfo newParent = null);
         abstract internal List<AssetInfo> GetDependencies();
+
+        abstract internal bool DoesItemMatchSearch(string search);
     }
 
     internal class BundleDataInfo : BundleInfo
@@ -545,6 +555,21 @@ namespace AssetBundleBrowser.AssetBundleModel
         {
             return m_DependentAssets;
         }
+
+        internal override bool DoesItemMatchSearch(string search)
+        {
+            foreach(var asset in m_ConcreteAssets)
+            {
+                if (asset.displayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            foreach (var asset in m_DependentAssets)
+            {
+                if (asset.displayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            return false;
+        }
     }
 
     internal class BundleVariantDataInfo : BundleDataInfo
@@ -719,6 +744,11 @@ namespace AssetBundleBrowser.AssetBundleModel
                 child.Value.HandleDelete(false, forcedNewName, forcedNewVariant);
             }
             m_Children.Clear();
+        }
+
+        internal override bool DoesItemMatchSearch(string search)
+        {
+            return false; //folders don't ever match.
         }
 
         protected override void RefreshMessages()

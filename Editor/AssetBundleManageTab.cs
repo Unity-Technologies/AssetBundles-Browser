@@ -37,6 +37,7 @@ namespace AssetBundleBrowser
         const float k_SplitterWidth = 3f;
         private static float m_UpdateDelay = 0f;
 
+        SearchField m_searchField;
 
         EditorWindow m_Parent = null;
 
@@ -66,6 +67,8 @@ namespace AssetBundleBrowser
                 (int)(m_Position.y + m_HorizontalSplitterRect.height * m_VerticalSplitterPercentLeft),
                 (m_HorizontalSplitterRect.width) - k_SplitterWidth,
                 k_SplitterWidth);
+
+            m_searchField = new SearchField();
         }
 
 
@@ -167,15 +170,18 @@ namespace AssetBundleBrowser
                 //Right half.
                 float panelLeft = m_HorizontalSplitterRect.x + k_SplitterWidth;
                 float panelWidth = m_VerticalSplitterRectRight.width - k_SplitterWidth * 2;
-                float panelHeight = m_VerticalSplitterRectRight.y - m_Position.y;
+                float searchHeight = 20f;
+                float panelTop = m_Position.y + searchHeight;
+                float panelHeight = m_VerticalSplitterRectRight.y - panelTop;
+                OnGUISearchBar(new Rect(panelLeft, m_Position.y, panelWidth, searchHeight));
                 m_AssetList.OnGUI(new Rect(
                     panelLeft,
-                    m_Position.y,
+                    panelTop,
                     panelWidth,
                     panelHeight));
                 m_MessageList.OnGUI(new Rect(
                     panelLeft,
-                    m_Position.y + panelHeight + k_SplitterWidth,
+                    panelTop + panelHeight + k_SplitterWidth,
                     panelWidth,
                     (m_Position.height - panelHeight) - k_SplitterWidth * 2));
 
@@ -184,6 +190,16 @@ namespace AssetBundleBrowser
             }
         }
 
+        void OnGUISearchBar(Rect rect)
+        {
+            m_BundleTree.searchString = m_searchField.OnGUI(rect, m_BundleTree.searchString);
+            m_AssetList.searchString = m_BundleTree.searchString;
+        }
+
+        public bool hasSearch
+        {
+            get { return m_BundleTree.hasSearch;  }
+        }
 
         private void HandleHorizontalResize()
         {

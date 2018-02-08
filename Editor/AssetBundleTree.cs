@@ -31,6 +31,12 @@ namespace AssetBundleBrowser
             return item.displayName.Length > 0;
         }
 
+        protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
+        {
+            var bundleItem = item as AssetBundleModel.BundleTreeItem;
+            return bundleItem.bundle.DoesItemMatchSearch(search);
+        }
+
         protected override void RowGUI(RowGUIArgs args)
         {
             var bundleItem = (args.item as AssetBundleModel.BundleTreeItem);

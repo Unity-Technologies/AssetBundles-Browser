@@ -10,6 +10,17 @@ namespace AssetBundleBrowser
     public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
     {
 
+        private static AssetBundleBrowserMain m_instance = null;
+        internal static AssetBundleBrowserMain instance
+        {
+            get
+            {
+                if (m_instance == null)
+                    m_instance = GetWindow<AssetBundleBrowserMain>();
+                return m_instance;
+            }
+        }
+
         internal const float kButtonWidth = 150;
 
         enum Mode
@@ -41,9 +52,9 @@ namespace AssetBundleBrowser
         [MenuItem("Window/AssetBundle Browser", priority = 2050)]
         static void ShowWindow()
         {
-            var window = GetWindow<AssetBundleBrowserMain>();
-            window.titleContent = new GUIContent("AssetBundles");
-            window.Show();
+            m_instance = null;
+            instance.titleContent = new GUIContent("AssetBundles");
+            instance.Show();
         }
 
         [SerializeField]
