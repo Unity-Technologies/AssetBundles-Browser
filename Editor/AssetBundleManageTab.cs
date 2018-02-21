@@ -18,6 +18,8 @@ namespace AssetBundleBrowser
         [SerializeField]
         TreeViewState m_BundleDetailState;
 
+        SearchField m_searchField;
+
         Rect m_Position;
 
         AssetBundleTree m_BundleTree;
@@ -37,7 +39,6 @@ namespace AssetBundleBrowser
         const float k_SplitterWidth = 3f;
         private static float m_UpdateDelay = 0f;
 
-        SearchField m_searchField;
 
         EditorWindow m_Parent = null;
 
@@ -194,11 +195,6 @@ namespace AssetBundleBrowser
         {
             m_BundleTree.searchString = m_searchField.OnGUI(rect, m_BundleTree.searchString);
             m_AssetList.searchString = m_BundleTree.searchString;
-        }
-
-        public bool hasSearch
-        {
-            get { return m_BundleTree.hasSearch;  }
         }
 
         private void HandleHorizontalResize()
