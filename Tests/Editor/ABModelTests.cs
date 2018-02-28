@@ -16,7 +16,7 @@ using UnityEngine.SceneManagement;
 
 namespace AssetBundleBrowserTests
 {
-    public class ABModelTests
+    class ABModelTests
     {
         private List<BundleInfo> m_BundleInfo;
 
@@ -33,7 +33,7 @@ namespace AssetBundleBrowserTests
         }
 
         [TearDown]
-        public void TearDown()
+        public static void TearDown()
         {
             GameObject[] gameObjectsInScene = GameObject.FindObjectsOfType<GameObject>()
                 .Where(go => go.tag != "MainCamera").ToArray();
@@ -93,7 +93,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void ValidateAssetBundleListMatchesAssetDatabase()
+        public static void ValidateAssetBundleListMatchesAssetDatabase()
         {
             int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
 
@@ -102,7 +102,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void ValidateAssetBundleList_ReturnsCorrect_ListOfBundles()
+        public static void ValidateAssetBundleList_ReturnsCorrect_ListOfBundles()
         {
             // Account for existing bundles
             int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
@@ -125,7 +125,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void ValidateAssetBundleList_WithVariants_ContainsCorrectList()
+        public static void ValidateAssetBundleList_WithVariants_ContainsCorrectList()
         {
             // Account for existing bundles
             int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
@@ -150,7 +150,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void ModelRebuild_KeepsCorrect_BundlesToUpdate()
+        public static void ModelRebuild_KeepsCorrect_BundlesToUpdate()
         {
             // Account for existing bundles
             int numChildren = ABModelUtil.Root.GetChildList().Count;
@@ -190,7 +190,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void VerifyBasicTreeStructure_ContainsCorrect_ClassTypes()
+        public static void VerifyBasicTreeStructure_ContainsCorrect_ClassTypes()
         {
             // Account for existing bundles
             int numChildren = ABModelUtil.Root.GetChildList().Count;
@@ -231,7 +231,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void CreateEmptyBundle_AddsBundle_ToRootBundles()
+        public static void CreateEmptyBundle_AddsBundle_ToRootBundles()
         {
             // Account for existing bundles
             int numChildren = GetBundleRootFolderChildCount();
@@ -243,7 +243,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void CreatedEmptyBundle_Remains_AfterRefresh()
+        public static void CreatedEmptyBundle_Remains_AfterRefresh()
         {
             // Account for existing bundles
             int numChildren = GetBundleRootFolderChildCount();
@@ -260,7 +260,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void CreatedEmptyBundle_IsRemoved_AfterRebuild()
+        public static void CreatedEmptyBundle_IsRemoved_AfterRebuild()
         {
             // Account for existing bundles
             int childCount = GetBundleRootFolderChildCount();
@@ -274,7 +274,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void MoveAssetToBundle_PlacesAsset_IntoMoveQueue()
+        public static void MoveAssetToBundle_PlacesAsset_IntoMoveQueue()
         {
             string assetName = "New Asset";
             List<string> listOfPrefabs = new List<string>();
@@ -297,7 +297,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void ExecuteAssetMove_MovesAssets_IntoCorrectBundles_UsingStrings()
+        public static void ExecuteAssetMove_MovesAssets_IntoCorrectBundles_UsingStrings()
         {
             List<string> listOfPrefabs = new List<string>();
 
@@ -318,7 +318,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void ExecuteAssetMove_MovesAssets_IntoCorrectBundles_UsingAssetInfo()
+        public static void ExecuteAssetMove_MovesAssets_IntoCorrectBundles_UsingAssetInfo()
         {
             List<string> listOfPrefabs = new List<string>();
 
@@ -340,7 +340,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void CreateAsset_CreatesAsset_WithCorrectData()
+        public static void CreateAsset_CreatesAsset_WithCorrectData()
         {
             string assetName = "Assets/assetName";
             string bunleName = "bundle1";
@@ -351,7 +351,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleRename_RenamesTo_CorrectAssetBundleName()
+        public static void HandleBundleRename_RenamesTo_CorrectAssetBundleName()
         {
             string bundleDataInfoName = "bundledatainfo";
             string newBundleDataInfoName = "newbundledatainfo";
@@ -366,7 +366,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void AssetBundleName_GetsRenamed_WhenBundleIsRenamed()
+        public static void AssetBundleName_GetsRenamed_WhenBundleIsRenamed()
         {
             List<string> listOfPrefabs = new List<string>();
 
@@ -388,7 +388,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void BundleFolderInfo_ChildrenTable_UpdatesWhenBundleIsRenamed()
+        public static void BundleFolderInfo_ChildrenTable_UpdatesWhenBundleIsRenamed()
         {
             // Account for existing asset bundles
             int numExistingChildren = ABModelUtil.Root.GetChildList().Count;
@@ -415,7 +415,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void BundleTreeItem_ChangesBundleName_AfterRename()
+        public static void BundleTreeItem_ChangesBundleName_AfterRename()
         {
             string bundle1Name = "bundle1";
             string bundle2Name = "bundle2";
@@ -427,7 +427,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleReparent_MovesBundleDataInfoBundles_ToTheCorrectParent()
+        public static void HandleBundleReparent_MovesBundleDataInfoBundles_ToTheCorrectParent()
         {
             BundleDataInfo dataInfo = new BundleDataInfo("bundle1", ABModelUtil.Root);
             BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", ABModelUtil.Root);
@@ -441,7 +441,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleReparent_MoveBundleFolderInfo_ToTheCorrectParent()
+        public static void HandleBundleReparent_MoveBundleFolderInfo_ToTheCorrectParent()
         {
             BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("folder1", ABModelUtil.Root);
             BundleFolderConcreteInfo subConcreteFolder = new BundleFolderConcreteInfo("subFolder1", concreteFolder);
@@ -451,13 +451,13 @@ namespace AssetBundleBrowserTests
             concreteFolder.AddChild(subConcreteFolder);
             subConcreteFolder.AddChild(subConcreteFolder);
 
-            Model.HandleBundleReparent(new BundleInfo[] { folderToBeMoved }, concreteFolder);
+            Model.HandleBundleReparent(new BundleInfo[] { folderToBeMoved }, concreteFolder);  
 
             Assert.AreEqual(concreteFolder.m_Name.bundleName, folderToBeMoved.parent.m_Name.bundleName);
         }
 
         [Test]
-        public void HandleBundleReparent_MovesBundleVariant_ToCorrectParent()
+        public static void HandleBundleReparent_MovesBundleVariant_ToCorrectParent()
         {
             BundleFolderConcreteInfo concreteFolder = Model.CreateEmptyBundleFolder() as BundleFolderConcreteInfo;
             BundleFolderConcreteInfo subConcreteFolder = Model.CreateEmptyBundleFolder(concreteFolder) as BundleFolderConcreteInfo;
@@ -470,7 +470,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleReparent_MovesBundleFolderVariant_ToCorrectParent()
+        public static void HandleBundleReparent_MovesBundleFolderVariant_ToCorrectParent()
         {
             BundleFolderConcreteInfo concreteFolder = Model.CreateEmptyBundleFolder() as BundleFolderConcreteInfo;
             BundleFolderConcreteInfo startParent = Model.CreateEmptyBundleFolder() as BundleFolderConcreteInfo;
@@ -483,7 +483,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleReparent_MovesBundle_IntoCorrectVariantFolder()
+        public static void HandleBundleReparent_MovesBundle_IntoCorrectVariantFolder()
         {
             string variantFolderName = "variantfolder";
             string bundleName = "bundle1";
@@ -500,7 +500,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleDelete_Deletes_AllChildrenOfConcreteFolder()
+        public static void HandleBundleDelete_Deletes_AllChildrenOfConcreteFolder()
         {
             BundleFolderConcreteInfo concreteFolder = new BundleFolderConcreteInfo("concreteFolder", ABModelUtil.Root);
             ABModelUtil.Root.AddChild(concreteFolder);
@@ -523,7 +523,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleDelete_Deletes_BundleDataInfo()
+        public static void HandleBundleDelete_Deletes_BundleDataInfo()
         {
             // Account for existing asset bundles
             int numChilren = ABModelUtil.Root.GetChildList().Count;
@@ -546,7 +546,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleDelete_Deletes_VariantFolderAndChildren()
+        public static void HandleBundleDelete_Deletes_VariantFolderAndChildren()
         {
             // Account for existing asset bundles
             int numChildren = ABModelUtil.Root.GetChildList().Count;
@@ -579,7 +579,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleDelete_Deletes_SingleVariantFromVariantFolder()
+        public static void HandleBundleDelete_Deletes_SingleVariantFromVariantFolder()
         {
             // Account for existing asset bundles
             int numChildren = ABModelUtil.Root.GetChildList().Count;
@@ -622,7 +622,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleMerge_Merges_BundlesCorrectly()
+        public static void HandleBundleMerge_Merges_BundlesCorrectly()
         {
             // Account for existing bundles
             int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
@@ -659,7 +659,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleBundleMerge_Merges_BundlesWithChildrenCorrectly()
+        public static void HandleBundleMerge_Merges_BundlesWithChildrenCorrectly()
         {
             // Account for existing bundles
             int numBundles = AssetDatabase.GetAllAssetBundleNames().Length;
@@ -696,7 +696,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleConvertToVariant_Converts_BundlesToVariant()
+        public static void HandleConvertToVariant_Converts_BundlesToVariant()
         {
             BundleInfo dataInfo = new BundleDataInfo("folder", ABModelUtil.Root);
             dataInfo = Model.HandleConvertToVariant((BundleDataInfo)dataInfo);
@@ -704,7 +704,7 @@ namespace AssetBundleBrowserTests
         }
 
         [Test]
-        public void HandleDedupeBundles_MovesDuplicatedAssets_ToNewBundle()
+        public static void HandleDedupeBundles_MovesDuplicatedAssets_ToNewBundle()
         {
             string bundle1PrefabInstanceName = "Bundle1Prefab";
             string bundle2PrefabInstanceName = "Bundle2Prefab";
@@ -744,13 +744,13 @@ namespace AssetBundleBrowserTests
             }, listOfAssets);
         }
 
-        int GetBundleRootFolderChildCount()
+        static int GetBundleRootFolderChildCount()
         {
             Dictionary<string, BundleInfo>.ValueCollection childList = ABModelUtil.Root.GetChildList();
             return childList.Count;
         }
 
-        void AddMaterialsToMultipleObjects(IEnumerable<string> parentNames, IEnumerable<string> paths, Material mat)
+        static void AddMaterialsToMultipleObjects(IEnumerable<string> parentNames, IEnumerable<string> paths, Material mat)
         {
             for (int i = 0; i < parentNames.Count(); i++)
             {
@@ -761,7 +761,7 @@ namespace AssetBundleBrowserTests
             }
         }
 
-        string GetAllElementsAsString(IEnumerable<string> list)
+        static string GetAllElementsAsString(IEnumerable<string> list)
         {
             string returnString = String.Empty;
             foreach (string i in list)
