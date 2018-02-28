@@ -7,7 +7,7 @@ using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBrowser.AssetBundleModel
 {
-    internal class BundleTreeItem : TreeViewItem
+    internal sealed class BundleTreeItem : TreeViewItem
     {   
         private BundleInfo m_Bundle;
         internal BundleInfo bundle
@@ -54,7 +54,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal BundleNameData(string name) { SetName(name); }
         internal BundleNameData(string path, string name)
         {
-            string finalName = path == "" ? "" : path + '/';
+            string finalName = System.String.IsNullOrEmpty(path) ? "" : path + '/';
             finalName += name;
             SetName(finalName);
         }
@@ -68,7 +68,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal void SetBundleName(string bundleName, string variantName)
         {
             string name = bundleName;
-            name += (variantName == "") ? "" : "." + variantName;
+            name += System.String.IsNullOrEmpty(variantName) ? "" : "." + variantName;
             SetName(name);
         }
         internal string bundleName
@@ -87,7 +87,7 @@ namespace AssetBundleBrowser.AssetBundleModel
             {
                 m_VariantName = value;
                 m_FullNativeName = m_FullBundleName;
-                m_FullNativeName += (m_VariantName == "") ? "" : "." + m_VariantName;
+                m_FullNativeName += System.String.IsNullOrEmpty(m_VariantName) ? "" : "." + m_VariantName;
             }
         }
         internal List<string> pathTokens
@@ -155,7 +155,7 @@ namespace AssetBundleBrowser.AssetBundleModel
             }
             m_FullBundleName += m_ShortName;
             m_FullNativeName = m_FullBundleName;
-            m_FullNativeName += (m_VariantName == "") ? "" : "." + m_VariantName;
+            m_FullNativeName += System.String.IsNullOrEmpty(m_VariantName) ? "" : "." + m_VariantName;
         }
     }
 
@@ -337,21 +337,21 @@ namespace AssetBundleBrowser.AssetBundleModel
                 }
 
                 var bundleName = Model.GetBundleName(assetName);
-                if (bundleName == string.Empty)  
+                if (System.String.IsNullOrEmpty(bundleName))  
                 {
                     ///we get here if the current asset is only added due to being in an explicitly added folder
                     
 
                     var partialPath = assetName;
                     while(
-                        partialPath != string.Empty && 
+                        !System.String.IsNullOrEmpty(partialPath) && 
                         partialPath != "Assets" &&
-                        bundleName == string.Empty)
+                        System.String.IsNullOrEmpty(bundleName))
                     {
                         partialPath = partialPath.Substring(0, partialPath.LastIndexOf('/'));
                         bundleName = Model.GetBundleName(partialPath);
                     }
-                    if(bundleName != string.Empty)
+                    if(!System.String.IsNullOrEmpty(bundleName))
                     {
                         var folderAsset = Model.CreateAsset(partialPath, bundleName);
                         folderAsset.isFolder = true;
@@ -453,7 +453,7 @@ namespace AssetBundleBrowser.AssetBundleModel
 
         private void GatherDependencies(AssetInfo asset, string parentBundle = "")
         {
-            if (parentBundle == string.Empty)
+            if (System.String.IsNullOrEmpty(parentBundle))
                 parentBundle = asset.bundleName;
 
             if (asset == null)
@@ -532,7 +532,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
         {
             RefreshAssetList();
-            string newName = (parentName=="") ? "" : parentName + '/';
+            string newName = System.String.IsNullOrEmpty(parentName) ? "" : parentName + '/';
             newName += m_Name.shortName;
             if (newName == m_Name.bundleName)
                 return;
@@ -578,10 +578,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal BundleVariantDataInfo(string name, BundleFolderInfo parent) : base(name, parent)
         {
         }
-        ~BundleVariantDataInfo()
-        {
-            //parent should be auto called
-        }
+
         internal override string displayName
         {
             get { return m_Name.variant; }
@@ -803,7 +800,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal virtual bool HandleChildRename(string oldName, string newName)
         {
 
-            if (newName != string.Empty && m_Children.ContainsKey(newName))
+            if (!System.String.IsNullOrEmpty(newName) && m_Children.ContainsKey(newName))
             {
                 Model.LogWarning("Attempting to name an item '" + newName + "' which matches existing name at this level in hierarchy.  If your desire is to merge bundles, drag one on top of the other.");
                 return false;
@@ -813,7 +810,7 @@ namespace AssetBundleBrowser.AssetBundleModel
             if (m_Children.TryGetValue(oldName, out info))
             {
                 m_Children.Remove(oldName);
-                if (newName != string.Empty)
+                if (!System.String.IsNullOrEmpty(newName))
                     m_Children.Add(newName, info);
             }
             return true;
@@ -883,7 +880,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         }
         internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
         {
-            string newName = (parentName == "") ? "" : parentName + '/';
+            string newName = System.String.IsNullOrEmpty(parentName) ? "" : parentName + '/';
             newName += displayName;
             if (newName == m_Name.bundleName)
                 return;
@@ -965,7 +962,7 @@ namespace AssetBundleBrowser.AssetBundleModel
 
         internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
         {
-            string newName = (parentName == "") ? "" : parentName + '/';
+            string newName = System.String.IsNullOrEmpty(parentName) ? "" : parentName + '/';
             newName += displayName;
             if (newName == m_Name.bundleName)
                 return;

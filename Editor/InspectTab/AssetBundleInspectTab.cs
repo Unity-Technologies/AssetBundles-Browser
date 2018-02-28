@@ -12,8 +12,6 @@ namespace AssetBundleBrowser
     internal class AssetBundleInspectTab
     {
         Rect m_Position;
-        [SerializeField]
-        private Vector2 m_ScrollPosition;
 
         [SerializeField]
         private InspectTabData m_Data;
@@ -60,7 +58,7 @@ namespace AssetBundleBrowser
             m_loadedAssetBundles = new Dictionary<string, AssetBundleRecord>();
         }
 
-        internal void OnEnable(Rect pos, EditorWindow parent)
+        internal void OnEnable(Rect pos)
         {
             m_Position = pos;
             if (m_Data == null)

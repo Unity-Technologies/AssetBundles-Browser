@@ -38,7 +38,7 @@ namespace AssetBundleBrowser
 			{
 				foreach (var folder in m_InspectTab.BundleList)
 				{
-                    if (folder.Key == string.Empty)
+                    if (System.String.IsNullOrEmpty(folder.Key))
                     {
                         foreach(var path in folder.Value)
                             root.AddChild(new InspectTreeItem(path, 0));
@@ -109,7 +109,10 @@ namespace AssetBundleBrowser
         protected override void SelectionChanged(IList<int> selectedIds)
 		{
 			base.SelectionChanged(selectedIds);
-			
+
+            if (selectedIds == null)
+                return;
+
 			if (selectedIds.Count > 0)
 			{
                 m_InspectTab.SetBundleItem(FindRows(selectedIds).Select(tvi => tvi as InspectTreeItem).ToList());

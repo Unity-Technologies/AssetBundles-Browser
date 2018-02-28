@@ -18,23 +18,29 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             }
         }
 
-        private static List<Type> BuildCustomABDataSourceList() {
-            var list = new List<Type>(Assembly
-                .GetExecutingAssembly()
-                .GetTypes()
-                .Where(t => t != typeof(ABDataSource))
-                .Where(t => typeof(ABDataSource).IsAssignableFrom(t)) );
-
-
+        private static List<Type> BuildCustomABDataSourceList()
+        {
             var properList = new List<Type>();
             properList.Add(null); //empty spot for "default" 
-            for(int count = 0; count < list.Count; count++)
+            var x = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var assembly in x)
             {
-                if(list[count].Name == "AssetDatabaseABDataSource")
-                    properList[0] = list[count];
-                else
-                    properList.Add(list[count]);
+                var list = new List<Type>(
+                    assembly
+                    .GetTypes()
+                    .Where(t => t != typeof(ABDataSource))
+                    .Where(t => typeof(ABDataSource).IsAssignableFrom(t)));
+
+
+                for (int count = 0; count < list.Count; count++)
+                {
+                    if (list[count].Name == "AssetDatabaseABDataSource")
+                        properList[0] = list[count];
+                    else if(list[count] != null)
+                        properList.Add(list[count]);
+                }
             }
+
 
             return properList;
         }

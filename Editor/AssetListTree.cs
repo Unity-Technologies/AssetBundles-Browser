@@ -190,9 +190,11 @@ namespace AssetBundleBrowser
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
+            List<int> ids = new List<int>(selectedIds);
+
             List<Object> selectedObjects = new List<Object>();
             List<AssetBundleModel.AssetInfo> selectedAssets = new List<AssetBundleModel.AssetInfo>();
-            foreach (var id in selectedIds)
+            foreach (var id in ids)
             {
                 var assetItem = FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem;
                 if (assetItem != null)
@@ -230,7 +232,7 @@ namespace AssetBundleBrowser
         
         protected override DragAndDropVisualMode HandleDragAndDrop(DragAndDropArgs args)
         {
-            if(IsValidDragDrop(args))
+            if(IsValidDragDrop())
             {
                 if (args.performDrop)
                 {
@@ -247,7 +249,7 @@ namespace AssetBundleBrowser
 
             return DragAndDropVisualMode.Rejected;
         }
-        protected bool IsValidDragDrop(DragAndDropArgs args)
+        protected bool IsValidDragDrop()
         {
             //can't do drag & drop if data source is read only
             if (AssetBundleModel.Model.DataSource.IsReadOnly ())
@@ -327,7 +329,7 @@ namespace AssetBundleBrowser
             //var bundles = new List<AssetBundleModel.BundleInfo>();
             foreach (var node in selectedNodes)
             {
-                if (node.asset.bundleName != string.Empty)
+                if (!System.String.IsNullOrEmpty(node.asset.bundleName))
                     assets.Add(node.asset);
             }
             AssetBundleModel.Model.MoveAssetToBundle(assets, string.Empty, string.Empty);

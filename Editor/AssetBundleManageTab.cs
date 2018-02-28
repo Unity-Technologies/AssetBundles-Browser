@@ -35,7 +35,7 @@ namespace AssetBundleBrowser
         [SerializeField]
         float m_VerticalSplitterPercentLeft;
         const float k_SplitterWidth = 3f;
-        private static float m_UpdateDelay = 0f;
+        private static float s_UpdateDelay = 0f;
 
         SearchField m_searchField;
 
@@ -76,10 +76,10 @@ namespace AssetBundleBrowser
         internal void Update()
         {
             var t = Time.realtimeSinceStartup;
-            if (t - m_UpdateDelay > 0.1f ||
-                m_UpdateDelay > t) //something went strangely wrong if this second check is true.
+            if (t - s_UpdateDelay > 0.1f ||
+                s_UpdateDelay > t) //something went strangely wrong if this second check is true.
             {
-                m_UpdateDelay = t - 0.001f;
+                s_UpdateDelay = t - 0.001f;
 
                 if(AssetBundleModel.Model.Update())
                 {

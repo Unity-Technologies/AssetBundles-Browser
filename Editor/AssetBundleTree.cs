@@ -28,7 +28,7 @@ namespace AssetBundleBrowser
 
         protected override bool CanRename(TreeViewItem item)
         {
-            return item.displayName.Length > 0;
+            return item != null && item.displayName.Length > 0;
         }
 
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
@@ -597,6 +597,9 @@ namespace AssetBundleBrowser
 
         protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
         {
+            if (args.draggedItemIDs == null)
+                return;
+
             DragAndDrop.PrepareStartDrag();
 
             var selectedBundles = new List<AssetBundleModel.BundleInfo>();

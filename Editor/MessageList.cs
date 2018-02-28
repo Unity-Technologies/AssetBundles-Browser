@@ -90,7 +90,7 @@ namespace AssetBundleBrowser
             }
         }
 
-        internal void DrawOutline(Rect rect, float size)
+        internal static void DrawOutline(Rect rect, float size)
         {
             Color color = new Color(0.6f, 0.6f, 0.6f, 1.333f);
             if(EditorGUIUtility.isProSkin)
