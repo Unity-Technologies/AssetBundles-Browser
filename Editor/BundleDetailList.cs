@@ -95,7 +95,7 @@ namespace AssetBundleBrowser
         }
 
 
-        internal TreeViewItem AppendBundleToTree(AssetBundleModel.BundleDataInfo bundle)
+        internal static TreeViewItem AppendBundleToTree(AssetBundleModel.BundleDataInfo bundle)
         {
             var itemName = bundle.m_Name.fullNativeName;
             var bunRoot = new TreeViewItem(itemName.GetHashCode(), 0, itemName);

@@ -90,7 +90,7 @@ namespace AssetBundleBrowser
             file.Close();
 
         }
-        internal void OnEnable(Rect pos, EditorWindow parent)
+        internal void OnEnable(EditorWindow parent)
         {
             m_InspectTab = (parent as AssetBundleBrowserMain).m_InspectTab;
 
@@ -168,7 +168,7 @@ namespace AssetBundleBrowser
             }
         }
 
-        internal void OnGUI(Rect pos)
+        internal void OnGUI()
         {
             m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
             bool newState = false;
@@ -200,8 +200,7 @@ namespace AssetBundleBrowser
                 EditorGUILayout.Space();
                 GUILayout.BeginHorizontal();
                 var newPath = EditorGUILayout.TextField("Output Path", m_UserData.m_OutputPath);
-                if ( (newPath != m_UserData.m_OutputPath) &&
-                     (newPath != string.Empty) )
+                if (!System.String.IsNullOrEmpty(newPath) && newPath != m_UserData.m_OutputPath)
                 {
                     m_UserData.m_UseDefaultPath = false;
                     m_UserData.m_OutputPath = newPath;

@@ -10,14 +10,14 @@ namespace AssetBundleBrowser
     public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
     {
 
-        private static AssetBundleBrowserMain m_instance = null;
+        private static AssetBundleBrowserMain s_instance = null;
         internal static AssetBundleBrowserMain instance
         {
             get
             {
-                if (m_instance == null)
-                    m_instance = GetWindow<AssetBundleBrowserMain>();
-                return m_instance;
+                if (s_instance == null)
+                    s_instance = GetWindow<AssetBundleBrowserMain>();
+                return s_instance;
             }
         }
 
@@ -52,7 +52,7 @@ namespace AssetBundleBrowser
         [MenuItem("Window/AssetBundle Browser", priority = 2050)]
         static void ShowWindow()
         {
-            m_instance = null;
+            s_instance = null;
             instance.titleContent = new GUIContent("AssetBundles");
             instance.Show();
         }
@@ -62,7 +62,8 @@ namespace AssetBundleBrowser
         List<AssetBundleDataSource.ABDataSource> m_DataSourceList = null;
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
-            menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
+            if(menu != null)
+               menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
         }
         internal void FlipDataSource()
         {
@@ -78,13 +79,13 @@ namespace AssetBundleBrowser
             m_ManageTab.OnEnable(subPos, this);
             if(m_BuildTab == null)
                 m_BuildTab = new AssetBundleBuildTab();
-            m_BuildTab.OnEnable(subPos, this);
+            m_BuildTab.OnEnable(this);
             if (m_InspectTab == null)
                 m_InspectTab = new AssetBundleInspectTab();
-            m_InspectTab.OnEnable(subPos, this);
+            m_InspectTab.OnEnable(subPos);
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
-            
+
             InitDataSources();
         } 
         private void InitDataSources()
@@ -118,7 +119,6 @@ namespace AssetBundleBrowser
         }
         public void OnAfterDeserialize()
         {
-            InitDataSources();
         }
 
         private Rect GetSubWindowArea()
@@ -152,7 +152,7 @@ namespace AssetBundleBrowser
             switch(m_Mode)
             {
                 case Mode.Builder:
-                    m_BuildTab.OnGUI(GetSubWindowArea());
+                    m_BuildTab.OnGUI();
                     break;
                 case Mode.Inspect:
                     m_InspectTab.OnGUI(GetSubWindowArea());

@@ -26,7 +26,7 @@ namespace Assets.AssetBundles_Browser.Editor.Tests.Util
         {
             get
             {
-                FieldInfo rootFieldInfo = typeof(Model).GetField("m_RootLevelBundles",
+                FieldInfo rootFieldInfo = typeof(Model).GetField("s_RootLevelBundles",
                 BindingFlags.NonPublic | BindingFlags.Static);
                 BundleFolderConcreteInfo concreteFolder = rootFieldInfo.GetValue(null) as BundleFolderConcreteInfo;
                 return concreteFolder;
@@ -37,7 +37,7 @@ namespace Assets.AssetBundles_Browser.Editor.Tests.Util
         {
             get
             {
-                FieldInfo info = typeof(Model).GetField("m_BundlesToUpdate", BindingFlags.NonPublic | BindingFlags.Static);
+                FieldInfo info = typeof(Model).GetField("s_BundlesToUpdate", BindingFlags.NonPublic | BindingFlags.Static);
                 List<BundleInfo> bundleInfo = info.GetValue(null) as List<BundleInfo>;
                 return bundleInfo;
 
@@ -48,7 +48,7 @@ namespace Assets.AssetBundles_Browser.Editor.Tests.Util
         {
             get
             {
-                FieldInfo info = typeof(Model).GetField("m_MoveData", BindingFlags.NonPublic | BindingFlags.Static);
+                FieldInfo info = typeof(Model).GetField("s_MoveData", BindingFlags.NonPublic | BindingFlags.Static);
                 var moveData = info.GetValue(null) as IList;
                 return moveData;
             }

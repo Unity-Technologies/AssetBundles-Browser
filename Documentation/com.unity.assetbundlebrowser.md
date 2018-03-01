@@ -79,7 +79,7 @@ Lower left hand pane showing details of the bundles(s) selected in the Bundle Li
 
 ### Asset List
 
-Upper right hand pane providing a list of assets contained in whichever bundles are selected in the Bundle List. Available functionality:
+Upper right hand pane providing a list of assets contained in whichever bundles are selected in the Bundle List.  The search field above this list will match with assets in any bundle. The Asset List will only display matching assets, and the Bundle List will only display bundles that contain matching assets.  Available functionality:
 
 * View all assets anticipated to be included in bundle. Sort asset list by any column header.
 
