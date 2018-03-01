@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.5.0] - 2018-02-28
 - Code static analysis cleanup.
 - Documentation updates.
+- fix to missing bundle-icon bug.
 
 ## [1.4.0] - 2018-02-23
 - Added a search bar to the main tab.  Searches based on asset name.
