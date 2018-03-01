@@ -783,14 +783,12 @@ namespace AssetBundleBrowser.AssetBundleModel
         static private void FindBundleIcons()
         {
             s_folderIcon = EditorGUIUtility.FindTexture("Folder Icon");
-            string[] icons = AssetDatabase.FindAssets("ABundleBrowserIconY1756");
-            foreach (string i in icons)
+
+            var packagePath = System.IO.Path.GetFullPath("Packages/com.unity.assetbundlebrowser");
+            if (System.IO.Directory.Exists(packagePath))
             {
-                string name = AssetDatabase.GUIDToAssetPath(i);
-                if (name.Contains("ABundleBrowserIconY1756Basic.png"))
-                    s_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(name, typeof(Texture2D));
-                else if (name.Contains("ABundleBrowserIconY1756Scene.png"))
-                    s_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath(name, typeof(Texture2D));
+                s_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebrowser/Editor/Icons/ABundleBrowserIconY1756Basic.png", typeof(Texture2D));
+                s_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebrowser/Editor/Icons/ABundleBrowserIconY1756Scene.png", typeof(Texture2D));
             }
         }
     }
