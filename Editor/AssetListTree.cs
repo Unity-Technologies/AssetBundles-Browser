@@ -190,11 +190,12 @@ namespace AssetBundleBrowser
 
         protected override void SelectionChanged(IList<int> selectedIds)
         {
-            List<int> ids = new List<int>(selectedIds);
+            if (selectedIds == null)
+                return;
 
             List<Object> selectedObjects = new List<Object>();
             List<AssetBundleModel.AssetInfo> selectedAssets = new List<AssetBundleModel.AssetInfo>();
-            foreach (var id in ids)
+            foreach (var id in selectedIds)
             {
                 var assetItem = FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem;
                 if (assetItem != null)
