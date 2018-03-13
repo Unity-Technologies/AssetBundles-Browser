@@ -176,7 +176,8 @@ namespace AssetBundleBrowser.AssetBundleModel
             if (m_dependencies != null && m_dependencies.Count > 0)
             {
                 var message = string.Empty;
-                foreach (var dependent in m_dependencies)
+				List<AssetInfo> sortedDependencies = m_dependencies.OrderBy(d => d.bundleName).ToList();
+                foreach (var dependent in sortedDependencies)
                 {
                     if (dependent.bundleName != bundleName)
                     {
