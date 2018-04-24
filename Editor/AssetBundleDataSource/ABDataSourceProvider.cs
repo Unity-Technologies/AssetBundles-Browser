@@ -25,19 +25,26 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             var x = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in x)
             {
-                var list = new List<Type>(
-                    assembly
-                    .GetTypes()
-                    .Where(t => t != typeof(ABDataSource))
-                    .Where(t => typeof(ABDataSource).IsAssignableFrom(t)));
-
-
-                for (int count = 0; count < list.Count; count++)
+                try
                 {
-                    if (list[count].Name == "AssetDatabaseABDataSource")
-                        properList[0] = list[count];
-                    else if(list[count] != null)
-                        properList.Add(list[count]);
+                    var list = new List<Type>(
+                        assembly
+                        .GetTypes()
+                        .Where(t => t != typeof(ABDataSource))
+                        .Where(t => typeof(ABDataSource).IsAssignableFrom(t)));
+
+
+                    for (int count = 0; count < list.Count; count++)
+                    {
+                        if (list[count].Name == "AssetDatabaseABDataSource")
+                            properList[0] = list[count];
+                        else if (list[count] != null)
+                            properList.Add(list[count]);
+                    }
+                }
+                catch (System.Exception)
+                {
+                    //assembly which raises exception on the GetTypes() call - ignore it
                 }
             }
 
