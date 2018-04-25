@@ -87,7 +87,6 @@ namespace AssetBundleBrowser
             m_Controller = ctrl;
             showBorder = true;
             showAlternatingRowBackgrounds = true;
-            DefaultStyles.label.richText = true;
             multiColumnHeader.sortingChanged += OnSortingChanged;
         }
 

@@ -172,7 +172,7 @@ namespace AssetBundleBrowser
         {
             m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
             bool newState = false;
-            var centeredStyle = GUI.skin.GetStyle("Label");
+            var centeredStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
             centeredStyle.alignment = TextAnchor.UpperCenter;
             GUILayout.Label(new GUIContent("Example build setup"), centeredStyle);
             //basic options

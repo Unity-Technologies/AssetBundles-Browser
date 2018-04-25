@@ -141,7 +141,7 @@ namespace AssetBundleBrowser
             if (AssetBundleModel.Model.BundleListIsEmpty())
             {
                 m_BundleTree.OnGUI(m_Position);
-                var style = GUI.skin.label;
+                var style = new GUIStyle(GUI.skin.label);
                 style.alignment = TextAnchor.MiddleCenter;
                 style.wordWrap = true;
                 GUI.Label(
