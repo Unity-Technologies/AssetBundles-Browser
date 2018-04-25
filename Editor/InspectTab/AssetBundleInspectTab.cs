@@ -112,7 +112,7 @@ namespace AssetBundleBrowser
 
             if (Application.isPlaying)
             {
-                var style = GUI.skin.label;
+                var style = new GUIStyle(GUI.skin.label);
                 style.alignment = TextAnchor.MiddleCenter;
                 style.wordWrap = true;
                 GUI.Label(

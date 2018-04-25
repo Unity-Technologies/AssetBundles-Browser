@@ -55,7 +55,7 @@ namespace AssetBundleBrowser
             }
             else if(!string.IsNullOrEmpty(currentPath))
             {
-                var style = GUI.skin.label;
+                var style = new GUIStyle(GUI.skin.label);
                 style.alignment = TextAnchor.MiddleCenter;
                 style.wordWrap = true;
                 GUI.Label(m_Position, new GUIContent("Invalid bundle selected"), style);
@@ -87,7 +87,7 @@ namespace AssetBundleBrowser
 
             using (new EditorGUI.DisabledScope(true))
             {
-                var leftStyle = GUI.skin.GetStyle("Label");
+                var leftStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
                 leftStyle.alignment = TextAnchor.UpperLeft;
                 GUILayout.Label(new GUIContent("Name: " + bundle.name), leftStyle);
 
