@@ -99,6 +99,7 @@ namespace AssetBundleBrowser
         {
             UpdateSelectedBundles(new List<AssetBundleModel.BundleInfo>());
             SetSelectedItems(new List<AssetBundleModel.AssetInfo>());
+            m_BundleTree.SetSelection(new int[0]);
             AssetBundleModel.Model.ForceReloadData(m_BundleTree);
             m_Parent.Repaint();
         }
