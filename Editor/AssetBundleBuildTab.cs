@@ -380,8 +380,9 @@ namespace AssetBundleBrowser
 
             foreach (string filePath in Directory.GetFiles(sourceDirName, "*.*", SearchOption.AllDirectories))
             {
-                string newFilePath = Path.Combine(Path.GetDirectoryName(filePath).Replace(sourceDirName, destDirName),
-                    Path.GetFileName(filePath));
+                var fileDirName = Path.GetDirectoryName(filePath).Replace("\\", "/");
+                var fileName = Path.GetFileName(filePath);
+                string newFilePath = Path.Combine(fileDirName.Replace(sourceDirName, destDirName), fileName);
 
                 File.Copy(filePath, newFilePath, true);
             }
