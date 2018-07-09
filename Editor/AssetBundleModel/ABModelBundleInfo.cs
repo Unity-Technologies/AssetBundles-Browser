@@ -536,6 +536,12 @@ namespace AssetBundleBrowser.AssetBundleModel
             newName += m_Name.shortName;
             if (newName == m_Name.bundleName)
                 return;
+
+            if (newParent != null && newParent.GetChild(newName) != null)
+            {
+                Model.LogWarning("An item named '" + newName + "' already exists at this level in hierarchy.  If your desire is to merge bundles, drag one on top of the other.");
+                return;
+            }
             
             foreach (var asset in m_ConcreteAssets)
             {
@@ -884,6 +890,13 @@ namespace AssetBundleBrowser.AssetBundleModel
             newName += displayName;
             if (newName == m_Name.bundleName)
                 return;
+
+            if (newParent != null && newParent.GetChild(newName) != null)
+            {
+                Model.LogWarning("An item named '" + newName + "' already exists at this level in hierarchy.  If your desire is to merge bundles, drag one on top of the other.");
+                return;
+            }
+
             foreach (var child in m_Children)
             {
                 child.Value.HandleReparent(newName);
@@ -966,6 +979,13 @@ namespace AssetBundleBrowser.AssetBundleModel
             newName += displayName;
             if (newName == m_Name.bundleName)
                 return;
+
+            if (newParent != null && newParent.GetChild(newName) != null)
+            {
+                Model.LogWarning("An item named '" + newName + "' already exists at this level in hierarchy.  If your desire is to merge bundles, drag one on top of the other.");
+                return;
+            }
+
             foreach (var child in m_Children)
             {
                 child.Value.HandleReparent(parentName);
