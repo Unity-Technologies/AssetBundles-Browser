@@ -126,7 +126,7 @@ Other tools that generate asset bundle data can choose to integrate with the bro
 
 # Usage - Build
 
-The Build tab provides basic build functionality to get you started using asset bundles. In most profressional scenarios, users will end up needing a more advanced build setup. All are welcome to use the build code in this tool as a starting point for writing their own once this no longer meets their needs. Interface:
+The Build tab provides basic build functionality to get you started using asset bundles. In most profressional scenarios, users will end up needing a more advanced build setup. All are welcome to use the build code in this tool as a starting point for writing their own once this no longer meets their needs. For the most part, the options here are directly tied to the options the engine expects in [BuildAssetBundleOptions](https://docs.unity3d.com/ScriptReference/BuildAssetBundleOptions.html). Interface:
 
 * *Build Target* - Platform the bundles will be built for
 
