@@ -1,6 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using AssetBundleBrowser.AssetBundleModel;
 using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBrowser
@@ -14,6 +15,37 @@ namespace AssetBundleBrowser
 
         internal MessageType MessageLevel
         { get; set; }
+    }
+
+    internal class BundleAssetDetailItem : TreeViewItem
+    {
+        private string alternateDisplayName;
+        
+        private static bool displayAlt = false;
+        
+        public BundleAssetDetailItem( int id, int depth, AssetInfo fromAsset, AssetInfo toAsset )
+        {
+            base.depth = depth;
+            base.id = id;
+            base.displayName = toAsset.displayName;
+            alternateDisplayName = fromAsset.fullAssetName + " -> " + toAsset.fullAssetName;
+        }
+        
+        public override string displayName
+        {
+            get
+            {
+                Event e = Event.current;
+                if( e.alt && e.type == EventType.MouseDown )
+                    displayAlt = !displayAlt;
+
+                return displayAlt ? alternateDisplayName : base.displayName;
+            }
+            set
+            {
+                this.displayName = value;
+            }
+        }
     }
     internal class BundleDetailList : TreeView
     {
@@ -43,7 +75,7 @@ namespace AssetBundleBrowser
             if (dirty)
             {
                 Reload();
-                ExpandAll();
+                ExpandAll( 2 );
             }
         }
         protected override TreeViewItem BuildRoot()
@@ -111,8 +143,16 @@ namespace AssetBundleBrowser
                 dependency.displayName = k_DependencyHeader;
                 foreach (var dep in bundle.GetBundleDependencies())
                 {
-                    str = itemName + dep;
-                    dependency.AddChild(new TreeViewItem(str.GetHashCode(), 2, dep));
+                    str = itemName + dep.m_BundleName;
+                    TreeViewItem newItem = new TreeViewItem( str.GetHashCode(), 2, dep.m_BundleName );
+                    dependency.AddChild(newItem);
+
+                    for( int i = 0; i < dep.m_FromAssets.Count; ++i )
+                    {
+                        str = itemName + dep.m_BundleName + dep.m_ToAssets[i].displayName;
+                        BundleAssetDetailItem assetLinkItem = new BundleAssetDetailItem( str.GetHashCode(), 3, dep.m_FromAssets[i], dep.m_ToAssets[i] );
+                        newItem.AddChild(assetLinkItem);
+                    }
                 }
             }
 
@@ -149,7 +189,7 @@ namespace AssetBundleBrowser
             }
             SetSelection(new List<int>());
             Reload();
-            ExpandAll();
+            ExpandAll( 2 );
         }
         internal void CollectBundles(AssetBundleModel.BundleInfo bundle)
         {
@@ -166,5 +206,23 @@ namespace AssetBundleBrowser
             }
         }
 
+        internal void ExpandAll( int maximumDepth )
+        {
+            List<int> expanded = new List<int>();
+            FindItems( rootItem, maximumDepth, expanded );
+            SetExpanded( expanded );
+        }
+        
+        internal void FindItems( TreeViewItem item, int maximumDepth, List<int> expanded )
+        {
+            if( item.depth >= maximumDepth || ! item.hasChildren )
+                return;
+            
+            expanded.Add( item.id );
+            for( int i = 0; i < item.children.Count; ++i )
+            {
+                FindItems( item.children[i], maximumDepth, expanded );
+            }
+        }
     }
 }
