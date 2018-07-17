@@ -1,7 +1,6 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
-using AssetBundleBrowser.AssetBundleModel;
 using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBrowser
@@ -17,18 +16,18 @@ namespace AssetBundleBrowser
         { get; set; }
     }
 
-    internal class BundleAssetDetailItem : TreeViewItem
+    internal class TogglePathTreeViewItem : TreeViewItem
     {
-        private string alternateDisplayName;
-        
         private static bool displayAlt = false;
         
-        public BundleAssetDetailItem( int id, int depth, AssetInfo fromAsset, AssetInfo toAsset )
+        private string alternateDisplayName;
+        
+        public TogglePathTreeViewItem( int id, int depth, string displayName, string alternateDisplayName )
         {
             base.depth = depth;
             base.id = id;
-            base.displayName = toAsset.displayName;
-            alternateDisplayName = fromAsset.fullAssetName + " -> " + toAsset.fullAssetName;
+            base.displayName = displayName;
+            this.alternateDisplayName = alternateDisplayName;
         }
         
         public override string displayName
@@ -146,12 +145,25 @@ namespace AssetBundleBrowser
                     str = itemName + dep.m_BundleName;
                     TreeViewItem newItem = new TreeViewItem( str.GetHashCode(), 2, dep.m_BundleName );
                     dependency.AddChild(newItem);
+                    
+                    Dictionary<string, TogglePathTreeViewItem> toAssetItems = new Dictionary<string, TogglePathTreeViewItem>();
 
                     for( int i = 0; i < dep.m_FromAssets.Count; ++i )
                     {
-                        str = itemName + dep.m_BundleName + dep.m_ToAssets[i].displayName;
-                        BundleAssetDetailItem assetLinkItem = new BundleAssetDetailItem( str.GetHashCode(), 3, dep.m_FromAssets[i], dep.m_ToAssets[i] );
-                        newItem.AddChild(assetLinkItem);
+                        TogglePathTreeViewItem item = null;
+                        
+                        if( ! toAssetItems.TryGetValue( dep.m_ToAssets[i].fullAssetName, out item ) )
+                        {
+                            str = itemName + dep.m_BundleName + dep.m_ToAssets[i].displayName;
+                            item = new TogglePathTreeViewItem( str.GetHashCode(), 3, dep.m_ToAssets[i].displayName, dep.m_ToAssets[i].fullAssetName );
+                            newItem.AddChild( item );
+                            toAssetItems.Add( dep.m_ToAssets[i].fullAssetName, item );
+                        }
+
+                        str = str + dep.m_FromAssets[i].displayName;
+                        item.AddChild( new TogglePathTreeViewItem( str.GetHashCode(), 4,
+                            string.Format( "Referenced by - {0}", dep.m_FromAssets[i].displayName ),
+                            string.Format( "Referenced by - {0}", dep.m_FromAssets[i].fullAssetName ) ) );
                     }
                 }
             }
@@ -208,7 +220,7 @@ namespace AssetBundleBrowser
 
         internal void ExpandAll( int maximumDepth )
         {
-            List<int> expanded = new List<int>();
+            List<int> expanded = new List<int>( GetExpanded() );
             FindItems( rootItem, maximumDepth, expanded );
             SetExpanded( expanded );
         }
