@@ -18,27 +18,44 @@ namespace AssetBundleBrowser
 
     internal class TogglePathTreeViewItem : TreeViewItem
     {
-        private static bool displayAlt = false;
+        private static bool m_DisplayAlt = false;
         
-        private string alternateDisplayName;
-        
-        public TogglePathTreeViewItem( int id, int depth, string displayName, string alternateDisplayName )
+        private string m_DisplayNamePrefix;
+        private string m_Path;
+
+        public string Path
+        {
+            get { return m_Path; }
+        }
+
+        public TogglePathTreeViewItem( int id, int depth, string displayName, string path )
         {
             base.depth = depth;
             base.id = id;
             base.displayName = displayName;
-            this.alternateDisplayName = alternateDisplayName;
+            m_Path = path;
+            m_DisplayNamePrefix = "";
+        }
+        
+        public TogglePathTreeViewItem( int id, int depth, string displayNamePrefix, string displayName, string path )
+        {
+            base.depth = depth;
+            base.id = id;
+            base.displayName = displayName;
+            m_Path = path;
+            m_DisplayNamePrefix = displayNamePrefix;
         }
         
         public override string displayName
         {
             get
             {
+                // TODO this is a bit unresponsive here in large projects, see if can be better elsewhere
                 Event e = Event.current;
                 if( e.alt && e.type == EventType.MouseDown )
-                    displayAlt = !displayAlt;
+                    m_DisplayAlt = !m_DisplayAlt;
 
-                return displayAlt ? alternateDisplayName : base.displayName;
+                return m_DisplayNamePrefix + ( m_DisplayAlt ? m_Path : base.displayName );
             }
             set
             {
@@ -125,6 +142,20 @@ namespace AssetBundleBrowser
             return base.GetCustomRowHeight(row, item);
         }
 
+        protected override void DoubleClickedItem( int id )
+        {
+            TreeViewItem item = this.FindItem( id, rootItem );
+            if( item != null )
+            {
+                TogglePathTreeViewItem pathItem = item as TogglePathTreeViewItem;
+                if( pathItem != null )
+                {
+                    Object o = AssetDatabase.LoadAssetAtPath<Object>( pathItem.Path );
+                    if( o != null )
+                        Selection.activeObject = o;
+                }
+            }
+        }
 
         internal static TreeViewItem AppendBundleToTree(AssetBundleModel.BundleDataInfo bundle)
         {
@@ -161,9 +192,8 @@ namespace AssetBundleBrowser
                         }
 
                         str = str + dep.m_FromAssets[i].displayName;
-                        item.AddChild( new TogglePathTreeViewItem( str.GetHashCode(), 4,
-                            string.Format( "Referenced by - {0}", dep.m_FromAssets[i].displayName ),
-                            string.Format( "Referenced by - {0}", dep.m_FromAssets[i].fullAssetName ) ) );
+                        item.AddChild( new TogglePathTreeViewItem( str.GetHashCode(), 4, "Referenced by -  ",
+                            dep.m_FromAssets[i].displayName, dep.m_FromAssets[i].fullAssetName ) );
                     }
                 }
             }
