@@ -27,6 +27,11 @@ namespace AssetBundleBrowser
         {
             get { return m_Path; }
         }
+        
+        public string DisplayNamePrefix
+        {
+            get { return m_DisplayNamePrefix; }
+        }
 
         public TogglePathTreeViewItem( int id, int depth, string displayName, string path )
         {
@@ -142,8 +147,46 @@ namespace AssetBundleBrowser
             return base.GetCustomRowHeight(row, item);
         }
 
+        public List<string> m_SelectedDependentAssets = null;
+        protected override void SelectionChanged( IList<int> selectedIds )
+        {
+            base.SelectionChanged( selectedIds );
+            m_SelectedDependentAssets = new List<string>();
+
+            for( int i = 0; i < selectedIds.Count; ++i )
+            {
+                TreeViewItem item = this.FindItem( selectedIds[i], rootItem );
+                if( item != null )
+                {
+                    AddDependentAssetsRecursive( item );
+                }
+            }
+            
+            // TODO better way to select the objects in the right side
+        }
+
+        void AddDependentAssetsRecursive( TreeViewItem item )
+        {
+            TogglePathTreeViewItem pathItem = item as TogglePathTreeViewItem;
+            if( pathItem != null )
+            {
+                // TODO better way to determine if it is an asset that indicates it is an asset referencing another asset bundle
+                if( pathItem.DisplayNamePrefix == "Referenced by - " && m_SelectedDependentAssets.Contains( pathItem.Path ) == false )
+                {
+                    m_SelectedDependentAssets.Add( pathItem.Path );
+                }
+            }
+
+            if( item.hasChildren )
+            {
+                for( int i=0; i<item.children.Count; ++i )
+                    AddDependentAssetsRecursive( item.children[i] );
+            }
+        }
+
         protected override void DoubleClickedItem( int id )
         {
+            base.DoubleClickedItem( id );
             TreeViewItem item = this.FindItem( id, rootItem );
             if( item != null )
             {
@@ -152,7 +195,10 @@ namespace AssetBundleBrowser
                 {
                     Object o = AssetDatabase.LoadAssetAtPath<Object>( pathItem.Path );
                     if( o != null )
+                    {
                         Selection.activeObject = o;
+                        EditorGUIUtility.PingObject( o );
+                    }
                 }
             }
         }
@@ -192,7 +238,7 @@ namespace AssetBundleBrowser
                         }
 
                         str = str + dep.m_FromAssets[i].displayName;
-                        item.AddChild( new TogglePathTreeViewItem( str.GetHashCode(), 4, "Referenced by -  ",
+                        item.AddChild( new TogglePathTreeViewItem( str.GetHashCode(), 4, "Referenced by - ",
                             dep.m_FromAssets[i].displayName, dep.m_FromAssets[i].fullAssetName ) );
                     }
                 }
