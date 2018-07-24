@@ -1,6 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using AssetBundleBrowser.AssetBundleModel;
 using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBrowser
@@ -79,6 +80,7 @@ namespace AssetBundleBrowser
         const string k_DependencyEmpty = k_DependencyHeader + " - None";
         const string k_MessageHeader = "Messages:";
         const string k_MessageEmpty = k_MessageHeader + " - None";
+        private const string k_ReferencedPrefix = "- ";
 
 
         internal BundleDetailList(TreeViewState state) : base(state)
@@ -147,40 +149,39 @@ namespace AssetBundleBrowser
             return base.GetCustomRowHeight(row, item);
         }
 
-        public List<string> m_SelectedDependentAssets = null;
+        
         protected override void SelectionChanged( IList<int> selectedIds )
         {
             base.SelectionChanged( selectedIds );
-            m_SelectedDependentAssets = new List<string>();
+            List<string> pathList = new List<string>();
 
             for( int i = 0; i < selectedIds.Count; ++i )
             {
                 TreeViewItem item = this.FindItem( selectedIds[i], rootItem );
                 if( item != null )
                 {
-                    AddDependentAssetsRecursive( item );
+                    AddDependentAssetsRecursive( item, pathList );
                 }
             }
             
-            // TODO better way to select the objects in the right side
+            AssetBundleBrowserMain.instance.m_ManageTab.SetAssetListSelection( pathList );
         }
 
-        void AddDependentAssetsRecursive( TreeViewItem item )
+        void AddDependentAssetsRecursive( TreeViewItem item, List<string> pathList )
         {
             TogglePathTreeViewItem pathItem = item as TogglePathTreeViewItem;
             if( pathItem != null )
             {
-                // TODO better way to determine if it is an asset that indicates it is an asset referencing another asset bundle
-                if( pathItem.DisplayNamePrefix == "Referenced by - " && m_SelectedDependentAssets.Contains( pathItem.Path ) == false )
+                if( string.IsNullOrEmpty(pathItem.DisplayNamePrefix) == false && pathList.Contains( pathItem.Path ) == false )
                 {
-                    m_SelectedDependentAssets.Add( pathItem.Path );
+                    pathList.Add( pathItem.Path );
                 }
             }
 
             if( item.hasChildren )
             {
                 for( int i=0; i<item.children.Count; ++i )
-                    AddDependentAssetsRecursive( item.children[i] );
+                    AddDependentAssetsRecursive( item.children[i], pathList );
             }
         }
 
@@ -221,6 +222,7 @@ namespace AssetBundleBrowser
                 {
                     str = itemName + dep.m_BundleName;
                     TreeViewItem newItem = new TreeViewItem( str.GetHashCode(), 2, dep.m_BundleName );
+                    newItem.icon = Model.GetBundleIcon();
                     dependency.AddChild(newItem);
                     
                     Dictionary<string, TogglePathTreeViewItem> toAssetItems = new Dictionary<string, TogglePathTreeViewItem>();
@@ -232,14 +234,17 @@ namespace AssetBundleBrowser
                         if( ! toAssetItems.TryGetValue( dep.m_ToAssets[i].fullAssetName, out item ) )
                         {
                             str = itemName + dep.m_BundleName + dep.m_ToAssets[i].displayName;
-                            item = new TogglePathTreeViewItem( str.GetHashCode(), 3, dep.m_ToAssets[i].displayName, dep.m_ToAssets[i].fullAssetName );
+                            item = new TogglePathTreeViewItem( str.GetHashCode(), 3, "/"+dep.m_ToAssets[i].displayName, "/"+dep.m_ToAssets[i].fullAssetName );
+                            item.icon = AssetDatabase.GetCachedIcon(dep.m_ToAssets[i].fullAssetName) as Texture2D;
                             newItem.AddChild( item );
                             toAssetItems.Add( dep.m_ToAssets[i].fullAssetName, item );
                         }
 
                         str = str + dep.m_FromAssets[i].displayName;
-                        item.AddChild( new TogglePathTreeViewItem( str.GetHashCode(), 4, "Referenced by - ",
-                            dep.m_FromAssets[i].displayName, dep.m_FromAssets[i].fullAssetName ) );
+                        TreeViewItem refItem = new TogglePathTreeViewItem( str.GetHashCode(), 4, k_ReferencedPrefix,
+                            dep.m_FromAssets[i].displayName, dep.m_FromAssets[i].fullAssetName );
+                        refItem.icon = AssetDatabase.GetCachedIcon(dep.m_FromAssets[i].fullAssetName) as Texture2D;
+                        item.AddChild( refItem );
                     }
                 }
             }

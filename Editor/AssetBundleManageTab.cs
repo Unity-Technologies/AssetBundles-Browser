@@ -166,12 +166,6 @@ namespace AssetBundleBrowser
                     bundleTreeRect.width,
                     m_Position.height - bundleTreeRect.height - k_SplitterWidth*2));
                 
-                if( m_DetailsList.m_SelectedDependentAssets != null && m_DetailsList.m_SelectedDependentAssets.Count > 0 )
-                {
-                    m_AssetList.SetSelection( m_DetailsList.m_SelectedDependentAssets );
-                    m_DetailsList.m_SelectedDependentAssets = new List<string>();
-                }
-
                 //Right half.
                 float panelLeft = m_HorizontalSplitterRect.x + k_SplitterWidth;
                 float panelWidth = m_VerticalSplitterRectRight.width - k_SplitterWidth * 2;
@@ -273,6 +267,11 @@ namespace AssetBundleBrowser
         internal void SetSelectedItems(IEnumerable<AssetBundleModel.AssetInfo> items)
         {
             m_MessageList.SetItems(items);
+        }
+        
+        internal void SetAssetListSelection( List<string> assets )
+        {
+            m_AssetList.SetSelection( assets );
         }
     }
 }
