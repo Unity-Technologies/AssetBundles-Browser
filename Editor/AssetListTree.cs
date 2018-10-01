@@ -187,6 +187,34 @@ namespace AssetBundleBrowser
             }
         }
 
+        public void SetSelection( List<string> paths )
+        {
+            List<int> selected = new List<int>();
+            AddIfInPaths( paths, selected, rootItem );
+            SetSelection( selected );
+        }
+
+        void AddIfInPaths( List<string> paths, List<int> selected, TreeViewItem me )
+        {
+            var assetItem = me as AssetBundleModel.AssetTreeItem;
+            if( assetItem != null && assetItem.asset != null )
+            {
+                if( paths.Contains( assetItem.asset.fullAssetName ) )
+                {
+                    if( selected.Contains( me.id ) == false )
+                        selected.Add( me.id );
+                }
+            }
+
+            if( me.hasChildren )
+            {
+                foreach( TreeViewItem item in me.children )
+                {
+                    AddIfInPaths( paths, selected, item );
+                }
+            }
+        }
+
         protected override void SelectionChanged(IList<int> selectedIds)
         {
             if (selectedIds == null)

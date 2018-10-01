@@ -254,11 +254,27 @@ namespace AssetBundleBrowser.AssetBundleModel
         abstract internal bool DoesItemMatchSearch(string search);
     }
 
+    internal class BundleDependencyInfo
+    {
+        public string m_BundleName;
+        public List<AssetInfo> m_FromAssets;
+        public List<AssetInfo> m_ToAssets;
+
+        public BundleDependencyInfo( string bundleName, AssetInfo fromAsset, AssetInfo toAsset )
+        {
+            m_BundleName = bundleName;
+            m_FromAssets = new List<AssetInfo>();
+            m_FromAssets.Add( fromAsset );
+            m_ToAssets = new List<AssetInfo>();
+            m_ToAssets.Add( toAsset );
+        }
+    }
+
     internal class BundleDataInfo : BundleInfo
     {
         protected List<AssetInfo> m_ConcreteAssets;
         protected List<AssetInfo> m_DependentAssets;
-        protected HashSet<string> m_BundleDependencies;
+        protected List<BundleDependencyInfo> m_BundleDependencies;
         protected int m_ConcreteCounter;
         protected int m_DependentCounter;
         protected bool m_IsSceneBundle;
@@ -268,7 +284,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         {
             m_ConcreteAssets = new List<AssetInfo>();
             m_DependentAssets = new List<AssetInfo>();
-            m_BundleDependencies = new HashSet<string>();
+            m_BundleDependencies = new List<BundleDependencyInfo>();
             m_ConcreteCounter = 0;
             m_DependentCounter = 0;
         }
@@ -421,7 +437,7 @@ namespace AssetBundleBrowser.AssetBundleModel
 
             m_Dirty = false;
         }
-        internal HashSet<string> GetBundleDependencies()
+        internal List<BundleDependencyInfo> GetBundleDependencies()
         {
             return m_BundleDependencies;
         }
@@ -480,7 +496,18 @@ namespace AssetBundleBrowser.AssetBundleModel
                 }
                 else if(bundleName != m_Name.fullNativeName)
                 {
-                    m_BundleDependencies.Add(bundleName);
+                    BundleDependencyInfo dependencyInfo = m_BundleDependencies.Find( m => m.m_BundleName == bundleName );
+
+                    if( dependencyInfo == null )
+                    {
+                        dependencyInfo = new BundleDependencyInfo( bundleName, asset, ai );
+                        m_BundleDependencies.Add( dependencyInfo );
+                    }
+                    else
+                    {
+                        dependencyInfo.m_FromAssets.Add( asset );
+                        dependencyInfo.m_ToAssets.Add( ai );
+                    }
                 }
             }
         }

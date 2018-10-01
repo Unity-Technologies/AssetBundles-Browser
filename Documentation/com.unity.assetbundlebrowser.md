@@ -73,9 +73,15 @@ Lower left hand pane showing details of the bundles(s) selected in the Bundle Li
 
 * Total bundle size. This is a sum of the on-disk size of all assets.
 
-* Bundles that the current bundle depends on
+* Bundles that the current bundle depends on.
+
+    * Assets in that bundle referenced from the current bundle.
+    
+    * Assets in the current bundle referencing the asset in the dependency bundle.
 
 * Any messages (error/warning/info) associated with the current bundle.
+
+* Select bundles or assets to select assets in the Asset List that are dependent on the selection.
 
 ### Asset List
 
