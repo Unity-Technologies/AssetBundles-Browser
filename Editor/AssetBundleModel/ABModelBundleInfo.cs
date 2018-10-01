@@ -375,13 +375,17 @@ namespace AssetBundleBrowser.AssetBundleModel
                         {
                             m_ConcreteAssets.Add(folderAsset);
                         }
-                        
-                        m_DependentAssets.Add(Model.CreateAsset(assetName, folderAsset));
-                        if (m_DependentAssets != null && m_DependentAssets.Count > 0)
+
+                        var newAsset = Model.CreateAsset(assetName, folderAsset);
+                        if (newAsset != null)
                         {
-                            var last = m_DependentAssets.Last();
-                            if (last != null)
-                                m_TotalSize += last.fileSize;
+                            m_DependentAssets.Add(newAsset);
+                            if (m_DependentAssets != null && m_DependentAssets.Count > 0)
+                            {
+                                var last = m_DependentAssets.Last();
+                                if (last != null)
+                                    m_TotalSize += last.fileSize;
+                            }
                         }
                     }
                 }
