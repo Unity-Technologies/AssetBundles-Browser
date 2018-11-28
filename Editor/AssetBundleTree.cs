@@ -81,7 +81,6 @@ namespace AssetBundleBrowser
 
         protected override TreeViewItem BuildRoot()
         {
-            AssetBundleModel.Model.Refresh();
             var root = AssetBundleModel.Model.CreateBundleTreeView();
             return root;
         }
