@@ -13,7 +13,7 @@ Use this tool as an alternative to selecting assets and setting their asset bund
 This window provides an explorer like interface to managing and modifying asset bundles in your project. When first opened, the tool will parse all bundle data in the background, slowly marking warnings or errors it detects. It does what it can to stay in sync with the project, but cannot always be aware of activity outside the tool. To force a quick pass at error detection, or to update the tool with changes made externally, hit the Refresh button in the upper left.
 
 The window is broken into four sections: Bundle List, Bundle Details, Asset List, and Asset Details. 
-![BroserConfigure](images/browser_configure2.png)
+![BrowserConfigure](images/browser_configure2.png)
 
 ### Bundle List
 
@@ -31,7 +31,7 @@ Left hand pane showing a list of all bundles in the project. Available functiona
 
 * Bundles with duplicated assets will be marked with a warning (more information on duplication in Asset List section below)
 
-* Empty bundles will be marked with an info message. For a number of reasons, empty bundles are not very stable and can dissapear from this list at times.
+* Empty bundles will be marked with an info message. For a number of reasons, empty bundles are not very stable and can disappear from this list at times.
 
 * Folders of bundles will be marked with the highest message from the contained bundles.
 
@@ -47,7 +47,7 @@ Left hand pane showing a list of all bundles in the project. Available functiona
 
 * Drag bundles around to move them into and out of folders, or merge them.
 
-* Drag assets from the Project Explorer onto bundels to add them.
+* Drag assets from the Project Explorer onto bundles to add them.
 
 * Drag assets onto empty space to create a new bundle.
 
@@ -101,7 +101,7 @@ Upper right hand pane providing a list of assets contained in whichever bundles 
 
     * To fix the duplicate-inclusion warnings, you can manually move assets into a new bundle or right click the bundle and selecting one of the "Move duplicate" options.
 
-* Drag assets from the Project Explorer into this view to add them to the selected bundle. This is only valid if only one bundle is selected, and the asset type is compatable (scenes onto scene bundles, etc.) 
+* Drag assets from the Project Explorer into this view to add them to the selected bundle. This is only valid if only one bundle is selected, and the asset type is compatible (scenes onto scene bundles, etc.) 
 
 * Drag assets (explicit or implicit) from the Asset List into the Bundle List (to add them to different bundles, or a newly created bundle).
 
@@ -125,14 +125,14 @@ Lower right hand pane showing details of the asset(s) selected in the Asset List
 
 ### Troubleshooting
 
-* *Can't rename or delet a specific bundle.* This is occasionally caused when first adding this tool to an existing project. Please force a reimport of your assets through the Unity menu system to refresh the data.
+* *Can't rename or delete a specific bundle.* This is occasionally caused when first adding this tool to an existing project. Please force a reimport of your assets through the Unity menu system to refresh the data.
 
 ### External Tool Integration
 Other tools that generate asset bundle data can choose to integrate with the browser. Currently the primary example is the [Asset Bundle Graph Tool](https://bitbucket.org/Unity-Technologies/assetbundlegraphtool).  If integrations are detected, then a selection bar will appear near the top of the browser.  It will allow you to select the Default data source (Unity's AssetDatabase) or an integrated tool. If none are detected, the selector is not present, though you can add it by right-clicking on the tab header and selecting "Custom Sources".  
 
 # Usage - Build
 
-The Build tab provides basic build functionality to get you started using asset bundles. In most profressional scenarios, users will end up needing a more advanced build setup. All are welcome to use the build code in this tool as a starting point for writing their own once this no longer meets their needs. For the most part, the options here are directly tied to the options the engine expects in [BuildAssetBundleOptions](https://docs.unity3d.com/ScriptReference/BuildAssetBundleOptions.html). Interface:
+The Build tab provides basic build functionality to get you started using asset bundles. In most professional scenarios, users will end up needing a more advanced build setup. All are welcome to use the build code in this tool as a starting point for writing their own once this no longer meets their needs. For the most part, the options here are directly tied to the options the engine expects in [BuildAssetBundleOptions](https://docs.unity3d.com/ScriptReference/BuildAssetBundleOptions.html). Interface:
 
 * *Build Target* - Platform the bundles will be built for
 
