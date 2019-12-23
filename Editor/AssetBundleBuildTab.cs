@@ -292,11 +292,6 @@ namespace AssetBundleBrowser
 
         private void ExecuteBuild()
         {
-            ExecuteBuild(null);
-        }
-
-        public void ExecuteBuild(string[] assetBundleNames = null)
-        {
             if (AssetBundleModel.Model.DataSource.CanSpecifyBuildOutputDirectory) {
                 if (string.IsNullOrEmpty(m_UserData.m_OutputPath))
                     BrowseForFolder();
@@ -361,23 +356,6 @@ namespace AssetBundleBrowser
                 m_InspectTab.RefreshBundles();
             };
 
-            // Handle case where we're instructed to build particular asset bundles (and not all)
-            if (assetBundleNames != null)
-            {
-                AssetBundleBuild[] bundleBuilds = new AssetBundleBuild[assetBundleNames.Length];
-
-                for (int i = 0; i < bundleBuilds.Length; i++)
-                {
-                    AssetBundleBuild build = new AssetBundleBuild();
-                    build.assetBundleName = assetBundleNames[i];
-                    build.assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(assetBundleNames[i]);
-
-                    bundleBuilds[i] = build;
-                }
-
-                buildInfo.bundleBuilds = bundleBuilds;
-            }
-
             AssetBundleModel.Model.DataSource.BuildAssetBundles (buildInfo);
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
@@ -385,7 +363,7 @@ namespace AssetBundleBrowser
             if(m_CopyToStreaming.state)
                 DirectoryCopy(m_UserData.m_OutputPath, m_streamingPath);
         }
-        
+
         private static void DirectoryCopy(string sourceDirName, string destDirName)
         {
             // If the destination directory doesn't exist, create it.
