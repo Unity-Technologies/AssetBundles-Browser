@@ -44,6 +44,11 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             set { m_onBuild = value; }
         }
         private Action<string> m_onBuild;
+
+        /// <summary>
+        /// Asset bundle build array (only when building specific bundles, and not all at once).
+        /// </summary>
+        public AssetBundleBuild[] bundleBuilds { get; set; }
     }
 
     /// <summary>
