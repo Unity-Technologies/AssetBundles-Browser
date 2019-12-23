@@ -17,10 +17,6 @@ namespace AssetBundleBrowser
         {
             bundlePath = path;
         }
-		internal InspectTreeItem(string path, string parentPath, int depth, string prettyName) : base((path+parentPath).GetHashCode(), depth, prettyName)
-		{
-			bundlePath = path;
-		}
     }
 
 	class InspectBundleTree : TreeView
@@ -57,7 +53,7 @@ namespace AssetBundleBrowser
                             if (path.StartsWith(folder.Key)) //how could it not?
                                 prettyName = path.Remove(0, folder.Key.Length + 1);
 
-                            folderItem.AddChild(new InspectTreeItem(path, folder.Key, 1, prettyName));
+                            folderItem.AddChild(new InspectTreeItem(path, 1, prettyName));
                         }
                         root.AddChild(folderItem);
                     }

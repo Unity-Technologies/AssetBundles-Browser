@@ -193,7 +193,7 @@ namespace AssetBundleBrowser
             {
                 var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
                 gamePath = gamePath.Replace("\\", "/");
-                if (folderPath.Length > gamePath.Length && folderPath.StartsWith(gamePath))
+                if (folderPath.StartsWith(gamePath))
                     folderPath = folderPath.Remove(0, gamePath.Length + 1);
 
                 AddBundleFolder(folderPath);

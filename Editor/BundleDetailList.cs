@@ -65,7 +65,7 @@ namespace AssetBundleBrowser
             }
             set
             {
-                base.displayName = value;
+                this.displayName = value;
             }
         }
     }

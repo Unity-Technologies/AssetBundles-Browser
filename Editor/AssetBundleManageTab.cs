@@ -273,12 +273,5 @@ namespace AssetBundleBrowser
         {
             m_AssetList.SetSelection( assets );
         }
-
-        internal void BuildSpecificAssetBundles(string[] assetBundleNames)
-        {
-            var main = m_Parent as AssetBundleBrowserMain;
-
-            EditorApplication.delayCall += () => { main.m_BuildTab.ExecuteBuild(assetBundleNames); };
-        }
     }
 }

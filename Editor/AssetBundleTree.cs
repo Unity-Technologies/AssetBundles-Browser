@@ -192,10 +192,6 @@ namespace AssetBundleBrowser
                 menu.AddItem(new GUIContent("Move duplicates existing in any selected"), false, DedupeAllBundles, selectedNodes);
                 menu.AddItem(new GUIContent("Delete " + selectedNodes.Count + " selected bundles"), false, DeleteBundles, selectedNodes);
             }
-            
-            // Add the context menu option to build the selected asset bundles
-            menu.AddItem(new GUIContent("Build " + selectedNodes.Count + " selected bundle(s)"), false, BuildBundles, selectedNodes);
-            
             menu.ShowAsContext();
         }
         void ForceReloadData(object context)
@@ -349,15 +345,6 @@ namespace AssetBundleBrowser
 
 
         }
-        
-        void BuildBundles(object b)
-        {
-            var selectedNodes = b as List<AssetBundleModel.BundleTreeItem>;
-            
-            m_Controller.BuildSpecificAssetBundles(selectedNodes.Select(n => n.bundle.m_Name.bundleName).ToArray());
-            ReloadAndSelect(new List<int>());
-        }
-        
         protected override void KeyEvent()
         {
             if (Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
