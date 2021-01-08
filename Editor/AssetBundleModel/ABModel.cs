@@ -676,7 +676,7 @@ namespace AssetBundleBrowser.AssetBundleModel
 
         internal static bool ValidateAsset(string name)
         {
-            if (!name.StartsWith("Assets/"))
+            if (!name.StartsWith("Assets/") && !name.StartsWith("Packages/"))
                 return false;
             string ext = System.IO.Path.GetExtension(name);
             if (ext == ".dll" || ext == ".cs" || ext == ".meta" || ext == ".js" || ext == ".boo")
