@@ -1,10 +1,32 @@
 # Unity Asset Bundle Browser tool
 
-This tool enables the user to view and edit the configuration of asset bundles for their Unity project.  It will block editing that would create invalid bundles, and inform you of any issues with existing bundles.  It also provides basic build functionality.
+Note: This tool is not a supported utility.
 
-This tool is intended to replace the current workflow of selecting assets and setting their asset bundle manually in the inspector.  It can be dropped into any Unity project with a version of 5.6 or greater.  It will create a new menu item in *Window->AssetBundle Browser*.  
+This tool enables the user to view the content of built AssetBundles (on the "Inspect" tab).  This can be useful, but viewing extremely large AssetBundles can lead to slow performance and memory issues.
+
+The "Configure" tab offers basic functionality for assigning Assets and Scenes to bundles, similar to using the AssetBundle control at the bottom of the Inspector.  
+
+The "Build" tab offers basic functionality to assist in setting up a call to [BuildPipeline.BuildAssetBundles()](https://docs.unity3d.com/ScriptReference/BuildPipeline.BuildAssetBundles.html).
+
+## Alternatives
+
+It is recommended to use the [Addressables package](https://docs.unity3d.com/Packages/com.unity.addressables@latest) to define and build AssetBundles, rather than the Asset Bundle Browser.
+
+[UnityDataTools](https://github.com/Unity-Technologies/UnityDataTools) is an alternative way to view the content of built AssetBundles.
+
+## Installation
+To install the Asset Bundle Browser:
+
+* Open the Unity Package Manager in your Project (menu: Windows > Package Manager).
+* Click the + (Add) button at the top, left corner of the window.
+* Choose Add package from git URL…
+* Enter https://github.com/Unity-Technologies/AssetBundles-Browser.git as the URL
+* Click Add.
+The Package Manager downloads and installs the package’s “master” branch.
+
+Once installed it will create a new menu item in *Window->AssetBundle Browser*.  
 
 ## Full Documentation
-#### Official Released Features
-See [the official manual page](https://docs.unity3d.com/Manual/AssetBundles-Browser.html) or view the included [project manual page](Documentation/com.unity.assetbundlebrowser.md)
+
+See the included [project manual page](Documentation/com.unity.assetbundlebrowser.md).
 
