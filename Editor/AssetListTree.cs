@@ -346,6 +346,7 @@ namespace AssetBundleBrowser
             {
                 GenericMenu menu = new GenericMenu();
                 menu.AddItem(new GUIContent("Remove asset(s) from bundle."), false, RemoveAssets, selectedNodes);
+                menu.AddItem(new GUIContent("Copy asset(s) path."), false, CopyAssetsPath, selectedNodes);
                 menu.ShowAsContext();
             }
 
@@ -368,6 +369,25 @@ namespace AssetBundleBrowser
             }
             m_Controller.UpdateSelectedBundles(m_SourceBundles);
             //ReloadAndSelect(new List<int>());
+        }
+        
+        void CopyAssetsPath(object obj)
+        {
+            var selectedNodes = obj as List<AssetBundleModel.AssetTreeItem>;
+            if (selectedNodes != null)
+            {
+                var bundles = selectedNodes
+                    .Where(node => !System.String.IsNullOrEmpty(node.asset.bundleName))
+                    .Select(node => node.asset.bundleName);
+            
+                TextEditor te = new TextEditor();
+                te.text = System.String.Join(", ", bundles);
+                if (!System.String.IsNullOrEmpty(te.text))
+                {
+                    te.SelectAll();
+                    te.Copy();
+                }
+            }
         }
 
         protected override void KeyEvent()
