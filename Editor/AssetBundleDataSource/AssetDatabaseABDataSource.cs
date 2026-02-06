@@ -84,7 +84,17 @@ namespace AssetBundleBrowser.AssetBundleDataSource
                 return false;
             }
 
-            var buildManifest = BuildPipeline.BuildAssetBundles(info.outputDirectory, info.options, info.buildTarget);
+            AssetBundleManifest buildManifest;
+            if (info.bundlesToBuild != null && info.bundlesToBuild.Length > 0)
+            {
+                buildManifest = BuildPipeline.BuildAssetBundles(
+                    info.outputDirectory, info.bundlesToBuild, info.options, info.buildTarget);
+            }
+            else
+            {
+                buildManifest = BuildPipeline.BuildAssetBundles(
+                    info.outputDirectory, info.options, info.buildTarget);
+            }
             if (buildManifest == null)
             {
                 Debug.Log("Error in build");
