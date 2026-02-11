@@ -393,14 +393,9 @@ namespace AssetBundleBrowser
                         return;
                     }
 
-                    string bundleName = fullName;
-                    string variantName = string.Empty;
-                    int dotIndex = fullName.LastIndexOf('.');
-                    if (dotIndex >= 0)
-                    {
-                        bundleName = fullName.Substring(0, dotIndex);
-                        variantName = fullName.Substring(dotIndex + 1);
-                    }
+                    var importer = AssetImporter.GetAtPath(assetPaths[0]);
+                    string bundleName = importer.assetBundleName;
+                    string variantName = importer.assetBundleVariant;
 
                     AssetBundleBuild build = new AssetBundleBuild();
                     build.assetBundleName = bundleName;
