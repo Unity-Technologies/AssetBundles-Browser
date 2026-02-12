@@ -204,7 +204,14 @@ namespace AssetBundleBrowser
             if (m_UserData.m_SelectedBundleIndex >= displayOptions.Length)
                 m_UserData.m_SelectedBundleIndex = 0;
             m_UserData.m_SelectedBundleIndex = EditorGUILayout.Popup(
-                "Bundle", m_UserData.m_SelectedBundleIndex, displayOptions);
+                new GUIContent("Bundle", "Build a single bundle for fast iteration. Only the selected bundle is passed to the build pipeline."),
+                m_UserData.m_SelectedBundleIndex, displayOptions);
+            if (m_UserData.m_SelectedBundleIndex > 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "Building a single bundle may duplicate assets that are shared with other bundles. Use a full build for production output.",
+                    MessageType.Warning);
+            }
 
             ////output path
             using (new EditorGUI.DisabledScope (!AssetBundleModel.Model.DataSource.CanSpecifyBuildOutputDirectory)) {
