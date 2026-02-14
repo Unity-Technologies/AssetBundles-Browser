@@ -371,7 +371,7 @@ namespace AssetBundleBrowser.AssetBundleModel
                     {
                         var folderAsset = Model.CreateAsset(partialPath, bundleName);
                         folderAsset.isFolder = true;
-                        if (m_ConcreteAssets.FindIndex(a => a.displayName == folderAsset.displayName) == -1)
+                        if (m_ConcreteAssets.FindIndex(a => a.fullAssetName == folderAsset.fullAssetName) == -1)
                         {
                             m_ConcreteAssets.Add(folderAsset);
                         }
