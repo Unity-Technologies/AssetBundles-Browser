@@ -24,6 +24,7 @@ namespace AssetBundleBrowser
                 new MultiColumnHeaderState.Column(),
                 new MultiColumnHeaderState.Column(),
                 new MultiColumnHeaderState.Column(),
+                new MultiColumnHeaderState.Column(),
                 new MultiColumnHeaderState.Column()
             };
             retVal[0].headerContent = new GUIContent("Asset", "Short name of asset. For full name select asset and see message below");
@@ -58,6 +59,13 @@ namespace AssetBundleBrowser
             retVal[3].canSort = true;
             retVal[3].autoResize = false;
 
+            retVal[4].headerContent = new GUIContent("Type", "Type of asset");
+            retVal[4].minWidth = 50;
+            retVal[4].width = 100;
+            retVal[4].maxWidth = 300;
+            retVal[4].headerTextAlignment = TextAlignment.Left;
+            retVal[4].canSort = true;
+            retVal[4].autoResize = true;
             return retVal;
         }
         enum MyColumns
@@ -65,21 +73,24 @@ namespace AssetBundleBrowser
             Asset,
             Bundle,
             Size,
-            Message
+            Message,
+            Type
         }
         internal enum SortOption
         {
             Asset,
             Bundle,
             Size,
-            Message
+            Message,
+            Type
         }
         SortOption[] m_SortOptions =
         {
             SortOption.Asset,
             SortOption.Bundle,
             SortOption.Size,
-            SortOption.Message
+            SortOption.Message,
+            SortOption.Type
         };
 
         internal AssetListTree(TreeViewState state, MultiColumnHeaderState mchs, AssetBundleManageTab ctrl ) : base(state, new MultiColumnHeader(mchs))
@@ -171,6 +182,9 @@ namespace AssetBundleBrowser
                         var iconRect = new Rect(cellRect.x, cellRect.y, cellRect.height, cellRect.height);
                         GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
                     }
+                    break;
+                case 4:
+                    DefaultGUI.Label(cellRect, item.asset.fileType, args.selected, args.focused);
                     break;
             }
             GUI.color = oldColor;
@@ -432,6 +446,8 @@ namespace AssetBundleBrowser
                     return myTypes.Order(l => l.asset.fileSize, ascending);
                 case SortOption.Message:
                     return myTypes.Order(l => l.HighestMessageLevel(), ascending);
+                case SortOption.Type:
+                    return myTypes.Order(l => l.asset.fileType, ascending);
                 case SortOption.Bundle:
                 default:
                     return myTypes.Order(l => l.asset.bundleName, ascending);

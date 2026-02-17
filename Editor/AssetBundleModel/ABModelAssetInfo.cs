@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
@@ -73,6 +74,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal bool isScene { get; set; }
         internal bool isFolder { get; set; }
         internal long fileSize;
+        public readonly string fileType;
 
         private HashSet<string> m_Parents;
         private string m_AssetName;
@@ -87,6 +89,7 @@ namespace AssetBundleBrowser.AssetBundleModel
             m_Parents = new HashSet<string>();
             isScene = false;
             isFolder = false;
+            fileType = Path.GetExtension(m_AssetName).Trim('.');
         }
 
         internal string fullAssetName
