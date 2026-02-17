@@ -97,12 +97,19 @@ namespace AssetBundleBrowser.AssetBundleModel
                 m_AssetName = value;
                 m_DisplayName = System.IO.Path.GetFileNameWithoutExtension(m_AssetName);
 
-                //TODO - maybe there's a way to ask the AssetDatabase for this size info.
                 System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_AssetName);
                 if (fileInfo.Exists)
-                    fileSize = fileInfo.Length;
+                {
+                    Object obj = AssetDatabase.LoadMainAssetAtPath(m_AssetName);
+                    fileSize = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(obj);
+                    // The above isn't supported for all asset types:
+                    if (fileSize == 0)
+                        fileSize = fileInfo.Length;
+                }
                 else
+                {
                     fileSize = 0;
+                }
             }
         }
         internal string displayName
